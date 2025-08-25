@@ -1,7 +1,7 @@
 """World representation loaded from data files."""
 
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List, Tuple
 
 try:  # pragma: no cover - optional dependency
     import yaml  # type: ignore
@@ -11,28 +11,55 @@ except Exception:  # pragma: no cover - ignore missing library
 
 def _simple_yaml_load(fh) -> Dict[str, Any]:
     """Very small YAML subset loader for environments without PyYAML."""
-    result: Dict[str, Any] = {}
-    stack: list[tuple[Dict[str, Any], int]] = [(result, -1)]
-    for raw in fh:
-        line = raw.rstrip()
-        if not line or line.lstrip().startswith("#"):
-            continue
-        indent = len(line) - len(line.lstrip(" "))
-        key, _, value = line.lstrip().partition(":")
-        key = key.strip()
-        value = value.strip()
-        while indent <= stack[-1][1]:
-            stack.pop()
-        current, _ = stack[-1]
-        if not value:
-            new_dict: Dict[str, Any] = {}
-            current[key] = new_dict
-            stack.append((new_dict, indent))
-        else:
-            if value and value[0] in "'\"" and value[-1] == value[0]:
-                value = value[1:-1]
-            current[key] = value
-    return result
+    lines = [line.rstrip("\n") for line in fh
+             if line.strip() and not line.lstrip().startswith("#")]
+
+    def parse(index: int, indent: int) -> Tuple[int, Any]:
+        mapping: Dict[str, Any] = {}
+        while index < len(lines):
+            line = lines[index]
+            current_indent = len(line) - len(line.lstrip(" "))
+            if current_indent < indent:
+                break
+            stripped = line[current_indent:]
+            if stripped.startswith("- "):
+                raise ValueError("unexpected list item")
+            key, _, value = stripped.partition(":")
+            key = key.strip()
+            value = value.strip()
+            index += 1
+            if value:
+                if value[0] in "'\"" and value[-1] == value[0]:
+                    value = value[1:-1]
+                mapping[key] = value
+            else:
+                if index < len(lines):
+                    next_line = lines[index]
+                    next_indent = len(next_line) - len(next_line.lstrip(" "))
+                    next_stripped = next_line[next_indent:]
+                    if next_indent > current_indent and next_stripped.startswith("- "):
+                        lst: List[str] = []
+                        while index < len(lines):
+                            item_line = lines[index]
+                            item_indent = len(item_line) - len(item_line.lstrip(" "))
+                            if item_indent < next_indent:
+                                break
+                            item_stripped = item_line[next_indent:]
+                            if not item_stripped.startswith("- "):
+                                break
+                            item = item_stripped[2:].strip()
+                            if item and item[0] in "'\"" and item[-1] == item[0]:
+                                item = item[1:-1]
+                            lst.append(item)
+                            index += 1
+                        mapping[key] = lst
+                        continue
+                index, value_dict = parse(index, current_indent + 2)
+                mapping[key] = value_dict
+        return index, mapping
+
+    _, data = parse(0, 0)
+    return data
 
 
 class World:
@@ -56,13 +83,13 @@ class World:
     def move(self, exit_name: str) -> bool:
         room = self.rooms[self.current]
         exits = room.get("exits", {})
-        target = None
         exit_name_cf = exit_name.casefold()
-        for name, dest in exits.items():
-            if name.casefold() == exit_name_cf:
-                target = dest
-                break
-        if target is not None:
-            self.current = target
-            return True
+        for target, names in exits.items():
+            if isinstance(names, list):
+                name_list = names
+            else:  # pragma: no cover - legacy single-string syntax
+                name_list = [names]
+            if any(name.casefold() == exit_name_cf for name in name_list):
+                self.current = target
+                return True
         return False
