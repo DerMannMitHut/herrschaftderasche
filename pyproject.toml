@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "herrschaft-der-asche"
+version = "0.1.0"
+description = "A simple text adventure"
+authors = [""]
+
+[tool.poetry.dependencies]
+python = ">=3.11,<4.0"
+pyyaml = "^6.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
