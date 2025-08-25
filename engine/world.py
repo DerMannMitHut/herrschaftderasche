@@ -55,7 +55,14 @@ class World:
 
     def move(self, exit_name: str) -> bool:
         room = self.rooms[self.current]
-        if exit_name in room.get("exits", {}):
-            self.current = room["exits"][exit_name]
+        exits = room.get("exits", {})
+        target = None
+        exit_name_cf = exit_name.casefold()
+        for name, dest in exits.items():
+            if name.casefold() == exit_name_cf:
+                target = dest
+                break
+        if target is not None:
+            self.current = target
             return True
         return False
