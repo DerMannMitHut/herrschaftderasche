@@ -1,6 +1,6 @@
 # Herrschaft der Asche
 
-Ein einfaches Textadventure-Projekt. Dieses Repository enthält eine kleine Engine und eine Beispielwelt, die aus JSON-Daten geladen wird.
+Ein einfaches Textadventure-Projekt. Dieses Repository enthält eine kleine Engine und eine Beispielwelt, die aus YAML-Daten geladen wird.
 
 ## Ausführen
 

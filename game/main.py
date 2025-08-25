@@ -10,5 +10,5 @@ from engine.game import run
 
 
 if __name__ == "__main__":
-    data_path = Path(__file__).parent.parent / "data" / "world.json"
+    data_path = Path(__file__).parent.parent / "data" / "world.yaml"
     run(str(data_path))

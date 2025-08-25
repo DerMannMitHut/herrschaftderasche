@@ -1,0 +1,10 @@
+rooms:
+  hut:
+    description: "Du befindest dich in einer kleinen Hütte. Eine Tür führt nach draußen in den Wald."
+    exits:
+      wald: forest
+  forest:
+    description: "Du stehst auf einer Lichtung im Wald. Zurück geht es in die Hütte."
+    exits:
+      hütte: hut
+start: hut
