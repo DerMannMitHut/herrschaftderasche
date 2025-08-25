@@ -2,7 +2,8 @@
 name = "herrschaft-der-asche"
 version = "0.1.0"
 description = "A simple text adventure"
-authors = [""]
+authors = ["Der Mann mit Hut <dermannmithut@metstuebchen.de>"]
+packages = [{ include = "engine" }]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<4.0"
