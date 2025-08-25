@@ -1,0 +1,4 @@
+farewell: "Auf Wiedersehen!"
+cannot_move: "Dort kannst du nicht hin."
+unknown_command: "Das habe ich nicht verstanden."
+cmd_go: "gehe"

@@ -8,4 +8,6 @@ Ein einfaches Textadventure-Projekt. Dieses Repository enthält eine kleine Engi
 python game/main.py
 ```
 
-Während des Spiels können Befehle wie `gehe wald` oder `gehe hütte` eingegeben werden. Mit `quit` wird das Spiel beendet.
+Je nach Spracheingabe können Befehle wie `gehe forest` (Deutsch) oder `go forest` (Englisch) eingegeben werden. Mit `quit` wird das Spiel beendet.
+
+Die Welt- und Übersetzungsdaten liegen in den Unterverzeichnissen `data/de/` bzw. `data/en/`.

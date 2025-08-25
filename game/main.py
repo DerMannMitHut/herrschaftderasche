@@ -10,5 +10,6 @@ from engine.game import run
 
 
 if __name__ == "__main__":
-    data_path = Path(__file__).parent.parent / "data" / "world.yaml"
-    run(str(data_path))
+    language = "de"
+    data_path = Path(__file__).parent.parent / "data" / language / "world.yaml"
+    run(str(data_path), language=language)

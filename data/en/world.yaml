@@ -1,0 +1,10 @@
+rooms:
+  hut:
+    description: "You are in a small hut. A door leads out to the forest."
+    exits:
+      forest: forest
+  forest:
+    description: "You stand in a clearing in the forest. The hut is back the way you came."
+    exits:
+      hut: hut
+start: hut
