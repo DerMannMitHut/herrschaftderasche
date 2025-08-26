@@ -9,4 +9,6 @@ inventory: "inventory"
 look:
   - "look"
   - "look around"
+help: "help"
+language: "language"
 
