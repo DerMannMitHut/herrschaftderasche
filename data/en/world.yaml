@@ -4,7 +4,11 @@ items:
       - Ashen Crown
       - Crown
       - Crown of Ash
-    description: "A broken crown, covered in gray ash. It seems to radiate an uncanny heat."
+    states:
+      broken:
+        description: "A broken crown, covered in gray ash. It seems to radiate an uncanny heat."
+      repaired:
+        description: "A gleaming, fully repaired crown, free of ash. A gentle warmth emanates from it."
   flame_blade:
     names:
       - Flame Blade
