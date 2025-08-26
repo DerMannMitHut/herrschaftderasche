@@ -26,6 +26,11 @@ def _compile_condition(expr: str) -> Callable[["World"], bool]:
         r'("\2" not in self.rooms.get("\1", {}).get("items", []))',
         expr_cf,
     )
+    expr_cf = re.sub(
+        r"([a-z0-9_]+) is ([a-z0-9_]+)",
+        r'(self.item_states.get("\1") == "\2")',
+        expr_cf,
+    )
     code = compile(expr_cf, "<condition>", "eval")
 
     def func(world: "World") -> bool:

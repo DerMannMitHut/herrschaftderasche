@@ -34,3 +34,4 @@ start: ash_village
 
 endings:
   crown_returned: "inventory has ashen_crown AND at ash_village"
+  crown_repaired: "ashen_crown is repaired"
