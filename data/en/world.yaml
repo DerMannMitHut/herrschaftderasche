@@ -1,14 +1,57 @@
 items:
-  key:
+  ashen_crown:
     names:
-      - key
-    description: "A small brass key."
+      - Ashen Crown
+      - Crown
+      - Crown of Ash
+    description: "A broken crown, covered in gray ash. It seems to radiate an uncanny heat."
+  flame_blade:
+    names:
+      - Flame Blade
+      - Sword
+      - Blade
+    description: "A sword forged in the heart of fire. The blade glows faintly in the dark."
+
 rooms:
-  hut:
+  ash_village:
     names:
-      - hut
-    description: "You are in a small hut. A door leads out to the forest."
-  forest:
+      - Ash Village
+      - Village
+      - Settlement
+    description: "A small village at the edge of the ash wastes. Most huts lie in ruins, only a few people remain."
+    exits:
+      - grey_forest
+      - black_tower
+  grey_forest:
     names:
-      - forest
-    description: "You stand in a clearing in the forest. The hut is back the way you came."
+      - Grey Forest
+      - Forest
+      - Woods
+    description: "Charred trees rise like blackened fingers into the sky. Beneath the ash, tender green sprouts push through."
+    items:
+      - flame_blade
+    exits:
+      - ash_village
+      - glow_chasm
+  black_tower:
+    names:
+      - Black Tower
+      - Tower
+      - Ruined Tower
+    description: "A tower of dark stone, half buried in ash. It is said the Ashen Crown lies hidden here."
+    items:
+      - ashen_crown
+    exits:
+      - ash_village
+      - glow_chasm
+  glow_chasm:
+    names:
+      - Glow Chasm
+      - Chasm
+      - Fissure
+    description: "A deep rift in the ground, glowing lava flowing within. The heat makes it hard to breathe here."
+    exits:
+      - grey_forest
+      - black_tower
+
+start: ash_village

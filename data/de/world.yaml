@@ -1,14 +1,57 @@
 items:
-  key:
+  ashen_crown:
     names:
-      - Schlüssel
-    description: "Ein kleiner Messingschlüssel."
+      - Aschenkrone
+      - Krone
+      - Krone der Asche
+    description: "Eine zerbrochene Krone, bedeckt von grauer Asche. Sie scheint von unheimlicher Hitze erfüllt."
+  flame_blade:
+    names:
+      - Flammenklinge
+      - Schwert
+      - Klinge
+    description: "Ein Schwert, das in der Glut geschmiedet wurde. Die Klinge glimmt schwach im Dunkeln."
+
 rooms:
-  hut:
+  ash_village:
     names:
-      - Hütte
-    description: "Du befindest dich in einer kleinen Hütte. Eine Tür führt nach draußen in den Wald."
-  forest:
+      - Aschendorf
+      - Dorf
+      - Siedlung
+    description: "Ein kleines Dorf am Rande der Aschewüste. Die meisten Hütten sind verfallen, nur wenige Menschen leben hier noch."
+    exits:
+      - grey_forest
+      - black_tower
+  grey_forest:
     names:
+      - Grauer Wald
       - Wald
-    description: "Du stehst auf einer Lichtung im Wald. Zurück geht es in die Hütte."
+      - Forst
+    description: "Verkohlte Bäume ragen wie schwarze Finger in den Himmel. Unter der Asche wachsen zarte grüne Triebe."
+    items:
+      - flame_blade
+    exits:
+      - ash_village
+      - glow_chasm
+  black_tower:
+    names:
+      - Schwarzer Turm
+      - Turm
+      - Ruinenturm
+    description: "Ein Turm aus dunklem Stein, halb von Asche verschlungen. Es heißt, hier liege die Aschenkrone verborgen."
+    items:
+      - ashen_crown
+    exits:
+      - ash_village
+      - glow_chasm
+  glow_chasm:
+    names:
+      - Glutgrube
+      - Schlucht
+      - Spalte
+    description: "Eine tiefe Spalte im Boden, in der rotglühende Lava lodert. Die Hitze macht es schwer, hier zu atmen."
+    exits:
+      - grey_forest
+      - black_tower
+
+start: ash_village

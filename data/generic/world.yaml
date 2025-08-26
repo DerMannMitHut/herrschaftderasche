@@ -1,12 +1,29 @@
 items:
-  key: {}
+  ashen_crown: {}
+  flame_blade: {}
+
 rooms:
-  hut:
+  ash_village:
+    items: []
+    exits:
+      - grey_forest
+      - black_tower
+  grey_forest:
     items:
-      - key
+      - flame_blade
     exits:
-      - forest
-  forest:
+      - ash_village
+      - glow_chasm
+  black_tower:
+    items:
+      - ashen_crown
     exits:
-      - hut
-start: hut
+      - ash_village
+      - glow_chasm
+  glow_chasm:
+    items: []
+    exits:
+      - grey_forest
+      - black_tower
+
+start: ash_village
