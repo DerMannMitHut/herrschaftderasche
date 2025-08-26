@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+import yaml
+
 from engine import io, parser, world, llm, i18n
 
 
@@ -11,12 +13,15 @@ class Game:
         self.data_dir = data_path.parent.parent
         self.save_path = self.data_dir / "save.yaml"
         self.world = world.World.from_file(world_data_path)
+        self.language = language
         if self.save_path.exists():
+            with open(self.save_path, encoding="utf-8") as fh:
+                data = yaml.safe_load(fh) or {}
+            self.language = data.get("language", language)
             self.world.load_state(self.save_path)
             self.save_path.unlink()
-        self.language = language
-        self.messages = i18n.load_messages(language)
-        self.commands = i18n.load_commands(language)
+        self.messages = i18n.load_messages(self.language)
+        self.commands = i18n.load_commands(self.language)
         self.command_keys = i18n.load_command_keys()
         self.reverse_cmds: dict[str, str] = {}
         for key in self.command_keys:
@@ -26,6 +31,7 @@ class Game:
                     self.reverse_cmds[name] = key
             else:
                 self.reverse_cmds[val] = key
+        self.reverse_cmds["language"] = "language"
         self.running = True
 
     def run(self) -> None:
@@ -40,8 +46,14 @@ class Game:
             handler = getattr(self, f"cmd_{cmd_key}", self.cmd_unknown)
             handler(arg)
 
+    def _save_state(self) -> None:
+        data = self.world.to_state()
+        data["language"] = self.language
+        with open(self.save_path, "w", encoding="utf-8") as fh:
+            yaml.safe_dump(data, fh)
+
     def cmd_quit(self, arg: str) -> None:
-        self.world.save(self.save_path)
+        self._save_state()
         io.output(self.messages["farewell"])
         self.running = False
 
@@ -114,7 +126,7 @@ class Game:
         except FileNotFoundError:
             io.output(self.messages.get("language_unknown", "Unknown language"))
             return
-        self.world.save(self.save_path)
+        self._save_state()
         new_world.load_state(self.save_path)
         self.save_path.unlink()
         self.world = new_world
@@ -129,6 +141,7 @@ class Game:
                     self.reverse_cmds[name] = key
             else:
                 self.reverse_cmds[val] = key
+        self.reverse_cmds["language"] = "language"
         io.output(self.messages["language_set"].format(language=language))
 
     def cmd_unknown(self, arg: str) -> None:
