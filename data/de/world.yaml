@@ -4,7 +4,11 @@ items:
       - Aschenkrone
       - Krone
       - Krone der Asche
-    description: "Eine zerbrochene Krone, bedeckt von grauer Asche. Sie scheint von unheimlicher Hitze erfüllt."
+    states:
+      broken:
+        description: "Eine zerbrochene Krone, bedeckt von grauer Asche. Sie scheint von unheimlicher Hitze erfüllt."
+      repaired:
+        description: "Eine glänzende, reparierte Krone, frei von jeder Asche. Eine sanfte Wärme geht von ihr aus."
   flame_blade:
     names:
       - Flammenklinge
