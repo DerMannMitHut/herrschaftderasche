@@ -21,4 +21,6 @@ gestartet.
 
 Je nach Spracheingabe können Befehle wie `gehe Wald` (Deutsch) oder `go forest` (Englisch) eingegeben werden. Mit `beenden` (Deutsch) bzw. `quit` oder `exit` (Englisch) wird das Spiel beendet.
 
+In der Hütte liegt beispielsweise ein Schlüssel. Gegenstände können mit `nimm`/`take` aufgenommen, mit `lege`/`drop` wieder abgelegt und mit `inventar`/`inventory` angezeigt werden.
+
 Die Welt- und Übersetzungsdaten liegen in den Unterverzeichnissen `data/de/` bzw. `data/en/`.
