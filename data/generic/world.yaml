@@ -1,0 +1,12 @@
+items:
+  key: {}
+rooms:
+  hut:
+    items:
+      - key
+    exits:
+      - forest
+  forest:
+    exits:
+      - hut
+start: hut

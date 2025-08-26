@@ -19,6 +19,38 @@ class World:
             data = yaml.safe_load(fh)
         return cls(data)
 
+    @classmethod
+    def from_files(cls, config_path: str | Path, language_path: str | Path) -> "World":
+        with open(config_path, encoding="utf-8") as fh:
+            base = yaml.safe_load(fh)
+        with open(language_path, encoding="utf-8") as fh:
+            lang = yaml.safe_load(fh)
+        items: Dict[str, Any] = base.get("items", {})
+        for item_id, item_data in lang.get("items", {}).items():
+            items.setdefault(item_id, {}).update(item_data)
+        rooms: Dict[str, Any] = {}
+        lang_rooms = lang.get("rooms", {})
+        for room_id, cfg_room in base.get("rooms", {}).items():
+            room: Dict[str, Any] = {}
+            if cfg_room.get("items"):
+                room["items"] = list(cfg_room["items"])
+            exits: Dict[str, Any] = {}
+            for target in cfg_room.get("exits", []):
+                names = lang_rooms.get(target, {}).get("names", [target])
+                exits[target] = names
+            if exits:
+                room["exits"] = exits
+            lang_room = lang_rooms.get(room_id, {})
+            names = lang_room.get("names")
+            if names:
+                room["names"] = names
+            desc = lang_room.get("description")
+            if desc is not None:
+                room["description"] = desc
+            rooms[room_id] = room
+        data = {"items": items, "rooms": rooms, "start": base["start"]}
+        return cls(data)
+
     def to_state(self) -> Dict[str, Any]:
         return {
             "current": self.current,
