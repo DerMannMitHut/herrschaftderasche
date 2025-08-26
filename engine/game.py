@@ -1,11 +1,17 @@
 """Core game loop."""
 
+from pathlib import Path
+
 from engine import io, parser, world, llm, i18n
 
 
 class Game:
     def __init__(self, world_data_path: str, language: str) -> None:
+        data_path = Path(world_data_path)
+        self.save_path = data_path.parent.parent / "save.yaml"
         self.world = world.World.from_file(world_data_path)
+        if self.save_path.exists():
+            self.world.load_state(self.save_path)
         self.messages = i18n.load_messages(language)
         self.commands = i18n.load_commands(language)
         command_keys = i18n.load_command_keys()
@@ -32,6 +38,7 @@ class Game:
             handler(arg)
 
     def cmd_quit(self, arg: str) -> None:
+        self.world.save(self.save_path)
         io.output(self.messages["farewell"])
         self.running = False
 
