@@ -11,13 +11,25 @@ class World:
         self.rooms = data["rooms"]
         self.items = data.get("items", {})
         self.current = data["start"]
-        self.inventory: list[str] = []
+        self.inventory: list[str] = data.get("inventory", [])
 
     @classmethod
     def from_file(cls, path: str | Path) -> "World":
         with open(path, encoding="utf-8") as fh:
             data = yaml.safe_load(fh)
         return cls(data)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "rooms": self.rooms,
+            "items": self.items,
+            "start": self.current,
+            "inventory": self.inventory,
+        }
+
+    def save(self, path: str | Path) -> None:
+        with open(path, "w", encoding="utf-8") as fh:
+            yaml.safe_dump(self.to_dict(), fh)
 
     def describe_current(self, messages: Dict[str, str] | None = None) -> str:
         room = self.rooms[self.current]
