@@ -12,6 +12,11 @@ class World:
         self.items = data.get("items", {})
         self.current = data["start"]
         self.inventory: list[str] = data.get("inventory", [])
+        # Remember the initial state so that we can later compute differences.
+        self._base_rooms: Dict[str, list[str]] = {
+            room_id: list(room.get("items", [])) for room_id, room in self.rooms.items()
+        }
+        self._base_inventory: list[str] = list(self.inventory)
 
     @classmethod
     def from_file(cls, path: str | Path) -> "World":
@@ -52,11 +57,19 @@ class World:
         return cls(data)
 
     def to_state(self) -> Dict[str, Any]:
-        return {
-            "current": self.current,
-            "inventory": self.inventory,
-            "rooms": {room_id: room.get("items", []) for room_id, room in self.rooms.items()},
-        }
+        """Return the minimal state describing differences from the base world."""
+        state: Dict[str, Any] = {"current": self.current}
+        if self.inventory != self._base_inventory:
+            state["inventory"] = self.inventory
+        rooms_diff: Dict[str, list[str]] = {}
+        for room_id, room in self.rooms.items():
+            items = list(room.get("items", []))
+            base_items = self._base_rooms.get(room_id, [])
+            if items != base_items:
+                rooms_diff[room_id] = items
+        if rooms_diff:
+            state["rooms"] = rooms_diff
+        return state
 
     def save(self, path: str | Path) -> None:
         with open(path, "w", encoding="utf-8") as fh:
@@ -66,7 +79,8 @@ class World:
         with open(path, encoding="utf-8") as fh:
             data = yaml.safe_load(fh) or {}
         self.current = data.get("current", self.current)
-        self.inventory = data.get("inventory", [])
+        # Only override inventory if it was stored; otherwise keep base inventory.
+        self.inventory = data.get("inventory", self.inventory)
         room_items = data.get("rooms", {})
         for room_id, room in self.rooms.items():
             items = room_items.get(room_id)
