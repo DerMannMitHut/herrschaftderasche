@@ -37,15 +37,20 @@ class Game:
 
     def run(self) -> None:
         io.output(self.world.describe_current(self.messages))
-        while self.running:
-            raw = io.get_input()
-            raw = llm.interpret(raw)
-            raw = parser.parse(raw)
-            cmd_word, *rest = raw.split(" ", 1)
-            cmd_key = self.reverse_cmds.get(cmd_word)
-            arg = rest[0] if rest else ""
-            handler = getattr(self, f"cmd_{cmd_key}", self.cmd_unknown)
-            handler(arg)
+        try:
+            while self.running:
+                raw = io.get_input()
+                raw = llm.interpret(raw)
+                raw = parser.parse(raw)
+                cmd_word, *rest = raw.split(" ", 1)
+                cmd_key = self.reverse_cmds.get(cmd_word)
+                arg = rest[0] if rest else ""
+                handler = getattr(self, f"cmd_{cmd_key}", self.cmd_unknown)
+                handler(arg)
+        except (EOFError, KeyboardInterrupt):
+            io.output(self.messages["farewell"])
+        finally:
+            self._save_state()
 
     def _save_state(self) -> None:
         data = self.world.to_state()
