@@ -1,16 +1,38 @@
-import sys
-from pathlib import Path
-
-ROOT_DIR = Path(__file__).resolve().parents[1]
-sys.path.append(str(ROOT_DIR))
-
+import yaml
 from engine import game, io
 
 
-def test_language_switch(monkeypatch):
+def make_data_dir(tmp_path):
+    (tmp_path / "generic").mkdir()
+    (tmp_path / "en").mkdir()
+    (tmp_path / "de").mkdir()
+    generic = {
+        "items": {"sword": {}},
+        "rooms": {"start": {"items": ["sword"], "exits": []}},
+        "start": "start",
+    }
+    en = {
+        "items": {"sword": {"names": ["Sword"], "description": "A sharp blade."}},
+        "rooms": {"start": {"names": ["Start"], "description": "Start room."}},
+    }
+    de = {
+        "items": {"sword": {"names": ["Schwert"], "description": "Eine scharfe Klinge."}},
+        "rooms": {"start": {"names": ["Start"], "description": "Startraum."}},
+    }
+    with open(tmp_path / "generic" / "world.yaml", "w", encoding="utf-8") as fh:
+        yaml.safe_dump(generic, fh)
+    with open(tmp_path / "en" / "world.yaml", "w", encoding="utf-8") as fh:
+        yaml.safe_dump(en, fh)
+    with open(tmp_path / "de" / "world.yaml", "w", encoding="utf-8") as fh:
+        yaml.safe_dump(de, fh)
+    return tmp_path
+
+
+def test_language_switch(tmp_path, monkeypatch):
+    data_dir = make_data_dir(tmp_path)
     outputs: list[str] = []
     monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
-    g = game.Game(str(ROOT_DIR / "data" / "en" / "world.yaml"), "en")
+    g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
     g.cmd_language("de")
     assert g.messages["farewell"] == "Auf Wiedersehen!"
     assert g.commands["look"][0] == "umschau"
@@ -18,25 +40,27 @@ def test_language_switch(monkeypatch):
     assert g.reverse_cmds["language"] == "language"
     assert g.reverse_cmds["sprache"] == "language"
     assert outputs[-1] == g.messages["language_set"].format(language="de")
-    assert g.world.items["key"]["names"][0] == "Schlüssel"
+    assert g.world.items["sword"]["names"][0] == "Schwert"
 
 
-def test_language_persistence(monkeypatch):
+def test_language_persistence(tmp_path, monkeypatch):
+    data_dir = make_data_dir(tmp_path)
     outputs: list[str] = []
     monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
-    g = game.Game(str(ROOT_DIR / "data" / "en" / "world.yaml"), "en")
+    g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
     g.cmd_language("de")
     g.cmd_quit("")
-    g2 = game.Game(str(ROOT_DIR / "data" / "en" / "world.yaml"), "en")
+    g2 = game.Game(str(data_dir / "en" / "world.yaml"), "en")
     assert g2.language == "de"
     assert g2.messages["farewell"] == "Auf Wiedersehen!"
     assert g2.reverse_cmds["language"] == "language"
 
 
-def test_language_command_base_word(monkeypatch):
+def test_language_command_base_word(tmp_path, monkeypatch):
+    data_dir = make_data_dir(tmp_path)
     outputs: list[str] = []
     monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
-    g = game.Game(str(ROOT_DIR / "data" / "de" / "world.yaml"), "de")
+    g = game.Game(str(data_dir / "de" / "world.yaml"), "de")
     cmd = g.reverse_cmds["language"]
     getattr(g, f"cmd_{cmd}")("en")
     assert g.language == "en"
