@@ -8,11 +8,10 @@ from engine import io, parser, world, llm, i18n
 class Game:
     def __init__(self, world_data_path: str, language: str) -> None:
         data_path = Path(world_data_path)
-        self.save_path = data_path.with_name("save.yaml")
+        self.save_path = data_path.parent.parent / "save.yaml"
+        self.world = world.World.from_file(world_data_path)
         if self.save_path.exists():
-            self.world = world.World.from_file(self.save_path)
-        else:
-            self.world = world.World.from_file(world_data_path)
+            self.world.load_state(self.save_path)
         self.messages = i18n.load_messages(language)
         self.commands = i18n.load_commands(language)
         command_keys = i18n.load_command_keys()

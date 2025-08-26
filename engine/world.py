@@ -19,17 +19,31 @@ class World:
             data = yaml.safe_load(fh)
         return cls(data)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_state(self) -> Dict[str, Any]:
         return {
-            "rooms": self.rooms,
-            "items": self.items,
-            "start": self.current,
+            "current": self.current,
             "inventory": self.inventory,
+            "rooms": {room_id: room.get("items", []) for room_id, room in self.rooms.items()},
         }
 
     def save(self, path: str | Path) -> None:
         with open(path, "w", encoding="utf-8") as fh:
-            yaml.safe_dump(self.to_dict(), fh)
+            yaml.safe_dump(self.to_state(), fh)
+
+    def load_state(self, path: str | Path) -> None:
+        with open(path, encoding="utf-8") as fh:
+            data = yaml.safe_load(fh) or {}
+        self.current = data.get("current", self.current)
+        self.inventory = data.get("inventory", [])
+        room_items = data.get("rooms", {})
+        for room_id, room in self.rooms.items():
+            items = room_items.get(room_id)
+            if items is None:
+                continue
+            if items:
+                room["items"] = items
+            else:
+                room.pop("items", None)
 
     def describe_current(self, messages: Dict[str, str] | None = None) -> str:
         room = self.rooms[self.current]
