@@ -1,7 +1,8 @@
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parents[1]))
+ROOT_DIR = Path(__file__).resolve().parents[1]
+sys.path.append(str(ROOT_DIR))
 
 from engine import game, io
 
@@ -9,7 +10,7 @@ from engine import game, io
 def test_help_lists_commands(monkeypatch):
     outputs: list[str] = []
     monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
-    g = game.Game("data/en/world.yaml", "en")
+    g = game.Game(str(ROOT_DIR / "data" / "en" / "world.yaml"), "en")
     g.cmd_help("")
     names = []
     for key in g.command_keys:
