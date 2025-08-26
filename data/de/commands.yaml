@@ -8,4 +8,6 @@ inventory: "inventar"
 look:
   - "umschau"
   - "umsehen"
+help: "hilfe"
+language: "sprache"
 

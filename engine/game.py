@@ -8,16 +8,18 @@ from engine import io, parser, world, llm, i18n
 class Game:
     def __init__(self, world_data_path: str, language: str) -> None:
         data_path = Path(world_data_path)
-        self.save_path = data_path.parent.parent / "save.yaml"
+        self.data_dir = data_path.parent.parent
+        self.save_path = self.data_dir / "save.yaml"
         self.world = world.World.from_file(world_data_path)
         if self.save_path.exists():
             self.world.load_state(self.save_path)
             self.save_path.unlink()
+        self.language = language
         self.messages = i18n.load_messages(language)
         self.commands = i18n.load_commands(language)
-        command_keys = i18n.load_command_keys()
+        self.command_keys = i18n.load_command_keys()
         self.reverse_cmds: dict[str, str] = {}
-        for key in command_keys:
+        for key in self.command_keys:
             val = self.commands.get(key)
             if isinstance(val, list):
                 for name in val:
@@ -88,6 +90,46 @@ class Game:
             io.output(self.world.describe_current(self.messages))
         else:
             io.output(self.messages["cannot_move"])
+
+    def cmd_help(self, arg: str) -> None:
+        names: list[str] = []
+        for key in self.command_keys:
+            val = self.commands.get(key)
+            if isinstance(val, list):
+                names.append(val[0])
+            else:
+                names.append(val)
+        io.output(self.messages["help"].format(commands=", ".join(names)))
+
+    def cmd_language(self, arg: str) -> None:
+        if not arg:
+            self.cmd_unknown(arg)
+            return
+        language = arg.strip()
+        try:
+            messages = i18n.load_messages(language)
+            commands = i18n.load_commands(language)
+            world_path = self.data_dir / language / "world.yaml"
+            new_world = world.World.from_file(world_path)
+        except FileNotFoundError:
+            io.output(self.messages.get("language_unknown", "Unknown language"))
+            return
+        self.world.save(self.save_path)
+        new_world.load_state(self.save_path)
+        self.save_path.unlink()
+        self.world = new_world
+        self.language = language
+        self.messages = messages
+        self.commands = commands
+        self.reverse_cmds = {}
+        for key in self.command_keys:
+            val = self.commands.get(key)
+            if isinstance(val, list):
+                for name in val:
+                    self.reverse_cmds[name] = key
+            else:
+                self.reverse_cmds[val] = key
+        io.output(self.messages["language_set"].format(language=language))
 
     def cmd_unknown(self, arg: str) -> None:
         io.output(self.messages["unknown_command"])
