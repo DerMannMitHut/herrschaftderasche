@@ -12,7 +12,8 @@ class Game:
         data_path = Path(world_data_path)
         self.data_dir = data_path.parent.parent
         self.save_path = self.data_dir / "save.yaml"
-        self.world = world.World.from_file(world_data_path)
+        generic_path = self.data_dir / "generic" / "world.yaml"
+        self.world = world.World.from_files(generic_path, world_data_path)
         self.language = language
         if self.save_path.exists():
             with open(self.save_path, encoding="utf-8") as fh:
@@ -122,7 +123,8 @@ class Game:
             messages = i18n.load_messages(language)
             commands = i18n.load_commands(language)
             world_path = self.data_dir / language / "world.yaml"
-            new_world = world.World.from_file(world_path)
+            generic_path = self.data_dir / "generic" / "world.yaml"
+            new_world = world.World.from_files(generic_path, world_path)
         except FileNotFoundError:
             io.output(self.messages.get("language_unknown", "Unknown language"))
             return

@@ -5,15 +5,10 @@ items:
     description: "Ein kleiner Messingschlüssel."
 rooms:
   hut:
+    names:
+      - Hütte
     description: "Du befindest dich in einer kleinen Hütte. Eine Tür führt nach draußen in den Wald."
-    items:
-      - key
-    exits:
-      forest:
-        - Wald
   forest:
+    names:
+      - Wald
     description: "Du stehst auf einer Lichtung im Wald. Zurück geht es in die Hütte."
-    exits:
-      hut:
-        - Hütte
-start: hut
