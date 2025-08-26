@@ -1,9 +1,37 @@
 """World representation loaded from data files."""
 
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Callable
 
 import yaml
+import re
+
+
+def _compile_condition(expr: str) -> Callable[["World"], bool]:
+    expr_cf = expr.casefold()
+    expr_cf = re.sub(r"\band\b", " and ", expr_cf)
+    expr_cf = re.sub(r"\bor\b", " or ", expr_cf)
+    expr_cf = re.sub(r"at ([a-z0-9_]+)", r'(self.current == "\1")', expr_cf)
+    expr_cf = re.sub(r"inventory has ([a-z0-9_]+)", r'("\1" in self.inventory)', expr_cf)
+    expr_cf = re.sub(
+        r"inventory lacks ([a-z0-9_]+)", r'("\1" not in self.inventory)', expr_cf
+    )
+    expr_cf = re.sub(
+        r"([a-z0-9_]+) has ([a-z0-9_]+)",
+        r'("\2" in self.rooms.get("\1", {}).get("items", []))',
+        expr_cf,
+    )
+    expr_cf = re.sub(
+        r"([a-z0-9_]+) lacks ([a-z0-9_]+)",
+        r'("\2" not in self.rooms.get("\1", {}).get("items", []))',
+        expr_cf,
+    )
+    code = compile(expr_cf, "<condition>", "eval")
+
+    def func(world: "World") -> bool:
+        return bool(eval(code, {}, {"self": world}))
+
+    return func
 
 
 class World:
@@ -12,6 +40,11 @@ class World:
         self.items = data.get("items", {})
         self.current = data["start"]
         self.inventory: list[str] = data.get("inventory", [])
+        self.endings = data.get("endings", {})
+        for ending in self.endings.values():
+            cond = ending.get("condition")
+            if cond:
+                ending["check"] = _compile_condition(cond)
         # Remember the initial state so that we can later compute differences.
         self._base_rooms: Dict[str, list[str]] = {
             room_id: list(room.get("items", [])) for room_id, room in self.rooms.items()
@@ -53,7 +86,12 @@ class World:
             if desc is not None:
                 room["description"] = desc
             rooms[room_id] = room
-        data = {"items": items, "rooms": rooms, "start": base["start"]}
+        endings: Dict[str, Any] = {}
+        for end_id, cond in base.get("endings", {}).items():
+            endings[end_id] = {"condition": cond}
+        for end_id, desc in lang.get("endings", {}).items():
+            endings.setdefault(end_id, {})["description"] = desc
+        data = {"items": items, "rooms": rooms, "start": base["start"], "endings": endings}
         return cls(data)
 
     def to_state(self) -> Dict[str, Any]:
@@ -172,3 +210,10 @@ class World:
             return messages["inventory_empty"]
         item_names = [self.items[i]["names"][0] for i in self.inventory]
         return messages["inventory_items"].format(items=", ".join(item_names))
+
+    def check_endings(self) -> str | None:
+        for ending in self.endings.values():
+            check = ending.get("check")
+            if check and check(self):
+                return ending.get("description")
+        return None

@@ -55,3 +55,6 @@ rooms:
       - black_tower
 
 start: ash_village
+
+endings:
+  crown_returned: "With the Ashen Crown reclaimed, you return to the village as its destined ruler."
