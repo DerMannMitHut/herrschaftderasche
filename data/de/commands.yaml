@@ -5,4 +5,7 @@ take: "nimm"
 drop: "lege"
 drop_suffix: "ab"
 inventory: "inventar"
+look:
+  - "umschau"
+  - "umsehen"
 

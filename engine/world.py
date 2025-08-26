@@ -57,6 +57,21 @@ class World:
                 desc += " You see here: " + ", ".join(item_names)
         return desc
 
+    def describe_item(self, item_name: str) -> str | None:
+        item_name_cf = item_name.casefold()
+        room = self.rooms[self.current]
+        for item_id in room.get("items", []):
+            item = self.items.get(item_id, {})
+            names = item.get("names", [])
+            if any(name.casefold() == item_name_cf for name in names):
+                return item.get("description")
+        for item_id in self.inventory:
+            item = self.items.get(item_id, {})
+            names = item.get("names", [])
+            if any(name.casefold() == item_name_cf for name in names):
+                return item.get("description")
+        return None
+
     def move(self, exit_name: str) -> bool:
         room = self.rooms[self.current]
         exits = room.get("exits", {})
