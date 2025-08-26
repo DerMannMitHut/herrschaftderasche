@@ -1,25 +1,7 @@
 from engine import game, io
 
 
-GENERIC = {
-    "items": {"sword": {}},
-    "rooms": {"start": {"items": ["sword"], "exits": []}},
-    "start": "start",
-}
-
-EN = {
-    "items": {"sword": {"names": ["Sword"], "description": "A sharp blade."}},
-    "rooms": {"start": {"names": ["Start"], "description": "Start room."}},
-}
-
-DE = {
-    "items": {"sword": {"names": ["Schwert"], "description": "Eine scharfe Klinge."}},
-    "rooms": {"start": {"names": ["Start"], "description": "Startraum."}},
-}
-
-
-def test_language_switch(make_data_dir, monkeypatch):
-    data_dir = make_data_dir(generic=GENERIC, en=EN, de=DE)
+def test_language_switch(data_dir, monkeypatch):
     outputs: list[str] = []
     monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
     g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
@@ -33,8 +15,7 @@ def test_language_switch(make_data_dir, monkeypatch):
     assert g.world.items["sword"]["names"][0] == "Schwert"
 
 
-def test_language_persistence(make_data_dir, monkeypatch):
-    data_dir = make_data_dir(generic=GENERIC, en=EN, de=DE)
+def test_language_persistence(data_dir, monkeypatch):
     outputs: list[str] = []
     monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
     g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
@@ -46,8 +27,7 @@ def test_language_persistence(make_data_dir, monkeypatch):
     assert g2.reverse_cmds["language"] == "language"
 
 
-def test_language_command_base_word(make_data_dir, monkeypatch):
-    data_dir = make_data_dir(generic=GENERIC, en=EN, de=DE)
+def test_language_command_base_word(data_dir, monkeypatch):
     outputs: list[str] = []
     monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
     g = game.Game(str(data_dir / "de" / "world.yaml"), "de")

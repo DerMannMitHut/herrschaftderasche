@@ -3,20 +3,7 @@ import pytest
 from engine import game, io, parser
 
 
-GENERIC = {
-    "items": {"sword": {}},
-    "rooms": {"start": {"items": ["sword"], "exits": []}},
-    "start": "start",
-}
-
-EN = {
-    "items": {"sword": {"names": ["Sword"], "description": "A sharp blade."}},
-    "rooms": {"start": {"names": ["Start"], "description": "Start room."}},
-}
-
-
-def test_save_on_eoferror(make_data_dir, monkeypatch):
-    data_dir = make_data_dir(generic=GENERIC, en=EN)
+def test_save_on_eoferror(data_dir, monkeypatch):
     g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
 
     def fake_input(prompt: str = "> ") -> str:  # noqa: ARG001
@@ -31,8 +18,7 @@ def test_save_on_eoferror(make_data_dir, monkeypatch):
     assert data["current"] == "start"
 
 
-def test_save_on_exception(make_data_dir, monkeypatch):
-    data_dir = make_data_dir(generic=GENERIC, en=EN)
+def test_save_on_exception(data_dir, monkeypatch):
     g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
     monkeypatch.setattr(io, "get_input", lambda prompt="> ": "look")
 
