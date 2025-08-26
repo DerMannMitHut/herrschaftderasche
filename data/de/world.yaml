@@ -2,6 +2,7 @@ items:
   key:
     names:
       - Schlüssel
+    description: "Ein kleiner Messingschlüssel."
 rooms:
   hut:
     description: "Du befindest dich in einer kleinen Hütte. Eine Tür führt nach draußen in den Wald."

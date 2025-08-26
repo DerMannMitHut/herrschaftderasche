@@ -6,4 +6,7 @@ take: "take"
 drop: "drop"
 drop_suffix: ""
 inventory: "inventory"
+look:
+  - "look"
+  - "look around"
 

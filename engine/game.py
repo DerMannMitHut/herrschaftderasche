@@ -12,6 +12,7 @@ class Game:
         self.world = world.World.from_file(world_data_path)
         if self.save_path.exists():
             self.world.load_state(self.save_path)
+            self.save_path.unlink()
         self.messages = i18n.load_messages(language)
         self.commands = i18n.load_commands(language)
         command_keys = i18n.load_command_keys()
@@ -67,6 +68,16 @@ class Game:
             io.output(self.messages["dropped"].format(item=item))
         else:
             io.output(self.messages["not_carrying"])
+
+    def cmd_look(self, arg: str) -> None:
+        if arg:
+            desc = self.world.describe_item(arg)
+            if desc:
+                io.output(desc)
+            else:
+                io.output(self.messages["item_not_present"])
+        else:
+            io.output(self.world.describe_current(self.messages))
 
     def cmd_go(self, arg: str) -> None:
         if not arg:
