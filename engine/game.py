@@ -37,6 +37,7 @@ class Game:
 
     def run(self) -> None:
         io.output(self.world.describe_current(self.messages))
+        self._check_end()
         try:
             while self.running:
                 raw = io.get_input()
@@ -75,6 +76,7 @@ class Game:
             io.output(self.messages["taken"].format(item=item))
         else:
             io.output(self.messages["item_not_present"])
+        self._check_end()
 
     def cmd_drop(self, arg: str) -> None:
         if not arg:
@@ -88,6 +90,7 @@ class Game:
             io.output(self.messages["dropped"].format(item=item))
         else:
             io.output(self.messages["not_carrying"])
+        self._check_end()
 
     def cmd_look(self, arg: str) -> None:
         if arg:
@@ -108,6 +111,7 @@ class Game:
             io.output(self.world.describe_current(self.messages))
         else:
             io.output(self.messages["cannot_move"])
+        self._check_end()
 
     def cmd_help(self, arg: str) -> None:
         names: list[str] = []
@@ -153,6 +157,12 @@ class Game:
 
     def cmd_unknown(self, arg: str) -> None:
         io.output(self.messages["unknown_command"])
+
+    def _check_end(self) -> None:
+        ending = self.world.check_endings()
+        if ending:
+            io.output(ending)
+            self.running = False
 
 
 def run(world_data_path: str, language: str = "en") -> None:

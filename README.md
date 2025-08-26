@@ -25,3 +25,7 @@ Gegenstände können mit `nimm`/`take` aufgenommen, mit `lege`/`drop` wieder abg
 Die sprachunabhängige Weltkonfiguration befindet sich in `data/generic/world.yaml`.
 Sprachspezifische Texte und Bezeichnungen liegen in den Unterverzeichnissen
 `data/de/` bzw. `data/en/`.
+Im Abschnitt `endings` der generischen Datei können Endbedingungen in einer einfachen
+Ausdruckssprache definiert werden, z. B. `inventory has crown AND at village`.
+Die zugehörigen Beschreibungen stehen in den Sprachdateien und werden beim
+Erreichen ausgegeben, bevor das Spiel endet.
