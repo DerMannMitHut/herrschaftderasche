@@ -1,30 +1,22 @@
 import yaml
 import pytest
-from pathlib import Path
 from engine import game, io, parser
 
 
-def make_data_dir(tmp_path: Path) -> Path:
-    (tmp_path / "generic").mkdir()
-    (tmp_path / "en").mkdir()
-    generic = {
-        "items": {"sword": {}},
-        "rooms": {"start": {"items": ["sword"], "exits": []}},
-        "start": "start",
-    }
-    en = {
-        "items": {"sword": {"names": ["Sword"], "description": "A sharp blade."}},
-        "rooms": {"start": {"names": ["Start"], "description": "Start room."}},
-    }
-    with open(tmp_path / "generic" / "world.yaml", "w", encoding="utf-8") as fh:
-        yaml.safe_dump(generic, fh)
-    with open(tmp_path / "en" / "world.yaml", "w", encoding="utf-8") as fh:
-        yaml.safe_dump(en, fh)
-    return tmp_path
+GENERIC = {
+    "items": {"sword": {}},
+    "rooms": {"start": {"items": ["sword"], "exits": []}},
+    "start": "start",
+}
+
+EN = {
+    "items": {"sword": {"names": ["Sword"], "description": "A sharp blade."}},
+    "rooms": {"start": {"names": ["Start"], "description": "Start room."}},
+}
 
 
-def test_save_on_eoferror(tmp_path, monkeypatch):
-    data_dir = make_data_dir(tmp_path)
+def test_save_on_eoferror(make_data_dir, monkeypatch):
+    data_dir = make_data_dir(generic=GENERIC, en=EN)
     g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
 
     def fake_input(prompt: str = "> ") -> str:  # noqa: ARG001
@@ -39,8 +31,8 @@ def test_save_on_eoferror(tmp_path, monkeypatch):
     assert data["current"] == "start"
 
 
-def test_save_on_exception(tmp_path, monkeypatch):
-    data_dir = make_data_dir(tmp_path)
+def test_save_on_exception(make_data_dir, monkeypatch):
+    data_dir = make_data_dir(generic=GENERIC, en=EN)
     g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
     monkeypatch.setattr(io, "get_input", lambda prompt="> ": "look")
 
