@@ -1,6 +1,12 @@
+items:
+  key:
+    names:
+      - Schlüssel
 rooms:
   hut:
     description: "Du befindest dich in einer kleinen Hütte. Eine Tür führt nach draußen in den Wald."
+    items:
+      - key
     exits:
       forest:
         - Wald

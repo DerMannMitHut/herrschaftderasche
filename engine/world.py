@@ -9,7 +9,9 @@ import yaml
 class World:
     def __init__(self, data: Dict[str, Any]):
         self.rooms = data["rooms"]
+        self.items = data.get("items", {})
         self.current = data["start"]
+        self.inventory: list[str] = []
 
     @classmethod
     def from_file(cls, path: str | Path) -> "World":
@@ -17,9 +19,17 @@ class World:
             data = yaml.safe_load(fh)
         return cls(data)
 
-    def describe_current(self) -> str:
+    def describe_current(self, messages: Dict[str, str] | None = None) -> str:
         room = self.rooms[self.current]
-        return room["description"]
+        desc = room["description"]
+        room_items = room.get("items", [])
+        if room_items:
+            item_names = [self.items[i]["names"][0] for i in room_items]
+            if messages:
+                desc += " " + messages["items_here"].format(items=", ".join(item_names))
+            else:  # pragma: no cover - fallback without messages
+                desc += " You see here: " + ", ".join(item_names)
+        return desc
 
     def move(self, exit_name: str) -> bool:
         room = self.rooms[self.current]
@@ -34,3 +44,32 @@ class World:
                 self.current = target
                 return True
         return False
+
+    def take(self, item_name: str) -> bool:
+        room = self.rooms[self.current]
+        items = room.get("items", [])
+        item_name_cf = item_name.casefold()
+        for item_id in list(items):
+            names = self.items.get(item_id, {}).get("names", [])
+            if any(name.casefold() == item_name_cf for name in names):
+                items.remove(item_id)
+                self.inventory.append(item_id)
+                return True
+        return False
+
+    def drop(self, item_name: str) -> bool:
+        item_name_cf = item_name.casefold()
+        for item_id in list(self.inventory):
+            names = self.items.get(item_id, {}).get("names", [])
+            if any(name.casefold() == item_name_cf for name in names):
+                self.inventory.remove(item_id)
+                room = self.rooms[self.current]
+                room.setdefault("items", []).append(item_id)
+                return True
+        return False
+
+    def describe_inventory(self, messages: Dict[str, str]) -> str:
+        if not self.inventory:
+            return messages["inventory_empty"]
+        item_names = [self.items[i]["names"][0] for i in self.inventory]
+        return messages["inventory_items"].format(items=", ".join(item_names))
