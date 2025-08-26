@@ -18,7 +18,7 @@ def test_language_switch(monkeypatch):
     assert g.reverse_cmds["language"] == "language"
     assert g.reverse_cmds["sprache"] == "language"
     assert outputs[-1] == g.messages["language_set"].format(language="de")
-    assert g.world.items["key"]["names"][0] == "Schlüssel"
+    assert g.world.items["flame_blade"]["names"][0] == "Flammenklinge"
 
 
 def test_language_persistence(monkeypatch):

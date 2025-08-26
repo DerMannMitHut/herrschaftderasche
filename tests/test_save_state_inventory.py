@@ -13,30 +13,34 @@ EN = ROOT_DIR / 'data' / 'en' / 'world.yaml'
 def test_to_state_only_differences():
     w = World.from_files(GENERIC, EN)
     # Unchanged world should only store current position
-    assert w.to_state() == {"current": "hut"}
+    assert w.to_state() == {"current": "ash_village"}
 
-    # Taking the key removes it from hut and puts it into inventory
-    assert w.take("key")
+    # Move to the forest and take the flame blade
+    assert w.move("forest")
+    assert w.take("blade")
     assert w.to_state() == {
-        "current": "hut",
-        "inventory": ["key"],
-        "rooms": {"hut": []},
+        "current": "grey_forest",
+        "inventory": ["flame_blade"],
+        "rooms": {"grey_forest": []},
     }
 
-    # Drop the key in the forest; inventory reverts to base so it's omitted
-    assert w.move("forest")
-    assert w.drop("key")
+    # Drop the blade in the black tower; inventory reverts to base so it's omitted
+    assert w.move("village")
+    assert w.move("tower")
+    assert w.drop("blade")
     assert w.to_state() == {
-        "current": "forest",
-        "rooms": {"hut": [], "forest": ["key"]},
+        "current": "black_tower",
+        "rooms": {"grey_forest": [], "black_tower": ["ashen_crown", "flame_blade"]},
     }
 
 
 def test_load_state_applies_differences(tmp_path):
     w = World.from_files(GENERIC, EN)
-    w.take("key")
     w.move("forest")
-    w.drop("key")
+    w.take("blade")
+    w.move("village")
+    w.move("tower")
+    w.drop("blade")
     save_path = tmp_path / "save.yaml"
     w.save(save_path)
 
@@ -44,12 +48,12 @@ def test_load_state_applies_differences(tmp_path):
     new = World.from_files(GENERIC, EN)
     new.load_state(save_path)
 
-    assert new.current == "forest"
+    assert new.current == "black_tower"
     assert new.inventory == []
-    assert new.rooms["hut"].get("items", []) == []
-    assert new.rooms["forest"].get("items", []) == ["key"]
+    assert new.rooms["grey_forest"].get("items", []) == []
+    assert new.rooms["black_tower"].get("items", []) == ["ashen_crown", "flame_blade"]
     # The saved state should be minimal
     with open(save_path, encoding="utf-8") as fh:
         data = yaml.safe_load(fh)
     assert "inventory" not in data
-    assert data["rooms"] == {"hut": [], "forest": ["key"]}
+    assert data["rooms"] == {"grey_forest": [], "black_tower": ["ashen_crown", "flame_blade"]}

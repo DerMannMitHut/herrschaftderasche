@@ -101,6 +101,18 @@ class World:
                 desc += " " + messages["items_here"].format(items=", ".join(item_names))
             else:  # pragma: no cover - fallback without messages
                 desc += " You see here: " + ", ".join(item_names)
+        exits = room.get("exits", {})
+        if exits:
+            exit_names = []
+            for names in exits.values():
+                if isinstance(names, list):
+                    exit_names.append(names[0])
+                else:  # pragma: no cover - legacy single-string syntax
+                    exit_names.append(names)
+            if messages:
+                desc += " " + messages["exits"].format(exits=", ".join(exit_names))
+            else:  # pragma: no cover - fallback without messages
+                desc += " Exits: " + ", ".join(exit_names)
         return desc
 
     def describe_item(self, item_name: str) -> str | None:

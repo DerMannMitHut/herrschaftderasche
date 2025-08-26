@@ -11,8 +11,9 @@ def test_look_item_describes(monkeypatch):
     outputs: list[str] = []
     monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
     g = game.Game(str(ROOT_DIR / "data" / "en" / "world.yaml"), "en")
-    g.cmd_look("key")
-    assert outputs[-1] == "A small brass key."
+    g.world.move("forest")
+    g.cmd_look("blade")
+    assert outputs[-1] == "A sword forged in the heart of fire. The blade glows faintly in the dark."
 
 
 def test_look_item_not_present(monkeypatch):
@@ -20,6 +21,6 @@ def test_look_item_not_present(monkeypatch):
     monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
     g = game.Game(str(ROOT_DIR / "data" / "en" / "world.yaml"), "en")
     g.world.move("forest")
-    g.cmd_look("key")
+    g.cmd_look("crown")
     assert outputs[-1] == g.messages["item_not_present"]
 
