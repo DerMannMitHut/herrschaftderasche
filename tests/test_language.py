@@ -1,35 +1,7 @@
-import yaml
 from engine import game, io
 
 
-def make_data_dir(tmp_path):
-    (tmp_path / "generic").mkdir()
-    (tmp_path / "en").mkdir()
-    (tmp_path / "de").mkdir()
-    generic = {
-        "items": {"sword": {}},
-        "rooms": {"start": {"items": ["sword"], "exits": []}},
-        "start": "start",
-    }
-    en = {
-        "items": {"sword": {"names": ["Sword"], "description": "A sharp blade."}},
-        "rooms": {"start": {"names": ["Start"], "description": "Start room."}},
-    }
-    de = {
-        "items": {"sword": {"names": ["Schwert"], "description": "Eine scharfe Klinge."}},
-        "rooms": {"start": {"names": ["Start"], "description": "Startraum."}},
-    }
-    with open(tmp_path / "generic" / "world.yaml", "w", encoding="utf-8") as fh:
-        yaml.safe_dump(generic, fh)
-    with open(tmp_path / "en" / "world.yaml", "w", encoding="utf-8") as fh:
-        yaml.safe_dump(en, fh)
-    with open(tmp_path / "de" / "world.yaml", "w", encoding="utf-8") as fh:
-        yaml.safe_dump(de, fh)
-    return tmp_path
-
-
-def test_language_switch(tmp_path, monkeypatch):
-    data_dir = make_data_dir(tmp_path)
+def test_language_switch(data_dir, monkeypatch):
     outputs: list[str] = []
     monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
     g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
@@ -43,8 +15,7 @@ def test_language_switch(tmp_path, monkeypatch):
     assert g.world.items["sword"]["names"][0] == "Schwert"
 
 
-def test_language_persistence(tmp_path, monkeypatch):
-    data_dir = make_data_dir(tmp_path)
+def test_language_persistence(data_dir, monkeypatch):
     outputs: list[str] = []
     monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
     g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
@@ -56,8 +27,7 @@ def test_language_persistence(tmp_path, monkeypatch):
     assert g2.reverse_cmds["language"] == "language"
 
 
-def test_language_command_base_word(tmp_path, monkeypatch):
-    data_dir = make_data_dir(tmp_path)
+def test_language_command_base_word(data_dir, monkeypatch):
     outputs: list[str] = []
     monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
     g = game.Game(str(data_dir / "de" / "world.yaml"), "de")

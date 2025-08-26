@@ -45,11 +45,16 @@ class World:
             cond = ending.get("condition")
             if cond:
                 ending["check"] = _compile_condition(cond)
-        # Remember the initial state so that we can later compute differences.
+        self.item_states: Dict[str, str] = {
+            item_id: item_data.get("state")
+            for item_id, item_data in self.items.items()
+            if item_data.get("state") is not None
+        }
         self._base_rooms: Dict[str, list[str]] = {
             room_id: list(room.get("items", [])) for room_id, room in self.rooms.items()
         }
         self._base_inventory: list[str] = list(self.inventory)
+        self._base_item_states: Dict[str, str] = dict(self.item_states)
 
     @classmethod
     def from_file(cls, path: str | Path) -> "World":
@@ -65,7 +70,15 @@ class World:
             lang = yaml.safe_load(fh)
         items: Dict[str, Any] = base.get("items", {})
         for item_id, item_data in lang.get("items", {}).items():
-            items.setdefault(item_id, {}).update(item_data)
+            item_cfg = items.setdefault(item_id, {})
+            lang_states = item_data.get("states")
+            if lang_states:
+                base_states = item_cfg.setdefault("states", {})
+                for state_id, state_cfg in lang_states.items():
+                    base_states.setdefault(state_id, {}).update(state_cfg)
+            for key, value in item_data.items():
+                if key != "states":
+                    item_cfg[key] = value
         rooms: Dict[str, Any] = {}
         lang_rooms = lang.get("rooms", {})
         for room_id, cfg_room in base.get("rooms", {}).items():
@@ -107,6 +120,12 @@ class World:
                 rooms_diff[room_id] = items
         if rooms_diff:
             state["rooms"] = rooms_diff
+        states_diff: Dict[str, str] = {}
+        for item_id, cur_state in self.item_states.items():
+            if self._base_item_states.get(item_id) != cur_state:
+                states_diff[item_id] = cur_state
+        if states_diff:
+            state["item_states"] = states_diff
         return state
 
     def save(self, path: str | Path) -> None:
@@ -128,6 +147,11 @@ class World:
                 room["items"] = items
             else:
                 room.pop("items", None)
+        item_states = data.get("item_states", {})
+        for item_id, state in item_states.items():
+            if item_id in self.item_states:
+                self.item_states[item_id] = state
+                self.items[item_id]["state"] = state
 
     def describe_current(self, messages: Dict[str, str] | None = None) -> str:
         room = self.rooms[self.current]
@@ -160,11 +184,21 @@ class World:
             item = self.items.get(item_id, {})
             names = item.get("names", [])
             if any(name.casefold() == item_name_cf for name in names):
+                state = self.item_states.get(item_id)
+                if state:
+                    desc = item.get("states", {}).get(state, {}).get("description")
+                    if desc is not None:
+                        return desc
                 return item.get("description")
         for item_id in self.inventory:
             item = self.items.get(item_id, {})
             names = item.get("names", [])
             if any(name.casefold() == item_name_cf for name in names):
+                state = self.item_states.get(item_id)
+                if state:
+                    desc = item.get("states", {}).get(state, {}).get("description")
+                    if desc is not None:
+                        return desc
                 return item.get("description")
         return None
 
@@ -204,6 +238,20 @@ class World:
                 room.setdefault("items", []).append(item_id)
                 return True
         return False
+
+    def set_item_state(self, item_id: str, state: str) -> bool:
+        """Set the state for an item if the state exists.
+
+        Returns True if the state was changed, False otherwise."""
+        item = self.items.get(item_id)
+        if not item:
+            return False
+        states = item.get("states")
+        if not states or state not in states:
+            return False
+        self.item_states[item_id] = state
+        item["state"] = state
+        return True
 
     def describe_inventory(self, messages: Dict[str, str]) -> str:
         if not self.inventory:

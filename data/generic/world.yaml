@@ -1,5 +1,9 @@
 items:
-  ashen_crown: {}
+  ashen_crown:
+    state: broken
+    states:
+      broken: {}
+      repaired: {}
   flame_blade: {}
 
 rooms:
