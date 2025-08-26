@@ -6,40 +6,49 @@ from engine import io, parser, world, llm, i18n
 def run(world_data_path: str, language: str = "en") -> None:
     w = world.World.from_file(world_data_path)
     messages = i18n.load_messages(language)
-    go_cmd = messages["cmd_go"]
-    take_cmd = messages["cmd_take"]
-    drop_cmd = messages["cmd_drop"]
-    inventory_cmd = messages["cmd_inventory"]
-    exit_cmds = {messages["cmd_quit"], messages["cmd_exit"]}
+    command_keys = i18n.load_command_keys()
+    commands = i18n.load_commands(language)
+    reverse_cmds = {}
+    for key in command_keys:
+        val = commands.get(key)
+        if isinstance(val, list):
+            for name in val:
+                reverse_cmds[name] = key
+        else:
+            reverse_cmds[val] = key
     io.output(w.describe_current(messages))
     while True:
-        command = io.get_input()
-        command = llm.interpret(command)
-        command = parser.parse(command)
-        if command in exit_cmds:
+        raw = io.get_input()
+        raw = llm.interpret(raw)
+        raw = parser.parse(raw)
+        cmd_word, *rest = raw.split(" ", 1)
+        cmd_key = reverse_cmds.get(cmd_word)
+        arg = rest[0] if rest else ""
+        if cmd_key == "quit":
             io.output(messages["farewell"])
             break
-        if command == inventory_cmd:
+        if cmd_key == "inventory":
             io.output(w.describe_inventory(messages))
             continue
-        if command.startswith(f"{take_cmd} "):
-            item = command.split(" ", 1)[1]
+        if cmd_key == "take" and arg:
+            item = arg
             if w.take(item):
                 io.output(messages["taken"].format(item=item))
             else:
                 io.output(messages["item_not_present"])
             continue
-        if command.startswith(f"{drop_cmd} "):
-            item = command.split(" ", 1)[1]
-            if item.endswith(" ab"):
-                item = item[:-3].strip()
+        if cmd_key == "drop" and arg:
+            item = arg
+            drop_suffix = commands.get("drop_suffix", "")
+            if drop_suffix and item.endswith(f" {drop_suffix}"):
+                item = item[: -len(drop_suffix) - 1].strip()
             if w.drop(item):
                 io.output(messages["dropped"].format(item=item))
             else:
                 io.output(messages["not_carrying"])
             continue
-        if command.startswith(f"{go_cmd} "):
-            direction = command.split(" ", 1)[1]
+        if cmd_key == "go" and arg:
+            direction = arg
             if w.move(direction):
                 io.output(w.describe_current(messages))
             else:

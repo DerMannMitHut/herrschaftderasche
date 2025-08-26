@@ -1,0 +1,8 @@
+go: "gehe"
+quit:
+  - "beenden"
+take: "nimm"
+drop: "lege"
+drop_suffix: "ab"
+inventory: "inventar"
+

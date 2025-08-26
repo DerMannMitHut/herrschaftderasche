@@ -1,0 +1,9 @@
+go: "go"
+quit:
+  - "quit"
+  - "exit"
+take: "take"
+drop: "drop"
+drop_suffix: ""
+inventory: "inventory"
+
