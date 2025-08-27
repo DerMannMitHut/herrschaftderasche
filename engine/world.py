@@ -46,6 +46,7 @@ class World:
         self.current = data["start"]
         self.inventory: list[str] = data.get("inventory", [])
         self.endings = data.get("endings", {})
+        self.uses: list[Dict[str, Any]] = data.get("uses", [])
         for ending in self.endings.values():
             cond = ending.get("condition")
             if cond:
@@ -109,7 +110,20 @@ class World:
             endings[end_id] = {"condition": cond}
         for end_id, desc in lang.get("endings", {}).items():
             endings.setdefault(end_id, {})["description"] = desc
-        data = {"items": items, "rooms": rooms, "start": base["start"], "endings": endings}
+        uses: list[Dict[str, Any]] = []
+        base_uses = base.get("uses", {})
+        lang_uses = lang.get("uses", {})
+        for use_id, cfg_use in base_uses.items():
+            use = dict(cfg_use)
+            use.update(lang_uses.get(use_id, {}))
+            uses.append(use)
+        data = {
+            "items": items,
+            "rooms": rooms,
+            "start": base["start"],
+            "endings": endings,
+            "uses": uses,
+        }
         return cls(data)
 
     def to_state(self) -> Dict[str, Any]:

@@ -58,6 +58,10 @@ rooms:
       - grey_forest
       - black_tower
 
+uses:
+  repair_crown:
+    success: "The Flame Blade fuses the Ashen Crown back together."
+
 start: ash_village
 
 endings:

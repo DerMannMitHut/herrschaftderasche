@@ -58,6 +58,10 @@ rooms:
       - grey_forest
       - black_tower
 
+uses:
+  repair_crown:
+    success: "Die Flammenklinge verschweißt die Aschenkrone."
+
 start: ash_village
 
 endings:

@@ -21,6 +21,14 @@ def data_dir(tmp_path):
             "room2": {"items": ["gem"], "exits": ["start", "room3"]},
             "room3": {"items": ["sword"], "exits": ["start", "room2"]},
         },
+        "uses": {
+            "cut_gem": {
+                "item": "sword",
+                "target": "gem",
+                "room": "room2",
+                "set_item_state": {"gem": "green"},
+            }
+        },
         "start": "start",
         "endings": {"green_gem": "gem is green"},
     }
@@ -44,6 +52,11 @@ def data_dir(tmp_path):
             "room2": {"names": ["Room 2"], "description": "Room 2."},
             "room3": {"names": ["Room 3"], "description": "Room 3."},
         },
+        "uses": {
+            "cut_gem": {
+                "success": "The gem now gleams green.",
+            }
+        },
         "endings": {"green_gem": "The gem is green."},
     }
 
@@ -65,6 +78,11 @@ def data_dir(tmp_path):
             "start": {"names": ["Raum 1"], "description": "Raum 1."},
             "room2": {"names": ["Raum 2"], "description": "Raum 2."},
             "room3": {"names": ["Raum 3"], "description": "Raum 3."},
+        },
+        "uses": {
+            "cut_gem": {
+                "success": "Das Juwel leuchtet jetzt grün.",
+            }
         },
         "endings": {"green_gem": "Das Juwel ist grün."},
     }

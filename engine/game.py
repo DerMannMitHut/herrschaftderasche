@@ -155,6 +155,43 @@ class Game:
         self.reverse_cmds["language"] = "language"
         io.output(self.messages["language_set"].format(language=language))
 
+    def cmd_use(self, arg: str) -> None:
+        if " on " not in arg:
+            self.cmd_unknown(arg)
+            return
+        item_name, target_name = [part.strip() for part in arg.split(" on ", 1)]
+        item_id = None
+        target_id = None
+        item_name_cf = item_name.casefold()
+        target_name_cf = target_name.casefold()
+        for inv_id in self.world.inventory:
+            names = self.world.items.get(inv_id, {}).get("names", [])
+            if item_id is None and any(name.casefold() == item_name_cf for name in names):
+                item_id = inv_id
+            if target_id is None and any(name.casefold() == target_name_cf for name in names):
+                target_id = inv_id
+        if not item_id or not target_id:
+            io.output(self.messages["use_failure"])
+            self._check_end()
+            return
+        for use in self.world.uses:
+            if use.get("item") == item_id and use.get("target") == target_id:
+                required_room = use.get("room")
+                if required_room and self.world.current != required_room:
+                    continue
+                actions = use.get("set_item_state", {})
+                for obj_id, state in actions.items():
+                    self.world.set_item_state(obj_id, state)
+                message = use.get("success")
+                if message:
+                    io.output(message)
+                else:
+                    io.output(self.messages["use_failure"])
+                self._check_end()
+                return
+        io.output(self.messages["use_failure"])
+        self._check_end()
+
     def cmd_unknown(self, arg: str) -> None:
         io.output(self.messages["unknown_command"])
 
