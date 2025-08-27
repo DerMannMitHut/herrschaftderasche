@@ -62,3 +62,4 @@ start: ash_village
 
 endings:
   crown_returned: "Mit der Aschenkrone kehrst du ins Dorf zurück und erfüllst dein Schicksal."
+  crown_repaired: "Du hast die Krone repariert."
