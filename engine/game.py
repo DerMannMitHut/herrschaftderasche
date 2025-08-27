@@ -243,6 +243,27 @@ class Game:
         self.reverse_cmds["language"] = ("language", "")
         io.output(self.messages["language_set"].format(language=language))
 
+    def cmd_talk(self, arg: str) -> None:
+        if arg:
+            self.cmd_unknown(arg)
+            return
+        for npc_id, npc in self.world.npcs.items():
+            meet = npc.get("meet", {})
+            if meet.get("location") != self.world.current:
+                continue
+            state = self.world.npc_state(npc_id)
+            states = npc.get("states", {})
+            talk_cfg = states.get(state, {})
+            text = talk_cfg.get("talk")
+            if text:
+                io.output(text)
+            else:
+                io.output(self.messages["no_npc"])
+            if state != "helped":
+                self.world.set_npc_state(npc_id, "helped")
+            return
+        io.output(self.messages["no_npc"])
+
     def cmd_use(self, arg: str) -> None:
         if " on " not in arg:
             self.cmd_unknown(arg)

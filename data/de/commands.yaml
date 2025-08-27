@@ -47,4 +47,7 @@ wear:
 use:
   - "benutze"
   - "verwende"
+talk:
+  - "rede"
+  - "sprich"
 

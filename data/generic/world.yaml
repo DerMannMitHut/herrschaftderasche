@@ -41,6 +41,7 @@ npcs:
     states:
       unknown: {}
       met: {}
+      helped: {}
     meet:
       location: forest
 
