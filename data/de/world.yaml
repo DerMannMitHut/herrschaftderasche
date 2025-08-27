@@ -51,6 +51,11 @@ rooms:
       - Dorf
     description: "Ein Dorf, das unter einer Schicht Asche liegt."
 
+npcs:
+  ashram:
+    meet:
+      text: "Ashram tritt aus den Schatten und bietet seine Hilfe an."
+
 uses:
   use_key:
     success: "Der Schlüssel klickt, und die Truhe entriegelt sich."
