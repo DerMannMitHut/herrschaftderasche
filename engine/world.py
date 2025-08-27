@@ -206,6 +206,13 @@ class World:
                     return False
         return True
 
+    def _check_npc_condition(self, cond: Dict[str, Any]) -> bool:
+        npc_id = cond.get("npc")
+        state = cond.get("state")
+        if not npc_id or not state:
+            return False
+        return self.npc_state(npc_id) == state
+
     def check_preconditions(self, pre: Dict[str, Any] | None) -> bool:
         if not pre:
             return True
@@ -214,6 +221,15 @@ class World:
             return False
         item_cond = pre.get("item_condition")
         if item_cond and not self._check_item_condition(item_cond):
+            return False
+        npc_met = pre.get("npc_met")
+        if npc_met and not self._check_npc_condition({"npc": npc_met, "state": "met"}):
+            return False
+        npc_help = pre.get("npc_help")
+        if npc_help and not self._check_npc_condition({"npc": npc_help, "state": "helped"}):
+            return False
+        npc_cond = pre.get("npc_state")
+        if npc_cond and not self._check_npc_condition(npc_cond):
             return False
         return True
 
