@@ -14,18 +14,21 @@ class Game:
         self.save_path = self.data_dir / "save.yaml"
         generic_path = self.data_dir / "generic" / "world.yaml"
 
-        warnings = integrity.check_translations(language, self.data_dir)
-        for msg in warnings:
-            io.output(f"WARNING: {msg}")
-
-        self.world = world.World.from_files(generic_path, world_data_path)
-
-        errors = integrity.validate_world_structure(self.world)
-
         save_data: dict[str, object] = {}
         if self.save_path.exists():
             with open(self.save_path, encoding="utf-8") as fh:
                 save_data = yaml.safe_load(fh) or {}
+        self.language = str(save_data.get("language", language))
+        lang_world_path = self.data_dir / self.language / "world.yaml"
+
+        warnings = integrity.check_translations(self.language, self.data_dir)
+        for msg in warnings:
+            io.output(f"WARNING: {msg}")
+
+        self.world = world.World.from_files(generic_path, lang_world_path)
+
+        errors = integrity.validate_world_structure(self.world)
+        if save_data:
             errors.extend(integrity.validate_save(save_data, self.world))
 
         if errors:
@@ -33,9 +36,7 @@ class Game:
                 io.output(f"ERROR: {msg}")
             raise SystemExit("Integrity check failed")
 
-        self.language = language
         if save_data:
-            self.language = str(save_data.get("language", language))
             self.world.load_state(self.save_path)
             self.save_path.unlink()
 
