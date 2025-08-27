@@ -35,7 +35,7 @@ class Game:
 
         self.language = language
         if save_data:
-            self.language = save_data.get("language", language)
+            self.language = str(save_data.get("language", language))
             self.world.load_state(self.save_path)
             self.save_path.unlink()
 
@@ -54,7 +54,7 @@ class Game:
                         name, suffix = entry, ""
                     self.cmd_patterns.append((name, key, suffix))
                     self.reverse_cmds[name] = (key, suffix)
-            else:
+            elif isinstance(val, str):
                 self.cmd_patterns.append((val, key, ""))
                 self.reverse_cmds[val] = (key, "")
         self.cmd_patterns.sort(key=lambda x: len(x[0]), reverse=True)
@@ -181,6 +181,7 @@ class Game:
         direction = arg
         if self.world.move(direction):
             io.output(self.world.describe_current(self.messages))
+            self._check_npc_event()
         else:
             io.output(self.messages["cannot_move"])
         self._check_end()
@@ -195,7 +196,7 @@ class Game:
                     names.append(first[0])
                 else:
                     names.append(first)
-            else:
+            elif isinstance(val, str):
                 names.append(val)
         io.output(self.messages["help"].format(commands=", ".join(names)))
 
@@ -232,7 +233,7 @@ class Game:
                         name, suffix = entry, ""
                     self.cmd_patterns.append((name, key, suffix))
                     self.reverse_cmds[name] = (key, suffix)
-            else:
+            elif isinstance(val, str):
                 self.cmd_patterns.append((val, key, ""))
                 self.reverse_cmds[val] = (key, "")
         self.cmd_patterns.sort(key=lambda x: len(x[0]), reverse=True)
@@ -282,6 +283,16 @@ class Game:
         if ending:
             io.output(ending)
             self.running = False
+
+    def _check_npc_event(self) -> None:
+        for npc_id, npc in self.world.npcs.items():
+            meet = npc.get("meet", {})
+            loc = meet.get("location")
+            text = meet.get("text")
+            if loc == self.world.current and self.world.npc_state(npc_id) != "met":
+                if text:
+                    io.output(text)
+                self.world.meet_npc(npc_id)
 
 
 def run(world_data_path: str, language: str = "en") -> None:

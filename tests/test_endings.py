@@ -1,5 +1,4 @@
 import yaml
-import pytest
 from engine import game, io
 
 

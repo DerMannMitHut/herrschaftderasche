@@ -21,6 +21,13 @@ def data_dir(tmp_path):
             "room2": {"items": ["gem"], "exits": ["start", "room3"]},
             "room3": {"items": ["sword"], "exits": ["start", "room2"]},
         },
+        "npcs": {
+            "old_man": {
+                "state": "unknown",
+                "states": {"unknown": {}, "met": {}},
+                "meet": {"location": "room2"},
+            }
+        },
         "uses": {
             "cut_gem": {
                 "item": "sword",
@@ -60,6 +67,9 @@ def data_dir(tmp_path):
             "room2": {"names": ["Room 2"], "description": "Room 2."},
             "room3": {"names": ["Room 3"], "description": "Room 3."},
         },
+        "npcs": {
+            "old_man": {"meet": {"text": "The old man greets you."}}
+        },
         "uses": {
             "cut_gem": {
                 "success": "The gem now gleams green.",
@@ -86,6 +96,9 @@ def data_dir(tmp_path):
             "start": {"names": ["Raum 1"], "description": "Raum 1."},
             "room2": {"names": ["Raum 2"], "description": "Raum 2."},
             "room3": {"names": ["Raum 3"], "description": "Raum 3."},
+        },
+        "npcs": {
+            "old_man": {"meet": {"text": "Der alte Mann grüßt dich."}}
         },
         "uses": {
             "cut_gem": {
