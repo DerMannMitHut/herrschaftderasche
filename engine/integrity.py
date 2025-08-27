@@ -142,6 +142,20 @@ def validate_world_structure(w: world.World) -> List[str]:
                 f"Use effect references missing location '{eff_loc}'"
             )
 
+    # NPCs -------------------------------------------------------------------
+    for npc_id, npc in w.npcs.items():
+        meet = npc.get("meet", {})
+        loc = meet.get("location")
+        if loc and loc not in w.rooms:
+            errors.append(
+                f"NPC '{npc_id}' references missing room '{loc}'"
+            )
+        state = npc.get("state")
+        if state and state not in npc.get("states", {}):
+            errors.append(
+                f"NPC '{npc_id}' has undefined state '{state}'"
+            )
+
     # Endings ----------------------------------------------------------------
     for end_id, ending in w.endings.items():
         pre = ending.get("preconditions", {})
@@ -207,6 +221,18 @@ def validate_save(data: Dict[str, Any], w: world.World) -> List[str]:
             if state not in states:
                 errors.append(
                     f"Save references missing state '{state}' for item '{item_id}'"
+                )
+
+    for npc_id, state in data.get("npc_states", {}).items():
+        if npc_id not in w.npcs:
+            errors.append(
+                f"Save references missing NPC '{npc_id}' in npc_states"
+            )
+        else:
+            states = w.npcs.get(npc_id, {}).get("states", {})
+            if state not in states:
+                errors.append(
+                    f"Save references missing state '{state}' for NPC '{npc_id}'"
                 )
 
     return errors

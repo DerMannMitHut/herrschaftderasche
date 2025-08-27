@@ -10,6 +10,7 @@ class World:
     def __init__(self, data: Dict[str, Any]):
         self.rooms = data["rooms"]
         self.items = data.get("items", {})
+        self.npcs = data.get("npcs", {})
         self.current = data["start"]
         self.inventory: list[str] = data.get("inventory", [])
         self.endings = data.get("endings", {})
@@ -19,11 +20,17 @@ class World:
             for item_id, item_data in self.items.items()
             if item_data.get("state") is not None
         }
+        self.npc_states: Dict[str, str] = {
+            npc_id: npc_data.get("state")
+            for npc_id, npc_data in self.npcs.items()
+            if npc_data.get("state") is not None
+        }
         self._base_rooms: Dict[str, list[str]] = {
             room_id: list(room.get("items", [])) for room_id, room in self.rooms.items()
         }
         self._base_inventory: list[str] = list(self.inventory)
         self._base_item_states: Dict[str, str] = dict(self.item_states)
+        self._base_npc_states: Dict[str, str] = dict(self.npc_states)
 
     @classmethod
     def from_file(cls, path: str | Path) -> "World":
@@ -97,12 +104,29 @@ class World:
             use = dict(cfg_use)
             use.update(lang_uses.get(use_id, {}))
             uses.append(use)
+        npcs: Dict[str, Any] = base.get("npcs", {})
+        lang_npcs = lang.get("npcs", {})
+        for npc_id, npc_data in lang_npcs.items():
+            npc_cfg = npcs.setdefault(npc_id, {})
+            lang_states = npc_data.get("states")
+            if lang_states:
+                base_states = npc_cfg.setdefault("states", {})
+                for state_id, state_cfg in lang_states.items():
+                    base_states.setdefault(state_id, {}).update(state_cfg)
+            for key, value in npc_data.items():
+                if key == "states":
+                    continue
+                if isinstance(value, dict):
+                    npc_cfg.setdefault(key, {}).update(value)
+                else:
+                    npc_cfg[key] = value
         data = {
             "items": items,
             "rooms": rooms,
             "start": base["start"],
             "endings": endings,
             "uses": uses,
+            "npcs": npcs,
         }
         return cls(data)
 
@@ -125,6 +149,12 @@ class World:
                 states_diff[item_id] = cur_state
         if states_diff:
             state["item_states"] = states_diff
+        npc_states_diff: Dict[str, str] = {}
+        for npc_id, cur_state in self.npc_states.items():
+            if self._base_npc_states.get(npc_id) != cur_state:
+                npc_states_diff[npc_id] = cur_state
+        if npc_states_diff:
+            state["npc_states"] = npc_states_diff
         return state
 
     def save(self, path: str | Path) -> None:
@@ -151,6 +181,11 @@ class World:
             if item_id in self.item_states:
                 self.item_states[item_id] = state
                 self.items[item_id]["state"] = state
+        npc_states = data.get("npc_states", {})
+        for npc_id, state in npc_states.items():
+            if npc_id in self.npc_states:
+                self.npc_states[npc_id] = state
+                self.npcs[npc_id]["state"] = state
 
     # Condition / effect handling -------------------------------------------------
 
@@ -306,6 +341,22 @@ class World:
         self.item_states[item_id] = state
         item["state"] = state
         return True
+
+    def meet_npc(self, npc_id: str) -> bool:
+        """Mark an NPC as met if a corresponding state exists."""
+        npc = self.npcs.get(npc_id)
+        if not npc:
+            return False
+        states = npc.get("states", {})
+        if "met" not in states:
+            return False
+        self.npc_states[npc_id] = "met"
+        npc["state"] = "met"
+        return True
+
+    def npc_state(self, npc_id: str) -> str | None:
+        """Return the current state of an NPC."""
+        return self.npc_states.get(npc_id)
 
     def describe_inventory(self, messages: Dict[str, str]) -> str:
         if not self.inventory:
