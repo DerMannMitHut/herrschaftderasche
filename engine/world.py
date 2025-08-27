@@ -2,12 +2,14 @@
 
 from pathlib import Path
 from typing import Any, Dict
+import sys
 
 import yaml
 
 
 class World:
-    def __init__(self, data: Dict[str, Any]):
+    def __init__(self, data: Dict[str, Any], debug: bool = False):
+        self._debug_enabled = debug
         self.rooms = data["rooms"]
         self.items = data.get("items", {})
         self.npcs = data.get("npcs", {})
@@ -32,14 +34,20 @@ class World:
         self._base_item_states: Dict[str, str] = dict(self.item_states)
         self._base_npc_states: Dict[str, str] = dict(self.npc_states)
 
-    @classmethod
-    def from_file(cls, path: str | Path) -> "World":
-        with open(path, encoding="utf-8") as fh:
-            data = yaml.safe_load(fh)
-        return cls(data)
+    def debug(self, message: str) -> None:
+        if self._debug_enabled:
+            print(f"-- {message}", file=sys.stderr)
 
     @classmethod
-    def from_files(cls, config_path: str | Path, language_path: str | Path) -> "World":
+    def from_file(cls, path: str | Path, debug: bool = False) -> "World":
+        with open(path, encoding="utf-8") as fh:
+            data = yaml.safe_load(fh)
+        return cls(data, debug=debug)
+
+    @classmethod
+    def from_files(
+        cls, config_path: str | Path, language_path: str | Path, debug: bool = False
+    ) -> "World":
         with open(config_path, encoding="utf-8") as fh:
             base = yaml.safe_load(fh)
         with open(language_path, encoding="utf-8") as fh:
@@ -128,7 +136,7 @@ class World:
             "uses": uses,
             "npcs": npcs,
         }
-        return cls(data)
+        return cls(data, debug=debug)
 
     def to_state(self) -> Dict[str, Any]:
         """Return the minimal state describing differences from the base world."""
@@ -244,14 +252,19 @@ class World:
         if location:
             if item_id in self.inventory:
                 self.inventory.remove(item_id)
-            for room in self.rooms.values():
+                self.debug(f"inventory {self.inventory}")
+            for room_id, room in self.rooms.items():
                 items = room.get("items", [])
                 if item_id in items:
                     items.remove(item_id)
+                    self.debug(f"room {room_id} items {items}")
             if location == "INVENTORY":
                 self.inventory.append(item_id)
+                self.debug(f"inventory {self.inventory}")
             else:
                 self.rooms.setdefault(location, {}).setdefault("items", []).append(item_id)
+                items = self.rooms[location].get("items", [])
+                self.debug(f"room {location} items {items}")
 
     def apply_effect(self, effect: Dict[str, Any]) -> None:
         item_cond = effect.get("item_condition")
@@ -318,6 +331,7 @@ class World:
                 name_list = [names]
             if any(name.casefold() == exit_name_cf for name in name_list):
                 self.current = target
+                self.debug(f"location {self.current}")
                 return True
         return False
 
@@ -334,6 +348,8 @@ class World:
             if any(name.casefold() == item_name_cf for name in names):
                 items.remove(item_id)
                 self.inventory.append(item_id)
+                self.debug(f"room {self.current} items {items}")
+                self.debug(f"inventory {self.inventory}")
                 if names:
                     return names[0]
                 return item_name
@@ -347,6 +363,8 @@ class World:
                 self.inventory.remove(item_id)
                 room = self.rooms[self.current]
                 room.setdefault("items", []).append(item_id)
+                self.debug(f"inventory {self.inventory}")
+                self.debug(f"room {self.current} items {room['items']}")
                 return True
         return False
 
@@ -362,6 +380,7 @@ class World:
             return False
         self.item_states[item_id] = state
         item["state"] = state
+        self.debug(f"item {item_id} state {state}")
         return True
 
     def set_npc_state(self, npc_id: str, state: str) -> bool:
@@ -376,6 +395,7 @@ class World:
             return False
         self.npc_states[npc_id] = state
         npc["state"] = state
+        self.debug(f"npc {npc_id} state {state}")
         return True
 
     def meet_npc(self, npc_id: str) -> bool:
@@ -388,6 +408,7 @@ class World:
             return False
         self.npc_states[npc_id] = "met"
         npc["state"] = "met"
+        self.debug(f"npc {npc_id} state met")
         return True
 
     def npc_state(self, npc_id: str) -> str | None:
