@@ -92,6 +92,40 @@ class Game:
             io.output(self.messages["not_carrying"])
         self._check_end()
 
+    def cmd_destroy(self, arg: str) -> None:
+        if not arg:
+            self.cmd_unknown(arg)
+            return
+        item = arg
+        item_cf = item.casefold()
+        for item_id in list(self.world.inventory):
+            names = self.world.items.get(item_id, {}).get("names", [])
+            if any(name.casefold() == item_cf for name in names):
+                self.world.inventory.remove(item_id)
+                self.world.set_item_state(item_id, "destroyed")
+                io.output(self.messages["destroyed"].format(item=item))
+                break
+        else:
+            io.output(self.messages["not_carrying"])
+        self._check_end()
+
+    def cmd_wear(self, arg: str) -> None:
+        if not arg:
+            self.cmd_unknown(arg)
+            return
+        item = arg
+        item_cf = item.casefold()
+        for item_id in list(self.world.inventory):
+            names = self.world.items.get(item_id, {}).get("names", [])
+            if any(name.casefold() == item_cf for name in names):
+                self.world.inventory.remove(item_id)
+                self.world.set_item_state(item_id, "worn")
+                io.output(self.messages["worn"].format(item=item))
+                break
+        else:
+            io.output(self.messages["not_carrying"])
+        self._check_end()
+
     def cmd_look(self, arg: str) -> None:
         if arg:
             desc = self.world.describe_item(arg)

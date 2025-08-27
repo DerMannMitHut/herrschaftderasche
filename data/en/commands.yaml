@@ -11,4 +11,6 @@ look:
   - "look around"
 help: "help"
 language: "language"
+destroy: "destroy"
+wear: "wear"
 

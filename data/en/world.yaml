@@ -9,6 +9,10 @@ items:
         description: "A broken crown, covered in gray ash. It seems to radiate an uncanny heat."
       repaired:
         description: "A gleaming, fully repaired crown, free of ash. A gentle warmth emanates from it."
+      destroyed:
+        description: "Shattered pieces of the crown lie here, its power lost."
+      worn:
+        description: "The crown rests upon your head, its warmth now yours."
   flame_blade:
     names:
       - Flame Blade
@@ -63,3 +67,5 @@ start: ash_village
 endings:
   crown_returned: "With the Ashen Crown reclaimed, you return to the village as its destined ruler."
   crown_repaired: "You repaired the crown."
+  crown_destroyed: "The Ashen Crown crumbles to ash in your hands."
+  crown_worn: "The Ashen Crown rests upon your brow."

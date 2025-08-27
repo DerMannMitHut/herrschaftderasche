@@ -4,6 +4,8 @@ items:
     states:
       broken: {}
       repaired: {}
+      destroyed: {}
+      worn: {}
   flame_blade: {}
 
 rooms:
@@ -35,3 +37,5 @@ start: ash_village
 endings:
   crown_returned: "inventory has ashen_crown AND at ash_village"
   crown_repaired: "ashen_crown is repaired"
+  crown_destroyed: "ashen_crown is destroyed"
+  crown_worn: "ashen_crown is worn"
