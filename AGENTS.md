@@ -25,5 +25,8 @@ Die Story soll aus der Sicht einer Person (dem Spieler) passieren.
 ## Richtlinien
 - Programmiersprache: Python 3.12
 - Styleguide: PEP8 + ruff + pyright
+- Wenn Tests durchgeführt werden, sollte immer auch ein Report der Codeabdeckung gemacht werden  
 - Antworten in Deutsch, Code-Kommentare, Variablen-Namen, Konstanten, etc. in Englisch
 - Die Engine selber soll frei von plotabhängigem Code sein; der gesamte Plot muss über die generic/world.yaml beshrieben werden. 
+- Anstatt anonymer dicts für strukturierte Rückgabe von Daten, verwende @dataclass classes
+  Beispiel: statt `return {'a': 1, 'b': 'bbb'}` mache `return Ab(a=1, b='bbb')` mit entsprechender @dataclass `class Ab`
