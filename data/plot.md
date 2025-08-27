@@ -11,14 +11,17 @@ Der Spieler ist auf der Suche nach einem geheimnisvollen Artefakt (die **Aschenk
 * **Hütte** (Start)
 
   * Der Spieler wacht hier auf, findet erste Hinweise.
+  
 * **Wald**
 
   * Ein mysteriöser NSC (z. B. **Der Gelehrte Ashram**) trifft den Spieler.
   * Ashram gibt Ratschläge, erklärt Dinge, kennt die Legenden.
+  
 * **Ruinenstätte**
 
   * Enthält ein verschlossenes Tor oder eine versiegelte Truhe.
-  * Nur mit Hilfe von Ashram (der ein Ritual oder Wissen einsetzt) kann man hinein.
+  * Nur mit Hilfe von Ashram findet man den Weg.
+  
 * **Aschendorf**
 
   * Ein verlassener Ort, wo die Krone zurückgebracht werden muss.
@@ -38,15 +41,15 @@ Der Spieler ist auf der Suche nach einem geheimnisvollen Artefakt (die **Aschenk
 * **Ashram, der Gelehrte**
 
   * Alter Mann, kennt Mythen und Rätsel.
-  * Hilft dem Spieler beim Deuten der Karte und beim Öffnen der Ruine.
+  * Hilft dem Spieler beim Deuten der Karte -> dadurch erst gibt es einen Weg vom Wald zu den Ruinen
   * Spricht in Andeutungen, aber freundlich.
-  * Verschwindet am Ende (möglicherweise nur eine Projektion/Geist?).
+  * Verschwindet am Ende geheimnisvoll.
 
 ---
 
 ## Ablauf
 
 1. **Hütte**: Spieler findet den Schlüssel.
-2. **Wald**: Begegnung mit Ashram → er deutet die Karte.
-3. **Ruinenstätte**: Mit Ashrams Hilfe öffnet sich das Tor/Kiste → Aschenkrone.
+2. **Wald**: Begegnung mit Ashram → er deutet die Karte und der Zugang zu den Ruinen erscheint
+3. **Ruinenstätte**: Die Truhe kann geöffnet werden → Die Krone erscheint.
 4. **Aschendorf**: Spieler bringt Krone zurück → Ende.
