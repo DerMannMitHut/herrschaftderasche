@@ -37,15 +37,35 @@ rooms:
 uses:
   repair_crown:
     item: flame_blade
-    target: ashen_crown
-    room: glow_chasm
-    set_item_state:
-      ashen_crown: repaired
+    target_item: ashen_crown
+    preconditions:
+      is_location: glow_chasm
+    effect:
+      item_condition:
+        item: ashen_crown
+        state: repaired
 
 start: ash_village
 
 endings:
-  crown_returned: "inventory has ashen_crown AND at ash_village"
-  crown_repaired: "ashen_crown is repaired"
-  crown_destroyed: "ashen_crown is destroyed"
-  crown_worn: "ashen_crown is worn"
+  crown_returned:
+    preconditions:
+      is_location: ash_village
+      item_condition:
+        item: ashen_crown
+        location: INVENTORY
+  crown_repaired:
+    preconditions:
+      item_condition:
+        item: ashen_crown
+        state: repaired
+  crown_destroyed:
+    preconditions:
+      item_condition:
+        item: ashen_crown
+        state: destroyed
+  crown_worn:
+    preconditions:
+      item_condition:
+        item: ashen_crown
+        state: worn

@@ -14,7 +14,12 @@ def test_end_condition_inventory_and_location(tmp_path, monkeypatch):
         },
         "start": "room1",
         "endings": {
-            "win": "inventory has crown AND room1 lacks crown AND at room2"
+            "win": {
+                "preconditions": {
+                    "is_location": "room2",
+                    "item_condition": {"item": "crown", "location": "INVENTORY"},
+                }
+            }
         },
     }
     en = {
@@ -47,7 +52,14 @@ def test_end_condition_inventory_lacks(tmp_path, monkeypatch):
             "room2": {"items": [], "exits": []},
         },
         "start": "room1",
-        "endings": {"fail": "inventory lacks crown AND at room2"},
+        "endings": {
+            "fail": {
+                "preconditions": {
+                    "is_location": "room2",
+                    "item_condition": {"item": "crown", "location": "room1"},
+                }
+            }
+        },
     }
     en = {
         "items": {"crown": {"names": ["Crown"], "description": ""}},
@@ -79,7 +91,12 @@ def test_end_condition_or_room_has(tmp_path, monkeypatch):
         },
         "start": "room1",
         "endings": {
-            "done": "inventory has sword OR room2 has sword AND at room2"
+            "done": {
+                "preconditions": {
+                    "is_location": "room2",
+                    "item_condition": {"item": "sword", "location": "room2"},
+                }
+            }
         },
     }
     en = {
