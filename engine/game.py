@@ -24,15 +24,23 @@ class Game:
         self.messages = i18n.load_messages(self.language)
         self.commands = i18n.load_commands(self.language)
         self.command_keys = i18n.load_command_keys()
-        self.reverse_cmds: dict[str, str] = {}
+        self.cmd_patterns: list[tuple[str, str, str]] = []
+        self.reverse_cmds: dict[str, tuple[str, str]] = {}
         for key in self.command_keys:
             val = self.commands.get(key)
             if isinstance(val, list):
-                for name in val:
-                    self.reverse_cmds[name] = key
+                for entry in val:
+                    if isinstance(entry, list):
+                        name, suffix = entry
+                    else:
+                        name, suffix = entry, ""
+                    self.cmd_patterns.append((name, key, suffix))
+                    self.reverse_cmds[name] = (key, suffix)
             else:
-                self.reverse_cmds[val] = key
-        self.reverse_cmds["language"] = "language"
+                self.cmd_patterns.append((val, key, ""))
+                self.reverse_cmds[val] = (key, "")
+        self.cmd_patterns.sort(key=lambda x: len(x[0]), reverse=True)
+        self.reverse_cmds["language"] = ("language", "")
         self.running = True
 
     def run(self) -> None:
@@ -43,11 +51,15 @@ class Game:
                 raw = io.get_input()
                 raw = llm.interpret(raw)
                 raw = parser.parse(raw)
-                cmd_word, *rest = raw.split(" ", 1)
-                cmd_key = self.reverse_cmds.get(cmd_word)
-                arg = rest[0] if rest else ""
-                handler = getattr(self, f"cmd_{cmd_key}", self.cmd_unknown)
-                handler(arg)
+                for name, cmd_key, suffix in self.cmd_patterns:
+                    if raw == name or raw.startswith(name + " "):
+                        arg = raw[len(name):].strip()
+                        arg = self._strip_suffix(arg, suffix)
+                        handler = getattr(self, f"cmd_{cmd_key}", self.cmd_unknown)
+                        handler(arg)
+                        break
+                else:
+                    self.cmd_unknown(raw)
         except (EOFError, KeyboardInterrupt):
             io.output(self.messages["farewell"])
         finally:
@@ -58,6 +70,11 @@ class Game:
         data["language"] = self.language
         with open(self.save_path, "w", encoding="utf-8") as fh:
             yaml.safe_dump(data, fh)
+
+    def _strip_suffix(self, arg: str, suffix: str) -> str:
+        if suffix and arg.endswith(f" {suffix}"):
+            return arg[: -len(suffix) - 1].strip()
+        return arg
 
     def cmd_quit(self, arg: str) -> None:
         self._save_state()
@@ -83,9 +100,6 @@ class Game:
             self.cmd_unknown(arg)
             return
         item = arg
-        drop_suffix = self.commands.get("drop_suffix", "")
-        if drop_suffix and item.endswith(f" {drop_suffix}"):
-            item = item[: -len(drop_suffix) - 1].strip()
         if self.world.drop(item):
             io.output(self.messages["dropped"].format(item=item))
         else:
@@ -128,13 +142,19 @@ class Game:
 
     def cmd_look(self, arg: str) -> None:
         if arg:
-            desc = self.world.describe_item(arg)
-            if desc:
-                io.output(desc)
-            else:
-                io.output(self.messages["item_not_present"])
+            self.cmd_unknown(arg)
+            return
+        io.output(self.world.describe_current(self.messages))
+
+    def cmd_examine(self, arg: str) -> None:
+        if not arg:
+            self.cmd_unknown(arg)
+            return
+        desc = self.world.describe_item(arg)
+        if desc:
+            io.output(desc)
         else:
-            io.output(self.world.describe_current(self.messages))
+            io.output(self.messages["item_not_present"])
 
     def cmd_go(self, arg: str) -> None:
         if not arg:
@@ -152,7 +172,11 @@ class Game:
         for key in self.command_keys:
             val = self.commands.get(key)
             if isinstance(val, list):
-                names.append(val[0])
+                first = val[0]
+                if isinstance(first, list):
+                    names.append(first[0])
+                else:
+                    names.append(first)
             else:
                 names.append(val)
         io.output(self.messages["help"].format(commands=", ".join(names)))
@@ -178,15 +202,23 @@ class Game:
         self.language = language
         self.messages = messages
         self.commands = commands
+        self.cmd_patterns = []
         self.reverse_cmds = {}
         for key in self.command_keys:
             val = self.commands.get(key)
             if isinstance(val, list):
-                for name in val:
-                    self.reverse_cmds[name] = key
+                for entry in val:
+                    if isinstance(entry, list):
+                        name, suffix = entry
+                    else:
+                        name, suffix = entry, ""
+                    self.cmd_patterns.append((name, key, suffix))
+                    self.reverse_cmds[name] = (key, suffix)
             else:
-                self.reverse_cmds[val] = key
-        self.reverse_cmds["language"] = "language"
+                self.cmd_patterns.append((val, key, ""))
+                self.reverse_cmds[val] = (key, "")
+        self.cmd_patterns.sort(key=lambda x: len(x[0]), reverse=True)
+        self.reverse_cmds["language"] = ("language", "")
         io.output(self.messages["language_set"].format(language=language))
 
     def cmd_use(self, arg: str) -> None:

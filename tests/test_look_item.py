@@ -6,7 +6,7 @@ def test_look_item_describes(data_dir, monkeypatch):
     monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
     g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
     assert g.world.move("Room 2")
-    g.cmd_look("gem")
+    g.cmd_examine("gem")
     assert outputs[-1] == "A red gem."
 
 
@@ -15,5 +15,5 @@ def test_look_item_not_present(data_dir, monkeypatch):
     monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
     g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
     assert g.world.move("Room 2")
-    g.cmd_look("sword")
+    g.cmd_examine("sword")
     assert outputs[-1] == g.messages["item_not_present"]

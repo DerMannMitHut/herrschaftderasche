@@ -1,17 +1,50 @@
-go: "go"
+go:
+  - "go"
+  - "move"
+  - "walk"
 quit:
   - "quit"
   - "exit"
-take: "take"
-drop: "drop"
-drop_suffix: ""
-inventory: "inventory"
+  - "leave"
+take:
+  - "take"
+  - "grab"
+  - "pick up"
+  - ["pick", "up"]
+drop:
+  - "drop"
+  - "discard"
+  - "leave"
+  - "put down"
+  - ["put", "down"]
+inventory:
+  - "inventory"
+  - "inv"
 look:
   - "look"
   - "look around"
-help: "help"
-language: "language"
-destroy: "destroy"
-wear: "wear"
-use: "use"
+  - "l"
+  - "scan"
+examine:
+  - "examine"
+  - "look at"
+  - "inspect"
+  - "check"
+help:
+  - "help"
+  - "h"
+language:
+  - "language"
+  - "lang"
+destroy:
+  - "destroy"
+  - "break"
+wear:
+  - "wear"
+  - "equip"
+  - "put on"
+  - ["put", "on"]
+use:
+  - "use"
+  - "apply"
 
