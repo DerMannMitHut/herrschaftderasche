@@ -8,11 +8,12 @@ from engine import io, parser, world, llm, i18n, integrity
 
 
 class Game:
-    def __init__(self, world_data_path: str, language: str) -> None:
+    def __init__(self, world_data_path: str, language: str, debug: bool = False) -> None:
         data_path = Path(world_data_path)
         self.data_dir = data_path.parent.parent
         self.save_path = self.data_dir / "save.yaml"
         generic_path = self.data_dir / "generic" / "world.yaml"
+        self.debug = debug
 
         save_data: dict[str, object] = {}
         if self.save_path.exists():
@@ -25,7 +26,7 @@ class Game:
         for msg in warnings:
             io.output(f"WARNING: {msg}")
 
-        self.world = world.World.from_files(generic_path, lang_world_path)
+        self.world = world.World.from_files(generic_path, lang_world_path, debug=debug)
 
         errors = integrity.validate_world_structure(self.world)
         if save_data:
@@ -137,6 +138,7 @@ class Game:
             names = self.world.items.get(item_id, {}).get("names", [])
             if any(name.casefold() == item_cf for name in names):
                 self.world.inventory.remove(item_id)
+                self.world.debug(f"inventory {self.world.inventory}")
                 self.world.set_item_state(item_id, "destroyed")
                 io.output(self.messages["destroyed"].format(item=item))
                 break
@@ -154,6 +156,7 @@ class Game:
             names = self.world.items.get(item_id, {}).get("names", [])
             if any(name.casefold() == item_cf for name in names):
                 self.world.inventory.remove(item_id)
+                self.world.debug(f"inventory {self.world.inventory}")
                 self.world.set_item_state(item_id, "worn")
                 io.output(self.messages["worn"].format(item=item))
                 break
@@ -213,7 +216,9 @@ class Game:
             commands = i18n.load_commands(language)
             world_path = self.data_dir / language / "world.yaml"
             generic_path = self.data_dir / "generic" / "world.yaml"
-            new_world = world.World.from_files(generic_path, world_path)
+            new_world = world.World.from_files(
+                generic_path, world_path, debug=self.debug
+            )
         except FileNotFoundError:
             io.output(self.messages.get("language_unknown", "Unknown language"))
             return
@@ -319,5 +324,5 @@ class Game:
                 self.world.meet_npc(npc_id)
 
 
-def run(world_data_path: str, language: str = "en") -> None:
-    Game(world_data_path, language).run()
+def run(world_data_path: str, language: str = "en", debug: bool = False) -> None:
+    Game(world_data_path, language, debug=debug).run()
