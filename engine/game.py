@@ -209,13 +209,11 @@ class Game:
             self._check_end()
             return
         for use in self.world.uses:
-            if use.get("item") == item_id and use.get("target") == target_id:
-                required_room = use.get("room")
-                if required_room and self.world.current != required_room:
+            if use.get("item") == item_id and use.get("target_item") == target_id:
+                if not self.world.check_preconditions(use.get("preconditions")):
                     continue
-                actions = use.get("set_item_state", {})
-                for obj_id, state in actions.items():
-                    self.world.set_item_state(obj_id, state)
+                effect = use.get("effect", {})
+                self.world.apply_effect(effect)
                 message = use.get("success")
                 if message:
                     io.output(message)

@@ -1,42 +1,9 @@
 """World representation loaded from data files."""
 
 from pathlib import Path
-from typing import Any, Dict, Callable
+from typing import Any, Dict
 
 import yaml
-import re
-
-
-def _compile_condition(expr: str) -> Callable[["World"], bool]:
-    expr_cf = expr.casefold()
-    expr_cf = re.sub(r"\band\b", " and ", expr_cf)
-    expr_cf = re.sub(r"\bor\b", " or ", expr_cf)
-    expr_cf = re.sub(r"at ([a-z0-9_]+)", r'(self.current == "\1")', expr_cf)
-    expr_cf = re.sub(r"inventory has ([a-z0-9_]+)", r'("\1" in self.inventory)', expr_cf)
-    expr_cf = re.sub(
-        r"inventory lacks ([a-z0-9_]+)", r'("\1" not in self.inventory)', expr_cf
-    )
-    expr_cf = re.sub(
-        r"([a-z0-9_]+) has ([a-z0-9_]+)",
-        r'("\2" in self.rooms.get("\1", {}).get("items", []))',
-        expr_cf,
-    )
-    expr_cf = re.sub(
-        r"([a-z0-9_]+) lacks ([a-z0-9_]+)",
-        r'("\2" not in self.rooms.get("\1", {}).get("items", []))',
-        expr_cf,
-    )
-    expr_cf = re.sub(
-        r"([a-z0-9_]+) is ([a-z0-9_]+)",
-        r'(self.item_states.get("\1") == "\2")',
-        expr_cf,
-    )
-    code = compile(expr_cf, "<condition>", "eval")
-
-    def func(world: "World") -> bool:
-        return bool(eval(code, {}, {"self": world}))
-
-    return func
 
 
 class World:
@@ -47,10 +14,6 @@ class World:
         self.inventory: list[str] = data.get("inventory", [])
         self.endings = data.get("endings", {})
         self.uses: list[Dict[str, Any]] = data.get("uses", [])
-        for ending in self.endings.values():
-            cond = ending.get("condition")
-            if cond:
-                ending["check"] = _compile_condition(cond)
         self.item_states: Dict[str, str] = {
             item_id: item_data.get("state")
             for item_id, item_data in self.items.items()
@@ -106,10 +69,16 @@ class World:
                 room["description"] = desc
             rooms[room_id] = room
         endings: Dict[str, Any] = {}
-        for end_id, cond in base.get("endings", {}).items():
-            endings[end_id] = {"condition": cond}
-        for end_id, desc in lang.get("endings", {}).items():
-            endings.setdefault(end_id, {})["description"] = desc
+        base_endings = base.get("endings", {})
+        lang_endings = lang.get("endings", {})
+        for end_id, cfg_end in base_endings.items():
+            ending = dict(cfg_end)
+            lang_cfg = lang_endings.get(end_id)
+            if isinstance(lang_cfg, dict):
+                ending.update(lang_cfg)
+            elif lang_cfg is not None:
+                ending["description"] = lang_cfg
+            endings[end_id] = ending
         uses: list[Dict[str, Any]] = []
         base_uses = base.get("uses", {})
         lang_uses = lang.get("uses", {})
@@ -171,6 +140,61 @@ class World:
             if item_id in self.item_states:
                 self.item_states[item_id] = state
                 self.items[item_id]["state"] = state
+
+    # Condition / effect handling -------------------------------------------------
+
+    def _check_item_condition(self, cond: Dict[str, Any]) -> bool:
+        item_id = cond.get("item")
+        if not item_id:
+            return False
+        state = cond.get("state")
+        if state and self.item_states.get(item_id) != state:
+            return False
+        location = cond.get("location")
+        if location:
+            if location == "INVENTORY":
+                if item_id not in self.inventory:
+                    return False
+            else:
+                if item_id not in self.rooms.get(location, {}).get("items", []):
+                    return False
+        return True
+
+    def check_preconditions(self, pre: Dict[str, Any] | None) -> bool:
+        if not pre:
+            return True
+        loc = pre.get("is_location")
+        if loc and self.current != loc:
+            return False
+        item_cond = pre.get("item_condition")
+        if item_cond and not self._check_item_condition(item_cond):
+            return False
+        return True
+
+    def apply_item_condition(self, cond: Dict[str, Any]) -> None:
+        item_id = cond.get("item")
+        if not item_id:
+            return
+        state = cond.get("state")
+        if state:
+            self.set_item_state(item_id, state)
+        location = cond.get("location")
+        if location:
+            if item_id in self.inventory:
+                self.inventory.remove(item_id)
+            for room in self.rooms.values():
+                items = room.get("items", [])
+                if item_id in items:
+                    items.remove(item_id)
+            if location == "INVENTORY":
+                self.inventory.append(item_id)
+            else:
+                self.rooms.setdefault(location, {}).setdefault("items", []).append(item_id)
+
+    def apply_effect(self, effect: Dict[str, Any]) -> None:
+        item_cond = effect.get("item_condition")
+        if item_cond:
+            self.apply_item_condition(item_cond)
 
     def describe_current(self, messages: Dict[str, str] | None = None) -> str:
         room = self.rooms[self.current]
@@ -280,7 +304,7 @@ class World:
 
     def check_endings(self) -> str | None:
         for ending in self.endings.values():
-            check = ending.get("check")
-            if check and check(self):
+            pre = ending.get("preconditions")
+            if self.check_preconditions(pre):
                 return ending.get("description")
         return None

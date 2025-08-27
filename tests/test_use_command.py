@@ -14,7 +14,7 @@ def test_use_success(data_dir, monkeypatch):
     success_msg = next(
         u["success"]
         for u in g.world.uses
-        if u.get("item") == "sword" and u.get("target") == "gem"
+        if u.get("item") == "sword" and u.get("target_item") == "gem"
     )
     assert outputs[-2:] == [success_msg, "The gem is green."]
 

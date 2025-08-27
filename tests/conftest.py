@@ -24,13 +24,21 @@ def data_dir(tmp_path):
         "uses": {
             "cut_gem": {
                 "item": "sword",
-                "target": "gem",
-                "room": "room2",
-                "set_item_state": {"gem": "green"},
+                "target_item": "gem",
+                "preconditions": {"is_location": "room2"},
+                "effect": {
+                    "item_condition": {"item": "gem", "state": "green"}
+                },
             }
         },
         "start": "start",
-        "endings": {"green_gem": "gem is green"},
+        "endings": {
+            "green_gem": {
+                "preconditions": {
+                    "item_condition": {"item": "gem", "state": "green"}
+                }
+            }
+        },
     }
 
     en = {
