@@ -1,51 +1,32 @@
 items:
-  ashen_crown:
-    state: broken
-    states:
-      broken: {}
-      repaired: {}
-      destroyed: {}
-      worn: {}
-  flame_blade: {}
+  small_key: {}
+  map_fragment: {}
+  ashen_crown: {}
 
 rooms:
-  ash_village:
-    items: []
-    exits:
-      - grey_forest
-      - black_tower
-  grey_forest:
+  hut:
     items:
-      - flame_blade
+      - map_fragment
     exits:
+      - forest
+  forest:
+    items:
+      - small_key
+    exits:
+      - hut
+      - ruins
       - ash_village
-      - black_tower
-      - glow_chasm
-  black_tower:
+  ruins:
     items:
       - ashen_crown
     exits:
-      - ash_village
-      - grey_forest
-      - glow_chasm
-  glow_chasm:
+      - forest
+  ash_village:
     items: []
     exits:
-      - grey_forest
-      - black_tower
+      - forest
 
-uses:
-  repair_crown:
-    item: flame_blade
-    target_item: ashen_crown
-    preconditions:
-      is_location: glow_chasm
-    effect:
-      item_condition:
-        item: ashen_crown
-        state: repaired
-
-start: ash_village
+start: hut
 
 endings:
   crown_returned:
@@ -54,18 +35,3 @@ endings:
       item_condition:
         item: ashen_crown
         location: INVENTORY
-  crown_repaired:
-    preconditions:
-      item_condition:
-        item: ashen_crown
-        state: repaired
-  crown_destroyed:
-    preconditions:
-      item_condition:
-        item: ashen_crown
-        state: destroyed
-  crown_worn:
-    preconditions:
-      item_condition:
-        item: ashen_crown
-        state: worn
