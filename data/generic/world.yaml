@@ -15,12 +15,12 @@ items:
 rooms:
   hut:
     items:
-      - map_fragment
+      - small_key
     exits:
       - forest
   forest:
     items:
-      - small_key
+      - map_fragment
     exits:
       - hut
       - ruins

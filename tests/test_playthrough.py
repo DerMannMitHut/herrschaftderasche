@@ -24,9 +24,9 @@ def test_game_reaches_ending(data_dir, monkeypatch):
     g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
 
     commands = [
-        "take Map Fragment",
-        "go Forest",
         "take Small Key",
+        "go Forest",
+        "take Map Fragment",
         "go Ruins",
         "take Locked Chest",
         "use Small Key on Locked Chest",
