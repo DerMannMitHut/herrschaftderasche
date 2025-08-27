@@ -51,6 +51,11 @@ rooms:
       - Village
     description: "A village blanketed in ash."
 
+npcs:
+  ashram:
+    meet:
+      text: "Ashram steps from the shadows and offers his help."
+
 uses:
   use_key:
     success: "The key turns with a click and the chest unlocks."

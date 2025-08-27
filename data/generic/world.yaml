@@ -35,6 +35,15 @@ rooms:
     exits:
       - forest
 
+npcs:
+  ashram:
+    state: unknown
+    states:
+      unknown: {}
+      met: {}
+    meet:
+      location: forest
+
 uses:
   use_key:
     item: small_key
