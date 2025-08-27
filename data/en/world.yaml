@@ -1,77 +1,63 @@
 items:
+  small_key:
+    names:
+      - Small Key
+      - Key
+    description: "A small brass key, slightly tarnished."
+  map_fragment:
+    names:
+      - Map Fragment
+      - Fragment
+      - Map
+    states:
+      unreadable:
+        description: "A torn fragment of a map with smudged markings."
+      readable:
+        description: "The fragment reveals a route from the hut to the ruins."
   ashen_crown:
     names:
       - Ashen Crown
       - Crown
-      - Crown of Ash
-    states:
-      broken:
-        description: "A broken crown, covered in gray ash. It seems to radiate an uncanny heat."
-      repaired:
-        description: "A gleaming, fully repaired crown, free of ash. A gentle warmth emanates from it."
-      destroyed:
-        description: "Shattered pieces of the crown lie here, its power lost."
-      worn:
-        description: "The crown rests upon your head, its warmth now yours."
-  flame_blade:
+    description: "A crown darkened by ash."
+  locked_chest:
     names:
-      - Flame Blade
-      - Sword
-      - Blade
-    description: "A sword forged in the heart of fire. The blade glows faintly in the dark."
+      - Locked Chest
+      - Chest
+    states:
+      closed:
+        description: "A sturdy chest secured by a simple lock."
+      open:
+        description: "The chest stands open, its contents revealed."
 
 rooms:
+  hut:
+    names:
+      - Hut
+      - Cabin
+    description: "A modest hut with a creaking roof."
+  forest:
+    names:
+      - Forest
+      - Woods
+    description: "A sparse forest, its trees coated in ash."
+  ruins:
+    names:
+      - Ruins
+      - Ruined Site
+    description: "Crumbling stones hint at forgotten times."
   ash_village:
     names:
       - Ash Village
       - Village
-      - Settlement
-    description: "A small village at the edge of the ash wastes. Most huts lie in ruins, only a few people remain. The villagers whisper of the Flame Blade lost in the Grey Forest and of the Black Tower where a broken crown awaits."
-    exits:
-      - grey_forest
-      - black_tower
-  grey_forest:
-    names:
-      - Grey Forest
-      - Forest
-      - Woods
-    description: "Charred trees rise like blackened fingers into the sky. Beneath the ash, tender green sprouts push through. Amid the gloom a fiery glint hints at the Flame Blade, and beyond the trunks the Black Tower cuts the horizon."
-    items:
-      - flame_blade
-    exits:
-      - ash_village
-      - black_tower
-      - glow_chasm
-  black_tower:
-    names:
-      - Black Tower
-      - Tower
-      - Ruined Tower
-    description: "A tower of dark stone, half buried in ash. It is said the Ashen Crown lies hidden here, shattered and cold. An ancient engraving points toward the Glow Chasm whose heat might restore it."
-    items:
-      - ashen_crown
-    exits:
-      - ash_village
-      - grey_forest
-      - glow_chasm
-  glow_chasm:
-    names:
-      - Glow Chasm
-      - Chasm
-      - Fissure
-    description: "A deep rift in the ground, glowing lava flowing within. The heat makes it hard to breathe here. The molten light could fuse the crown once more—will you return it to the village or keep its power?"
-    exits:
-      - grey_forest
-      - black_tower
+    description: "A village blanketed in ash."
 
 uses:
-  repair_crown:
-    success: "The Flame Blade fuses the Ashen Crown back together."
-
-start: ash_village
+  use_key:
+    success: "The key turns with a click and the chest unlocks."
+  interpret_map:
+    success: "Ashram helps you decipher the faded map."
+  open_ruins:
+    success: "With Ashram's aid the ruins reveal a hidden chamber."
 
 endings:
   crown_returned: "With the Ashen Crown reclaimed, you return to the village as its destined ruler."
-  crown_repaired: "You repaired the crown."
-  crown_destroyed: "The Ashen Crown crumbles to ash in your hands."
-  crown_worn: "The Ashen Crown rests upon your brow."
