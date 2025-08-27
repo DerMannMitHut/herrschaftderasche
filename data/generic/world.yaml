@@ -32,6 +32,14 @@ rooms:
       - grey_forest
       - black_tower
 
+uses:
+  repair_crown:
+    item: flame_blade
+    target: ashen_crown
+    room: glow_chasm
+    set_item_state:
+      ashen_crown: repaired
+
 start: ash_village
 
 endings:
