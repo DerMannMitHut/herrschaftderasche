@@ -9,6 +9,10 @@ items:
         description: "Eine zerbrochene Krone, bedeckt von grauer Asche. Sie scheint von unheimlicher Hitze erfüllt."
       repaired:
         description: "Eine glänzende, reparierte Krone, frei von jeder Asche. Eine sanfte Wärme geht von ihr aus."
+      destroyed:
+        description: "Zerbrochene Fragmente der Krone liegen hier, ihre Macht ist verloren."
+      worn:
+        description: "Die Krone ruht auf deinem Haupt, ihre Wärme gehört dir."
   flame_blade:
     names:
       - Flammenklinge
@@ -67,3 +71,5 @@ start: ash_village
 endings:
   crown_returned: "Mit der Aschenkrone kehrst du ins Dorf zurück und erfüllst dein Schicksal."
   crown_repaired: "Du hast die Krone repariert."
+  crown_destroyed: "Die Aschenkrone zerfällt zu Staub in deinen Händen."
+  crown_worn: "Die Aschenkrone ruht auf deinem Haupt."
