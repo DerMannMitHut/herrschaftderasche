@@ -17,12 +17,14 @@ rooms:
       - flame_blade
     exits:
       - ash_village
+      - black_tower
       - glow_chasm
   black_tower:
     items:
       - ashen_crown
     exits:
       - ash_village
+      - grey_forest
       - glow_chasm
   glow_chasm:
     items: []
