@@ -53,6 +53,8 @@ rooms:
 
 npcs:
   ashram:
+    names:
+      - Ashram
     meet:
       text: "Ashram tritt aus den Schatten und bietet seine Hilfe an."
     states:
