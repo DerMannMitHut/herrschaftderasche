@@ -46,20 +46,20 @@ def test_item_state_saved_and_loaded(tmp_path):
 
 
 @pytest.mark.parametrize(
-    "language,item_name,broken_phrase,repaired_phrase,exit_name",
+    "language,item_name,dull_phrase,sharp_phrase,exit_name",
     [
-        ("en", "Ashen Crown", "broken crown", "repaired crown", "Black Tower"),
-        ("de", "Aschenkrone", "zerbrochene krone", "reparierte krone", "Schwarzer Turm"),
+        ("en", "Gem", "a red gem.", "a green gem.", "Room 2"),
+        ("de", "Juwel", "ein rotes juwel.", "ein grünes juwel.", "Raum 2"),
     ],
 )
-def test_states_from_files(language, item_name, broken_phrase, repaired_phrase, exit_name):
-    w = World.from_files("data/generic/world.yaml", f"data/{language}/world.yaml")
-    assert w.item_states["ashen_crown"] == "broken"
+def test_states_from_files(data_dir, language, item_name, dull_phrase, sharp_phrase, exit_name):
+    w = World.from_files(data_dir / "generic/world.yaml", data_dir / f"{language}/world.yaml")
+    assert w.item_states["gem"] == "red"
     assert w.move(exit_name)
     desc = w.describe_item(item_name)
     assert desc is not None
-    assert broken_phrase in desc.lower()
-    assert w.set_item_state("ashen_crown", "repaired")
+    assert dull_phrase in desc.lower()
+    assert w.set_item_state("gem", "green")
     desc = w.describe_item(item_name)
     assert desc is not None
-    assert repaired_phrase in desc.lower()
+    assert sharp_phrase in desc.lower()

@@ -7,7 +7,7 @@ def test_look_item_describes(data_dir, monkeypatch):
     g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
     assert g.world.move("Room 2")
     g.cmd_look("gem")
-    assert outputs[-1] == "A shiny gem."
+    assert outputs[-1] == "A red gem."
 
 
 def test_look_item_not_present(data_dir, monkeypatch):

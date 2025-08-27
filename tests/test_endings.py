@@ -101,39 +101,15 @@ def test_end_condition_or_room_has(tmp_path, monkeypatch):
     assert outputs[-1] == "You see the sword and know your quest is over."
 
 
-@pytest.fixture
-def data_path(tmp_path):
-    (tmp_path / "generic").mkdir()
-    (tmp_path / "en").mkdir()
-    generic = {
-        "items": {
-            "ashen_crown": {"states": ["repaired"]}
-        },
-        "rooms": {"room1": {"items": ["ashen_crown"], "exits": []}},
-        "start": "room1",
-        "endings": {"crown_repaired": "ashen_crown is repaired"},
-    }
-    en = {
-        "items": {
-            "ashen_crown": {"names": ["Ashen Crown"], "description": ""}
-        },
-        "rooms": {"room1": {"names": ["Room1"], "description": "Room1"}},
-        "endings": {"crown_repaired": "You repaired the crown."},
-    }
-    with open(tmp_path / "generic" / "world.yaml", "w", encoding="utf-8") as fh:
-        yaml.safe_dump(generic, fh)
-    with open(tmp_path / "en" / "world.yaml", "w", encoding="utf-8") as fh:
-        yaml.safe_dump(en, fh)
-    return tmp_path
 
 
-def test_end_condition_item_state(data_path, monkeypatch):
+def test_end_condition_item_state(data_dir, monkeypatch):
     outputs: list[str] = []
     monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
-    g = game.Game(str(data_path / "en" / "world.yaml"), "en")
+    g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
     g._check_end()
     assert outputs == []
-    assert g.world.set_item_state("ashen_crown", "repaired")
+    assert g.world.set_item_state("gem", "green")
     g._check_end()
-    assert outputs[-1] == "You repaired the crown."
+    assert outputs[-1] == "The gem is green."
 

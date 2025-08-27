@@ -12,37 +12,61 @@ if str(ROOT_DIR) not in sys.path:
 @pytest.fixture
 def data_dir(tmp_path):
     generic = {
-        "items": {"sword": {}, "gem": {}},
+        "items": {
+            "sword": {},
+            "gem": {"state": "red", "states": {"red": {}, "green": {}}},
+        },
         "rooms": {
             "start": {"exits": ["room2", "room3"]},
             "room2": {"items": ["gem"], "exits": ["start", "room3"]},
             "room3": {"items": ["sword"], "exits": ["start", "room2"]},
         },
         "start": "start",
+        "endings": {"green_gem": "gem is green"},
     }
 
     en = {
         "items": {
-            "sword": {"names": ["Sword"], "description": "A sharp blade."},
-            "gem": {"names": ["Gem"], "description": "A shiny gem."},
+            "sword": {
+                "names": ["Sword"],
+                "description": "A sharp blade.",
+            },
+            "gem": {
+                "names": ["Gem"],
+                "states": {
+                    "red": {"description": "A red gem."},
+                    "green": {"description": "A green gem."},
+                },
+            },
         },
         "rooms": {
             "start": {"names": ["Room 1"], "description": "Room 1."},
             "room2": {"names": ["Room 2"], "description": "Room 2."},
             "room3": {"names": ["Room 3"], "description": "Room 3."},
         },
+        "endings": {"green_gem": "The gem is green."},
     }
 
     de = {
         "items": {
-            "sword": {"names": ["Schwert"], "description": "Eine scharfe Klinge."},
-            "gem": {"names": ["Juwel"], "description": "Ein glänzendes Juwel."},
+            "sword": {
+                "names": ["Schwert"],
+                "description": "Eine scharfe Klinge.",
+            },
+            "gem": {
+                "names": ["Juwel"],
+                "states": {
+                    "red": {"description": "Ein rotes Juwel."},
+                    "green": {"description": "Ein grünes Juwel."},
+                },
+            },
         },
         "rooms": {
             "start": {"names": ["Raum 1"], "description": "Raum 1."},
             "room2": {"names": ["Raum 2"], "description": "Raum 2."},
             "room3": {"names": ["Raum 3"], "description": "Raum 3."},
         },
+        "endings": {"green_gem": "Das Juwel ist grün."},
     }
 
     (tmp_path / "generic").mkdir()
@@ -56,3 +80,5 @@ def data_dir(tmp_path):
             yaml.safe_dump(data, fh)
 
     return tmp_path
+
+
