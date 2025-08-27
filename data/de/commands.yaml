@@ -1,16 +1,50 @@
-go: "gehe"
+go:
+  - "gehe"
+  - "geh"
+  - "laufe"
 quit:
   - "beenden"
-take: "nimm"
-drop: "lege"
-drop_suffix: "ab"
-inventory: "inventar"
+  - "ende"
+  - "verlassen"
+take:
+  - "nimm"
+  - "nehme"
+  - "aufheben"
+  - "mitnehmen"
+  - ["heb", "auf"]
+  - ["hebe", "auf"]
+drop:
+  - ["lege", "ab"]
+  - ["lass", "fallen"]
+  - "werfen"
+inventory:
+  - "inventar"
+  - "inv"
 look:
   - "umschau"
   - "umsehen"
-help: "hilfe"
-language: "sprache"
-destroy: "zerstöre"
-wear: "trage"
-use: "benutze"
+  - "umgucken"
+  - "schau"
+  - "sieh dich um"
+examine:
+  - "ansehen"
+  - "schau an"
+  - "betrachte"
+  - "untersuche"
+help:
+  - "hilfe"
+  - "h"
+language:
+  - "sprache"
+destroy:
+  - "zerstöre"
+  - "vernichte"
+wear:
+  - "trage"
+  - "anziehen"
+  - ["zieh", "an"]
+  - ["ziehe", "an"]
+use:
+  - "benutze"
+  - "verwende"
 
