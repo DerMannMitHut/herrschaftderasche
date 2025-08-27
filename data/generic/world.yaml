@@ -1,7 +1,16 @@
 items:
   small_key: {}
-  map_fragment: {}
+  map_fragment:
+    state: unreadable
+    states:
+      unreadable: {}
+      readable: {}
   ashen_crown: {}
+  locked_chest:
+    state: closed
+    states:
+      closed: {}
+      open: {}
 
 rooms:
   hut:
@@ -18,13 +27,39 @@ rooms:
       - ash_village
   ruins:
     items:
-      - ashen_crown
+      - locked_chest
     exits:
       - forest
   ash_village:
     items: []
     exits:
       - forest
+
+uses:
+  use_key:
+    item: small_key
+    target_item: locked_chest
+    preconditions:
+      is_location: ruins
+    effect:
+      item_condition:
+        item: locked_chest
+        state: open
+  interpret_map:
+    item: map_fragment
+    preconditions:
+      npc_met: ashram
+    effect:
+      item_condition:
+        item: map_fragment
+        state: readable
+  open_ruins:
+    preconditions:
+      npc_help: ashram
+    effect:
+      item_condition:
+        item: ashen_crown
+        location: ruins
 
 start: hut
 
