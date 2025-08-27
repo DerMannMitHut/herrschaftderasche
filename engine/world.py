@@ -68,6 +68,17 @@ class World:
             if desc is not None:
                 room["description"] = desc
             rooms[room_id] = room
+        # Ensure items and rooms have at least default translations
+        for item_id, item_cfg in items.items():
+            item_cfg.setdefault("names", [item_id])
+            if "description" not in item_cfg:
+                item_cfg["description"] = item_id
+            states = item_cfg.get("states", {})
+            for state_id, state_cfg in states.items():
+                state_cfg.setdefault("description", state_id)
+        for room_id, room in rooms.items():
+            room.setdefault("names", [room_id])
+            room.setdefault("description", room_id)
         endings: Dict[str, Any] = {}
         base_endings = base.get("endings", {})
         lang_endings = lang.get("endings", {})
