@@ -2,9 +2,7 @@ import yaml
 from engine import game, io
 
 
-def test_end_condition_inventory_and_location(tmp_path, monkeypatch):
-    (tmp_path / "generic").mkdir()
-    (tmp_path / "en").mkdir()
+def test_end_condition_inventory_and_location(data_dir, monkeypatch):
     generic = {
         "items": {"crown": {}},
         "rooms": {
@@ -29,21 +27,19 @@ def test_end_condition_inventory_and_location(tmp_path, monkeypatch):
         },
         "endings": {"win": "You win!"},
     }
-    with open(tmp_path / "generic" / "world.yaml", "w", encoding="utf-8") as fh:
+    with open(data_dir / "generic" / "world.yaml", "w", encoding="utf-8") as fh:
         yaml.safe_dump(generic, fh)
-    with open(tmp_path / "en" / "world.yaml", "w", encoding="utf-8") as fh:
+    with open(data_dir / "en" / "world.yaml", "w", encoding="utf-8") as fh:
         yaml.safe_dump(en, fh)
     outputs: list[str] = []
     monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
-    g = game.Game(str(tmp_path / "en" / "world.yaml"), "en")
+    g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
     g.cmd_take("Crown")
     g.cmd_go("Room2")
     assert outputs[-1] == "You win!"
 
 
-def test_end_condition_inventory_lacks(tmp_path, monkeypatch):
-    (tmp_path / "generic").mkdir()
-    (tmp_path / "en").mkdir()
+def test_end_condition_inventory_lacks(data_dir, monkeypatch):
     generic = {
         "items": {"crown": {}},
         "rooms": {
@@ -68,20 +64,18 @@ def test_end_condition_inventory_lacks(tmp_path, monkeypatch):
         },
         "endings": {"fail": "No crown, no victory."},
     }
-    with open(tmp_path / "generic" / "world.yaml", "w", encoding="utf-8") as fh:
+    with open(data_dir / "generic" / "world.yaml", "w", encoding="utf-8") as fh:
         yaml.safe_dump(generic, fh)
-    with open(tmp_path / "en" / "world.yaml", "w", encoding="utf-8") as fh:
+    with open(data_dir / "en" / "world.yaml", "w", encoding="utf-8") as fh:
         yaml.safe_dump(en, fh)
     outputs: list[str] = []
     monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
-    g = game.Game(str(tmp_path / "en" / "world.yaml"), "en")
+    g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
     g.cmd_go("Room2")
     assert outputs[-1] == "No crown, no victory."
 
 
-def test_end_condition_or_room_has(tmp_path, monkeypatch):
-    (tmp_path / "generic").mkdir()
-    (tmp_path / "en").mkdir()
+def test_end_condition_or_room_has(data_dir, monkeypatch):
     generic = {
         "items": {"sword": {}},
         "rooms": {
@@ -106,13 +100,13 @@ def test_end_condition_or_room_has(tmp_path, monkeypatch):
         },
         "endings": {"done": "You see the sword and know your quest is over."},
     }
-    with open(tmp_path / "generic" / "world.yaml", "w", encoding="utf-8") as fh:
+    with open(data_dir / "generic" / "world.yaml", "w", encoding="utf-8") as fh:
         yaml.safe_dump(generic, fh)
-    with open(tmp_path / "en" / "world.yaml", "w", encoding="utf-8") as fh:
+    with open(data_dir / "en" / "world.yaml", "w", encoding="utf-8") as fh:
         yaml.safe_dump(en, fh)
     outputs: list[str] = []
     monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
-    g = game.Game(str(tmp_path / "en" / "world.yaml"), "en")
+    g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
     g.cmd_go("Room2")
     assert outputs[-1] == "You see the sword and know your quest is over."
 
