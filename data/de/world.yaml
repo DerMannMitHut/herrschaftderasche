@@ -1,77 +1,63 @@
 items:
+  small_key:
+    names:
+      - Kleiner Schlüssel
+      - Schlüssel
+    description: "Ein kleiner, leicht angelaufener Messingschlüssel."
+  map_fragment:
+    names:
+      - Kartenfragment
+      - Fragment
+      - Karte
+    states:
+      unreadable:
+        description: "Ein zerknittertes Kartenfragment, dessen Markierungen verwischt sind."
+      readable:
+        description: "Das Fragment zeigt einen Weg von der Hütte zu den Ruinen."
   ashen_crown:
     names:
       - Aschenkrone
       - Krone
-      - Krone der Asche
-    states:
-      broken:
-        description: "Eine zerbrochene Krone, bedeckt von grauer Asche. Sie scheint von unheimlicher Hitze erfüllt."
-      repaired:
-        description: "Eine glänzende, reparierte Krone, frei von jeder Asche. Eine sanfte Wärme geht von ihr aus."
-      destroyed:
-        description: "Zerbrochene Fragmente der Krone liegen hier, ihre Macht ist verloren."
-      worn:
-        description: "Die Krone ruht auf deinem Haupt, ihre Wärme gehört dir."
-  flame_blade:
+    description: "Eine von Asche verdunkelte Krone."
+  locked_chest:
     names:
-      - Flammenklinge
-      - Schwert
-      - Klinge
-    description: "Ein Schwert, das in der Glut geschmiedet wurde. Die Klinge glimmt schwach im Dunkeln."
+      - Verschlossene Truhe
+      - Truhe
+    states:
+      closed:
+        description: "Eine stabile Truhe mit einfachem Schloss."
+      open:
+        description: "Die Truhe steht offen und zeigt ihren Inhalt."
 
 rooms:
+  hut:
+    names:
+      - Hütte
+      - Häuschen
+    description: "Eine schlichte Hütte mit knarrendem Dach."
+  forest:
+    names:
+      - Wald
+      - Forst
+    description: "Ein lichter Wald, dessen Bäume von Asche bedeckt sind."
+  ruins:
+    names:
+      - Ruinen
+      - Ruinenstätte
+    description: "Bröckelnde Steine zeugen von vergangener Zeit."
   ash_village:
     names:
       - Aschendorf
       - Dorf
-      - Siedlung
-    description: "Ein kleines Dorf am Rande der Aschewüste. Die meisten Hütten sind verfallen, nur wenige Menschen leben hier noch. Die Bewohner sprechen von der Flammenklinge im Grauen Wald und vom Schwarzen Turm, der die zerbrochene Krone birgt."
-    exits:
-      - grey_forest
-      - black_tower
-  grey_forest:
-    names:
-      - Grauer Wald
-      - Wald
-      - Forst
-    description: "Verkohlte Bäume ragen wie schwarze Finger in den Himmel. Unter der Asche wachsen zarte grüne Triebe. Zwischen den Stämmen schimmert etwas wie eine Klinge, und in der Ferne erhebt sich der Schwarze Turm."
-    items:
-      - flame_blade
-    exits:
-      - ash_village
-      - black_tower
-      - glow_chasm
-  black_tower:
-    names:
-      - Schwarzer Turm
-      - Turm
-      - Ruinenturm
-    description: "Ein Turm aus dunklem Stein, halb von Asche verschlungen. Es heißt, hier liege die Aschenkrone verborgen, zerbrochen und kalt. Eine Inschrift verweist auf die Glutgrube, deren Hitze sie wieder einen kann."
-    items:
-      - ashen_crown
-    exits:
-      - ash_village
-      - grey_forest
-      - glow_chasm
-  glow_chasm:
-    names:
-      - Glutgrube
-      - Schlucht
-      - Spalte
-    description: "Eine tiefe Spalte im Boden, in der rotglühende Lava lodert. Die Hitze macht es schwer, hier zu atmen. Hier könnte die Krone wieder verschmolzen werden – wirst du mit ihr ins Dorf zurückkehren oder ihre Macht für dich behalten?"
-    exits:
-      - grey_forest
-      - black_tower
+    description: "Ein Dorf, das unter einer Schicht Asche liegt."
 
 uses:
-  repair_crown:
-    success: "Die Flammenklinge verschweißt die Aschenkrone."
-
-start: ash_village
+  use_key:
+    success: "Der Schlüssel klickt, und die Truhe entriegelt sich."
+  interpret_map:
+    success: "Ashram hilft dir, die verblasste Karte zu entziffern."
+  open_ruins:
+    success: "Mit Ashrams Hilfe offenbaren die Ruinen eine verborgene Kammer."
 
 endings:
   crown_returned: "Mit der Aschenkrone kehrst du ins Dorf zurück und erfüllst dein Schicksal."
-  crown_repaired: "Du hast die Krone repariert."
-  crown_destroyed: "Die Aschenkrone zerfällt zu Staub in deinen Händen."
-  crown_worn: "Die Aschenkrone ruht auf deinem Haupt."
