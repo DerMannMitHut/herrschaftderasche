@@ -4,7 +4,7 @@ from pathlib import Path
 
 import yaml
 
-from engine import io, parser, world, llm, i18n
+from engine import io, parser, world, llm, i18n, integrity
 
 
 class Game:
@@ -13,14 +13,32 @@ class Game:
         self.data_dir = data_path.parent.parent
         self.save_path = self.data_dir / "save.yaml"
         generic_path = self.data_dir / "generic" / "world.yaml"
+
+        warnings = integrity.check_translations(language, self.data_dir)
+        for msg in warnings:
+            io.output(f"WARNING: {msg}")
+
         self.world = world.World.from_files(generic_path, world_data_path)
-        self.language = language
+
+        errors = integrity.validate_world_structure(self.world)
+
+        save_data: dict[str, object] = {}
         if self.save_path.exists():
             with open(self.save_path, encoding="utf-8") as fh:
-                data = yaml.safe_load(fh) or {}
-            self.language = data.get("language", language)
+                save_data = yaml.safe_load(fh) or {}
+            errors.extend(integrity.validate_save(save_data, self.world))
+
+        if errors:
+            for msg in errors:
+                io.output(f"ERROR: {msg}")
+            raise SystemExit("Integrity check failed")
+
+        self.language = language
+        if save_data:
+            self.language = save_data.get("language", language)
             self.world.load_state(self.save_path)
             self.save_path.unlink()
+
         self.messages = i18n.load_messages(self.language)
         self.commands = i18n.load_commands(self.language)
         self.command_keys = i18n.load_command_keys()
