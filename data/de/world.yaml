@@ -26,7 +26,7 @@ rooms:
       - Aschendorf
       - Dorf
       - Siedlung
-    description: "Ein kleines Dorf am Rande der Aschewüste. Die meisten Hütten sind verfallen, nur wenige Menschen leben hier noch."
+    description: "Ein kleines Dorf am Rande der Aschewüste. Die meisten Hütten sind verfallen, nur wenige Menschen leben hier noch. Die Bewohner sprechen von der Flammenklinge im Grauen Wald und vom Schwarzen Turm, der die zerbrochene Krone birgt."
     exits:
       - grey_forest
       - black_tower
@@ -35,29 +35,31 @@ rooms:
       - Grauer Wald
       - Wald
       - Forst
-    description: "Verkohlte Bäume ragen wie schwarze Finger in den Himmel. Unter der Asche wachsen zarte grüne Triebe."
+    description: "Verkohlte Bäume ragen wie schwarze Finger in den Himmel. Unter der Asche wachsen zarte grüne Triebe. Zwischen den Stämmen schimmert etwas wie eine Klinge, und in der Ferne erhebt sich der Schwarze Turm."
     items:
       - flame_blade
     exits:
       - ash_village
+      - black_tower
       - glow_chasm
   black_tower:
     names:
       - Schwarzer Turm
       - Turm
       - Ruinenturm
-    description: "Ein Turm aus dunklem Stein, halb von Asche verschlungen. Es heißt, hier liege die Aschenkrone verborgen."
+    description: "Ein Turm aus dunklem Stein, halb von Asche verschlungen. Es heißt, hier liege die Aschenkrone verborgen, zerbrochen und kalt. Eine Inschrift verweist auf die Glutgrube, deren Hitze sie wieder einen kann."
     items:
       - ashen_crown
     exits:
       - ash_village
+      - grey_forest
       - glow_chasm
   glow_chasm:
     names:
       - Glutgrube
       - Schlucht
       - Spalte
-    description: "Eine tiefe Spalte im Boden, in der rotglühende Lava lodert. Die Hitze macht es schwer, hier zu atmen."
+    description: "Eine tiefe Spalte im Boden, in der rotglühende Lava lodert. Die Hitze macht es schwer, hier zu atmen. Hier könnte die Krone wieder verschmolzen werden – wirst du mit ihr ins Dorf zurückkehren oder ihre Macht für dich behalten?"
     exits:
       - grey_forest
       - black_tower

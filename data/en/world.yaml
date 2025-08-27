@@ -26,7 +26,7 @@ rooms:
       - Ash Village
       - Village
       - Settlement
-    description: "A small village at the edge of the ash wastes. Most huts lie in ruins, only a few people remain."
+    description: "A small village at the edge of the ash wastes. Most huts lie in ruins, only a few people remain. The villagers whisper of the Flame Blade lost in the Grey Forest and of the Black Tower where a broken crown awaits."
     exits:
       - grey_forest
       - black_tower
@@ -35,29 +35,31 @@ rooms:
       - Grey Forest
       - Forest
       - Woods
-    description: "Charred trees rise like blackened fingers into the sky. Beneath the ash, tender green sprouts push through."
+    description: "Charred trees rise like blackened fingers into the sky. Beneath the ash, tender green sprouts push through. Amid the gloom a fiery glint hints at the Flame Blade, and beyond the trunks the Black Tower cuts the horizon."
     items:
       - flame_blade
     exits:
       - ash_village
+      - black_tower
       - glow_chasm
   black_tower:
     names:
       - Black Tower
       - Tower
       - Ruined Tower
-    description: "A tower of dark stone, half buried in ash. It is said the Ashen Crown lies hidden here."
+    description: "A tower of dark stone, half buried in ash. It is said the Ashen Crown lies hidden here, shattered and cold. An ancient engraving points toward the Glow Chasm whose heat might restore it."
     items:
       - ashen_crown
     exits:
       - ash_village
+      - grey_forest
       - glow_chasm
   glow_chasm:
     names:
       - Glow Chasm
       - Chasm
       - Fissure
-    description: "A deep rift in the ground, glowing lava flowing within. The heat makes it hard to breathe here."
+    description: "A deep rift in the ground, glowing lava flowing within. The heat makes it hard to breathe here. The molten light could fuse the crown once more—will you return it to the village or keep its power?"
     exits:
       - grey_forest
       - black_tower
