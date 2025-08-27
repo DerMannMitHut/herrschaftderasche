@@ -1,6 +1,6 @@
 import yaml
 from engine.world import World
-from engine import game
+from engine import game, io
 
 
 def make_world() -> World:
@@ -48,3 +48,37 @@ def test_npc_event_triggered_on_room_change(data_dir, capsys):
     g.cmd_go("Room 2")
     out = capsys.readouterr().out
     assert "The old man greets you." not in out
+
+
+def test_npc_event_triggered_on_start(tmp_path, monkeypatch):
+    (tmp_path / "generic").mkdir()
+    (tmp_path / "en").mkdir()
+
+    generic = {
+        "rooms": {"room1": {"exits": []}},
+        "start": "room1",
+        "npcs": {
+            "old_man": {
+                "state": "unknown",
+                "states": {"unknown": {}, "met": {}},
+                "meet": {"location": "room1"},
+            }
+        },
+    }
+    en = {
+        "rooms": {"room1": {"names": ["Room"], "description": "Room"}},
+        "npcs": {"old_man": {"meet": {"text": "Hello there."}}},
+    }
+    with open(tmp_path / "generic" / "world.yaml", "w", encoding="utf-8") as fh:
+        yaml.safe_dump(generic, fh)
+    with open(tmp_path / "en" / "world.yaml", "w", encoding="utf-8") as fh:
+        yaml.safe_dump(en, fh)
+
+    outputs: list[str] = []
+    monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
+    monkeypatch.setattr(io, "get_input", lambda: (_ for _ in ()).throw(EOFError()))
+
+    g = game.Game(str(tmp_path / "en" / "world.yaml"), "en")
+    g.run()
+
+    assert "Hello there." in outputs

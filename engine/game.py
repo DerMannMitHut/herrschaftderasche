@@ -63,6 +63,7 @@ class Game:
 
     def run(self) -> None:
         io.output(self.world.describe_current(self.messages))
+        self._check_npc_event()
         self._check_end()
         try:
             while self.running:
