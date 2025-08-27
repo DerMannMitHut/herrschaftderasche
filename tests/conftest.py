@@ -69,6 +69,7 @@ def data_dir(tmp_path):
         },
         "npcs": {
             "old_man": {
+                "names": ["Old Man"],
                 "meet": {"text": "The old man greets you."},
                 "states": {
                     "met": {
@@ -109,6 +110,7 @@ def data_dir(tmp_path):
         },
         "npcs": {
             "old_man": {
+                "names": ["Alter Mann"],
                 "meet": {"text": "Der alte Mann grüßt dich."},
                 "states": {
                     "met": {

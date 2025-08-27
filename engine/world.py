@@ -281,6 +281,16 @@ class World:
                 desc += " " + messages["items_here"].format(items=", ".join(item_names))
             else:  # pragma: no cover - fallback without messages
                 desc += " You see here: " + ", ".join(item_names)
+        room_npcs = [
+            npc.get("names", [npc_id])[0]
+            for npc_id, npc in self.npcs.items()
+            if npc.get("meet", {}).get("location") == self.current
+        ]
+        if room_npcs:
+            if messages:
+                desc += " " + messages["npcs_here"].format(npcs=", ".join(room_npcs))
+            else:  # pragma: no cover - fallback without messages
+                desc += " You see here: " + ", ".join(room_npcs)
         exits = room.get("exits", {})
         if exits:
             exit_names = []
