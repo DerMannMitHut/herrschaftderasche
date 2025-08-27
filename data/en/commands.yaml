@@ -47,4 +47,7 @@ wear:
 use:
   - "use"
   - "apply"
+talk:
+  - "talk"
+  - "speak"
 

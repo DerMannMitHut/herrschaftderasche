@@ -24,7 +24,7 @@ def data_dir(tmp_path):
         "npcs": {
             "old_man": {
                 "state": "unknown",
-                "states": {"unknown": {}, "met": {}},
+                "states": {"unknown": {}, "met": {}, "helped": {}},
                 "meet": {"location": "room2"},
             }
         },
@@ -68,7 +68,17 @@ def data_dir(tmp_path):
             "room3": {"names": ["Room 3"], "description": "Room 3."},
         },
         "npcs": {
-            "old_man": {"meet": {"text": "The old man greets you."}}
+            "old_man": {
+                "meet": {"text": "The old man greets you."},
+                "states": {
+                    "met": {
+                        "talk": "You tell the old man about your quest. He agrees to help."
+                    },
+                    "helped": {
+                        "talk": "The old man has already offered his aid."
+                    },
+                },
+            }
         },
         "uses": {
             "cut_gem": {
@@ -98,7 +108,17 @@ def data_dir(tmp_path):
             "room3": {"names": ["Raum 3"], "description": "Raum 3."},
         },
         "npcs": {
-            "old_man": {"meet": {"text": "Der alte Mann grüßt dich."}}
+            "old_man": {
+                "meet": {"text": "Der alte Mann grüßt dich."},
+                "states": {
+                    "met": {
+                        "talk": "Du erzählst dem alten Mann von deiner Suche. Er hilft dir."
+                    },
+                    "helped": {
+                        "talk": "Der alte Mann hat dir bereits geholfen."
+                    },
+                },
+            }
         },
         "uses": {
             "cut_gem": {

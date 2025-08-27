@@ -348,6 +348,20 @@ class World:
         item["state"] = state
         return True
 
+    def set_npc_state(self, npc_id: str, state: str) -> bool:
+        """Set the state for an NPC if the state exists.
+
+        Returns True if the state was changed, False otherwise."""
+        npc = self.npcs.get(npc_id)
+        if not npc:
+            return False
+        states = npc.get("states")
+        if not states or state not in states:
+            return False
+        self.npc_states[npc_id] = state
+        npc["state"] = state
+        return True
+
     def meet_npc(self, npc_id: str) -> bool:
         """Mark an NPC as met if a corresponding state exists."""
         npc = self.npcs.get(npc_id)

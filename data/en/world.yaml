@@ -55,6 +55,11 @@ npcs:
   ashram:
     meet:
       text: "Ashram steps from the shadows and offers his help."
+    states:
+      met:
+        talk: "Ashram listens to your plight and offers his aid."
+      helped:
+        talk: "Ashram nods; he is already helping you."
 
 uses:
   use_key:

@@ -8,7 +8,7 @@ def make_world() -> World:
         "npcs": {
             "old_man": {
                 "state": "unknown",
-                "states": {"unknown": {}, "met": {}},
+                "states": {"unknown": {}, "met": {}, "helped": {}},
             }
         },
         "rooms": {"room1": {"description": "Room 1.", "exits": {}}},
@@ -22,6 +22,12 @@ def test_meet_npc_changes_state():
     assert w.npc_state("old_man") == "unknown"
     assert w.meet_npc("old_man")
     assert w.npc_state("old_man") == "met"
+
+
+def test_set_npc_state_changes_state():
+    w = make_world()
+    assert w.set_npc_state("old_man", "helped")
+    assert w.npc_state("old_man") == "helped"
 
 
 def test_npc_state_saved_and_loaded(tmp_path):
