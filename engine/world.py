@@ -305,7 +305,11 @@ class World:
                 return True
         return False
 
-    def take(self, item_name: str) -> bool:
+    def take(self, item_name: str) -> str | None:
+        """Move an item from the current room into the inventory.
+
+        Returns the canonical item name if the item was taken, otherwise ``None``.
+        """
         room = self.rooms[self.current]
         items = room.get("items", [])
         item_name_cf = item_name.casefold()
@@ -314,8 +318,10 @@ class World:
             if any(name.casefold() == item_name_cf for name in names):
                 items.remove(item_id)
                 self.inventory.append(item_id)
-                return True
-        return False
+                if names:
+                    return names[0]
+                return item_name
+        return None
 
     def drop(self, item_name: str) -> bool:
         item_name_cf = item_name.casefold()
