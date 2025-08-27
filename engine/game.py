@@ -108,9 +108,10 @@ class Game:
         if not arg:
             self.cmd_unknown(arg)
             return
-        item = arg
-        if self.world.take(item):
-            io.output(self.messages["taken"].format(item=item))
+        item_name = arg
+        taken = self.world.take(item_name)
+        if taken:
+            io.output(self.messages["taken"].format(item=taken))
         else:
             io.output(self.messages["item_not_present"])
         self._check_end()
