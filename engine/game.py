@@ -309,6 +309,7 @@ class Game:
             else:
                 io.output(self.messages["no_npc"])
             if state != "helped":
+                self._execute_action("talk", npc_id)
                 self.world.set_npc_state(npc_id, "helped")
             return
         io.output(self.messages["no_npc"])

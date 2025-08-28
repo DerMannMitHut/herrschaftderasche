@@ -276,12 +276,25 @@ class World:
 
     def apply_effect(self, effect: Dict[str, Any]) -> None:
         item_cond = effect.get("item_condition")
-        if not item_cond:
-            return
-        if isinstance(item_cond, dict):
-            item_cond = [item_cond]
-        for cond in item_cond:
-            self.apply_item_condition(cond)
+        if item_cond:
+            if isinstance(item_cond, dict):
+                item_cond = [item_cond]
+            for cond in item_cond:
+                self.apply_item_condition(cond)
+
+        exits = effect.get("exits")
+        if exits:
+            if isinstance(exits, dict):
+                exits = [exits]
+            for exit_cfg in exits:
+                from_room = exit_cfg.get("from")
+                to_room = exit_cfg.get("to")
+                if not from_room or not to_room:
+                    continue
+                room_exits = self.rooms.setdefault(from_room, {}).setdefault("exits", {})
+                if to_room not in room_exits:
+                    names = self.rooms.get(to_room, {}).get("names", [to_room])
+                    room_exits[to_room] = names
 
     def describe_current(self, messages: Dict[str, str] | None = None) -> str:
         room = self.rooms[self.current]

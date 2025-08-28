@@ -23,7 +23,6 @@ rooms:
       - map_fragment
     exits:
       - hut
-      - ruins
       - ash_village
   ruins:
     items:
@@ -57,14 +56,21 @@ actions:
         - item: locked_chest
           state: open
   interpret_map:
-    trigger: use
-    item: map_fragment
+    trigger: talk
+    item: ashram
     preconditions:
       npc_met: ashram
+      item_condition:
+        item: map_fragment
+        location: INVENTORY
+        state: unreadable
     effect:
       item_condition:
         - item: map_fragment
           state: readable
+      exits:
+        - from: forest
+          to: ruins
   open_ruins:
     trigger: use
     preconditions:
