@@ -37,6 +37,27 @@ class World:
         self._base_item_states: Dict[str, str] = dict(self.item_states)
         self._base_npc_states: Dict[str, str] = dict(self.npc_states)
 
+        for room in self.rooms.values():
+            exits = room.get("exits")
+            if not exits:
+                continue
+            if isinstance(exits, list):
+                room["exits"] = {e: {"names": [e]} for e in exits}
+                continue
+            new_exits: Dict[str, Dict[str, Any]] = {}
+            for target, cfg in exits.items():
+                if isinstance(cfg, list):
+                    new_exits[target] = {"names": list(cfg)}
+                elif isinstance(cfg, dict):
+                    names = cfg.get("names", [])
+                    pre = cfg.get("preconditions")
+                    new_exits[target] = {"names": list(names)}
+                    if pre:
+                        new_exits[target]["preconditions"] = pre
+                else:  # pragma: no cover - legacy single-string syntax
+                    new_exits[target] = {"names": [cfg]}
+            room["exits"] = new_exits
+
     def debug(self, message: str) -> None:
         if self._debug_enabled:
             print(f"-- {message}", file=sys.stderr)
@@ -76,9 +97,16 @@ class World:
             if cfg_room.get("items"):
                 room["items"] = list(cfg_room["items"])
             exits: Dict[str, Any] = {}
-            for target in cfg_room.get("exits", []):
+            cfg_exits = cfg_room.get("exits", {})
+            if isinstance(cfg_exits, list):
+                cfg_exits = {target: {} for target in cfg_exits}
+            for target, exit_cfg in cfg_exits.items():
                 names = lang_rooms.get(target, {}).get("names", [target])
-                exits[target] = names
+                exit_entry: Dict[str, Any] = {"names": names}
+                pre = exit_cfg.get("preconditions") if isinstance(exit_cfg, dict) else None
+                if pre:
+                    exit_entry["preconditions"] = pre
+                exits[target] = exit_entry
             if exits:
                 room["exits"] = exits
             lang_room = lang_rooms.get(room_id, {})
@@ -276,12 +304,21 @@ class World:
 
     def apply_effect(self, effect: Dict[str, Any]) -> None:
         item_cond = effect.get("item_condition")
-        if not item_cond:
-            return
-        if isinstance(item_cond, dict):
-            item_cond = [item_cond]
-        for cond in item_cond:
-            self.apply_item_condition(cond)
+        if item_cond:
+            if isinstance(item_cond, dict):
+                item_cond = [item_cond]
+            for cond in item_cond:
+                self.apply_item_condition(cond)
+        add_exit = effect.get("add_exit")
+        if add_exit:
+            if isinstance(add_exit, dict):
+                add_exit = [add_exit]
+            for cfg in add_exit:
+                room = cfg.get("room")
+                target = cfg.get("target")
+                pre = cfg.get("preconditions")
+                if room and target:
+                    self.add_exit(room, target, pre)
 
     def describe_current(self, messages: Dict[str, str] | None = None) -> str:
         room = self.rooms[self.current]
@@ -306,11 +343,10 @@ class World:
         exits = room.get("exits", {})
         if exits:
             exit_names = []
-            for names in exits.values():
-                if isinstance(names, list):
+            for cfg in exits.values():
+                names = cfg.get("names", [])
+                if names:
                     exit_names.append(names[0])
-                else:  # pragma: no cover - legacy single-string syntax
-                    exit_names.append(names)
             if messages:
                 desc += " " + messages["exits"].format(exits=", ".join(exit_names))
             else:  # pragma: no cover - fallback without messages
@@ -346,16 +382,34 @@ class World:
         room = self.rooms[self.current]
         exits = room.get("exits", {})
         exit_name_cf = exit_name.casefold()
-        for target, names in exits.items():
-            if isinstance(names, list):
-                name_list = names
-            else:  # pragma: no cover - legacy single-string syntax
-                name_list = [names]
-            if any(name.casefold() == exit_name_cf for name in name_list):
+        for target, cfg in exits.items():
+            names = cfg.get("names", [])
+            if any(name.casefold() == exit_name_cf for name in names):
                 self.current = target
                 self.debug(f"location {self.current}")
                 return True
         return False
+
+    def can_move(self, exit_name: str) -> bool:
+        room = self.rooms[self.current]
+        exits = room.get("exits", {})
+        exit_name_cf = exit_name.casefold()
+        for cfg in exits.values():
+            names = cfg.get("names", [])
+            if any(name.casefold() == exit_name_cf for name in names):
+                pre = cfg.get("preconditions")
+                return self.check_preconditions(pre)
+        return False
+
+    def add_exit(
+        self, room_id: str, target: str, pre: Dict[str, Any] | None = None
+    ) -> None:
+        room = self.rooms.setdefault(room_id, {})
+        exits = room.setdefault("exits", {})
+        names = self.rooms.get(target, {}).get("names", [target])
+        exits[target] = {"names": names}
+        if pre:
+            exits[target]["preconditions"] = pre
 
     def take(self, item_name: str) -> str | None:
         """Move an item from the current room into the inventory.
