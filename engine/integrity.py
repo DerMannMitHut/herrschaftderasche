@@ -125,22 +125,25 @@ def validate_world_structure(w: world.World) -> List[str]:
             errors.append(
                 f"Use precondition references missing location '{cond_loc}'"
             )
-        eff = use.get("effect", {}).get("item_condition", {})
-        eff_item = eff.get("item")
-        if eff_item and eff_item not in w.items:
-            errors.append(
-                f"Use effect references missing item '{eff_item}'"
-            )
-        eff_state = eff.get("state")
-        if eff_item and eff_state and eff_state not in w.items.get(eff_item, {}).get("states", {}):
-            errors.append(
-                f"Use effect references missing state '{eff_state}' for item '{eff_item}'"
-            )
-        eff_loc = eff.get("location")
-        if eff_loc and eff_loc != "INVENTORY" and eff_loc not in w.rooms:
-            errors.append(
-                f"Use effect references missing location '{eff_loc}'"
-            )
+        eff = use.get("effect", {}).get("item_condition", [])
+        if isinstance(eff, dict):
+            eff = [eff]
+        for cond in eff:
+            eff_item = cond.get("item")
+            if eff_item and eff_item not in w.items:
+                errors.append(
+                    f"Use effect references missing item '{eff_item}'"
+                )
+            eff_state = cond.get("state")
+            if eff_item and eff_state and eff_state not in w.items.get(eff_item, {}).get("states", {}):
+                errors.append(
+                    f"Use effect references missing state '{eff_state}' for item '{eff_item}'"
+                )
+            eff_loc = cond.get("location")
+            if eff_loc and eff_loc != "INVENTORY" and eff_loc not in w.rooms:
+                errors.append(
+                    f"Use effect references missing location '{eff_loc}'"
+                )
 
     # NPCs -------------------------------------------------------------------
     for npc_id, npc in w.npcs.items():
