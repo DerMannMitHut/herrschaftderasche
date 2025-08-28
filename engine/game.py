@@ -317,8 +317,8 @@ class Game:
         if not item_name or not target_name:
             self.cmd_unknown("use")
             return
-        item_id = self._find_item_id(item_name, in_inventory=True)
-        target_id = self._find_item_id(target_name, in_inventory=True)
+        item_id = self._find_item_id(item_name)
+        target_id = self._find_item_id(target_name)
         if not item_id or not target_id:
             io.output(self.messages["use_failure"])
             self._check_end()
