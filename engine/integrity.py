@@ -98,51 +98,56 @@ def validate_world_structure(w: world.World) -> List[str]:
     if w.current not in w.rooms:
         errors.append(f"Start room '{w.current}' does not exist")
 
-    # Uses -------------------------------------------------------------------
-    for use in w.uses:
-        item = use.get("item")
+    # Actions ----------------------------------------------------------------
+    for action in w.actions:
+        trigger = action.get("trigger")
+        if not trigger:
+            errors.append("Action missing trigger")
+        if trigger != "use":
+            continue
+        item = action.get("item")
         if item and item not in w.items:
-            errors.append(f"Use references missing item '{item}'")
-        target_item = use.get("target_item")
+            errors.append(f"Action references missing item '{item}'")
+        target_item = action.get("target_item")
         if target_item and target_item not in w.items:
             errors.append(
-                f"Use references missing target item '{target_item}'"
+                f"Action references missing target item '{target_item}'"
             )
-        pre = use.get("preconditions", {})
+        pre = action.get("preconditions", {})
         loc = pre.get("is_location")
         if loc and loc not in w.rooms:
             errors.append(
-                f"Use precondition references missing room '{loc}'"
+                f"Action precondition references missing room '{loc}'"
             )
         cond = pre.get("item_condition", {})
         cond_item = cond.get("item")
         if cond_item and cond_item not in w.items:
             errors.append(
-                f"Use precondition references missing item '{cond_item}'"
+                f"Action precondition references missing item '{cond_item}'"
             )
         cond_loc = cond.get("location")
         if cond_loc and cond_loc != "INVENTORY" and cond_loc not in w.rooms:
             errors.append(
-                f"Use precondition references missing location '{cond_loc}'"
+                f"Action precondition references missing location '{cond_loc}'"
             )
-        eff = use.get("effect", {}).get("item_condition", [])
+        eff = action.get("effect", {}).get("item_condition", [])
         if isinstance(eff, dict):
             eff = [eff]
         for cond in eff:
             eff_item = cond.get("item")
             if eff_item and eff_item not in w.items:
                 errors.append(
-                    f"Use effect references missing item '{eff_item}'"
+                    f"Action effect references missing item '{eff_item}'"
                 )
             eff_state = cond.get("state")
             if eff_item and eff_state and eff_state not in w.items.get(eff_item, {}).get("states", {}):
                 errors.append(
-                    f"Use effect references missing state '{eff_state}' for item '{eff_item}'"
+                    f"Action effect references missing state '{eff_state}' for item '{eff_item}'"
                 )
             eff_loc = cond.get("location")
             if eff_loc and eff_loc != "INVENTORY" and eff_loc not in w.rooms:
                 errors.append(
-                    f"Use effect references missing location '{eff_loc}'"
+                    f"Action effect references missing location '{eff_loc}'"
                 )
 
     # NPCs -------------------------------------------------------------------

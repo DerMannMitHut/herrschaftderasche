@@ -45,8 +45,9 @@ npcs:
     meet:
       location: forest
 
-uses:
-  use_key:
+actions:
+  open_chest:
+    trigger: use
     item: small_key
     target_item: locked_chest
     preconditions:
@@ -56,6 +57,7 @@ uses:
         - item: locked_chest
           state: open
   interpret_map:
+    trigger: use
     item: map_fragment
     preconditions:
       npc_met: ashram
@@ -64,6 +66,7 @@ uses:
         - item: map_fragment
           state: readable
   open_ruins:
+    trigger: use
     preconditions:
       npc_help: ashram
     effect:

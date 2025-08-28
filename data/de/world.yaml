@@ -63,13 +63,16 @@ npcs:
       helped:
         talk: "Ashram nickt; er unterstützt dich bereits."
 
-uses:
-  use_key:
-    success: "Der Schlüssel klickt, und die Truhe entriegelt sich."
+actions:
+  open_chest:
+    messages:
+      success: "Der Schlüssel klickt, und die Truhe entriegelt sich."
   interpret_map:
-    success: "Ashram hilft dir, die verblasste Karte zu entziffern."
+    messages:
+      success: "Ashram hilft dir, die verblasste Karte zu entziffern."
   open_ruins:
-    success: "Mit Ashrams Hilfe offenbaren die Ruinen eine verborgene Kammer."
+    messages:
+      success: "Mit Ashrams Hilfe offenbaren die Ruinen eine verborgene Kammer."
 
 endings:
   crown_returned: "Mit der Aschenkrone kehrst du ins Dorf zurück und erfüllst dein Schicksal."

@@ -28,8 +28,9 @@ def data_dir(tmp_path):
                 "meet": {"location": "room2"},
             }
         },
-        "uses": {
+        "actions": {
             "cut_gem": {
+                "trigger": "use",
                 "item": "sword",
                 "target_item": "gem",
                 "preconditions": {"is_location": "room2"},
@@ -81,9 +82,11 @@ def data_dir(tmp_path):
                 },
             }
         },
-        "uses": {
+        "actions": {
             "cut_gem": {
-                "success": "The gem now gleams green.",
+                "messages": {
+                    "success": "The gem now gleams green."
+                }
             }
         },
         "endings": {"green_gem": "The gem is green."},
@@ -122,9 +125,11 @@ def data_dir(tmp_path):
                 },
             }
         },
-        "uses": {
+        "actions": {
             "cut_gem": {
-                "success": "Das Juwel leuchtet jetzt grün.",
+                "messages": {
+                    "success": "Das Juwel leuchtet jetzt grün."
+                }
             }
         },
         "endings": {"green_gem": "Das Juwel ist grün."},
