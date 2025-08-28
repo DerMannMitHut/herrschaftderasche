@@ -43,7 +43,8 @@ class Game:
 
         self.messages = i18n.load_messages(self.language)
         self.commands = i18n.load_commands(self.language)
-        self.command_keys = i18n.load_command_keys()
+        self.command_info = i18n.load_command_info()
+        self.command_keys = list(self.command_info.keys())
         self.cmd_patterns: list[tuple[str, str, str]] = []
         self.reverse_cmds: dict[str, tuple[str, str]] = {}
         for key in self.command_keys:
@@ -193,18 +194,55 @@ class Game:
         self._check_end()
 
     def cmd_help(self, arg: str) -> None:
-        names: list[str] = []
-        for key in self.command_keys:
-            val = self.commands.get(key)
-            if isinstance(val, list):
-                first = val[0]
-                if isinstance(first, list):
-                    names.append(first[0])
+        if not arg:
+            names: list[str] = []
+            for key in self.command_keys:
+                val = self.commands.get(key)
+                if isinstance(val, list):
+                    first = val[0]
+                    if isinstance(first, list):
+                        names.append(first[0])
+                    else:
+                        names.append(first)
+                elif isinstance(val, str):
+                    names.append(val)
+            io.output(self.messages["help"].format(commands=", ".join(names)))
+            return
+        cmd_info = self.reverse_cmds.get(arg)
+        if not cmd_info:
+            for name, key_candidate, _ in self.cmd_patterns:
+                if arg == name or arg.startswith(name + " "):
+                    cmd_info = (key_candidate, "")
+                    break
+        if not cmd_info:
+            self.cmd_unknown(arg)
+            return
+        key, _ = cmd_info
+        entries = self.commands.get(key, [])
+        entries = entries if isinstance(entries, list) else [entries]
+        meta = self.command_info.get(key, {})
+        required = meta.get("arguments", 0)
+        optional = meta.get("optional_arguments", 0)
+        usages: list[str] = []
+        for entry in entries:
+            if isinstance(entry, list):
+                name, suffix = entry
+            else:
+                name, suffix = entry, ""
+            if key == "use":
+                usage = f"{name} <> on <> {suffix}".strip()
+            else:
+                placeholders = " ".join("<>" for _ in range(required))
+                if key == "help" and optional == 1:
+                    opt = "<command>"
                 else:
-                    names.append(first)
-            elif isinstance(val, str):
-                names.append(val)
-        io.output(self.messages["help"].format(commands=", ".join(names)))
+                    opt = " ".join("<>" for _ in range(optional))
+                if opt:
+                    placeholders = f"{placeholders} {opt}".strip()
+                usage = f"{name} {placeholders} {suffix}".strip()
+            usages.append(usage)
+        header = self.messages.get("help_usage", "Usage of \"{command}\" and synonyms:")
+        io.output(header.format(command=key) + "\n" + "\n".join(usages))
 
     def cmd_language(self, arg: str) -> None:
         if not arg:

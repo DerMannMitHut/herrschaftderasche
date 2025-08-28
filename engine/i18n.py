@@ -24,8 +24,8 @@ def load_commands(language: str) -> Dict[str, Union[str, List[str]]]:
         return yaml.safe_load(fh)
 
 
-def load_command_keys() -> List[str]:
-    """Return the list of canonical command names."""
+def load_command_info() -> Dict[str, Dict[str, int]]:
+    """Return metadata about the available commands."""
     path = Path(__file__).resolve().parent.parent / "data" / "generic" / "commands.yaml"
     with open(path, encoding="utf-8") as fh:
         return yaml.safe_load(fh)

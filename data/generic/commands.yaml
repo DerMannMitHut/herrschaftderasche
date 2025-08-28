@@ -1,13 +1,13 @@
-- go
-- quit
-- take
-- drop
-- inventory
-- look
-- examine
-- help
-- language
-- destroy
-- wear
-- use
-- talk
+go: {arguments: 1}
+quit: {}
+take: {arguments: 1}
+drop: {arguments: 1}
+inventory: {}
+look: {}
+examine: {arguments: 1}
+help: {optional_arguments: 1}
+language: {arguments: 1}
+destroy: {arguments: 1}
+wear: {arguments: 1}
+use: {arguments: 2}
+talk: {arguments: 1}
