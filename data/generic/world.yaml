@@ -56,6 +56,8 @@ actions:
       item_condition:
         - item: locked_chest
           state: open
+        - item: ashen_crown
+          location: ruins
   interpret_map:
     trigger: use
     item: map_fragment
@@ -65,14 +67,6 @@ actions:
       item_condition:
         - item: map_fragment
           state: readable
-  open_ruins:
-    trigger: use
-    preconditions:
-      npc_help: ashram
-    effect:
-      item_condition:
-        - item: ashen_crown
-          location: ruins
 
 start: hut
 

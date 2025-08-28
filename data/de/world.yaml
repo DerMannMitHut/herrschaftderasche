@@ -70,9 +70,6 @@ actions:
   interpret_map:
     messages:
       success: "Ashram hilft dir, die verblasste Karte zu entziffern."
-  open_ruins:
-    messages:
-      success: "Mit Ashrams Hilfe offenbaren die Ruinen eine verborgene Kammer."
 
 endings:
   crown_returned: "Mit der Aschenkrone kehrst du ins Dorf zurück und erfüllst dein Schicksal."
