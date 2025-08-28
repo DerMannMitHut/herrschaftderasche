@@ -16,7 +16,10 @@ class World:
         self.current = data["start"]
         self.inventory: list[str] = data.get("inventory", [])
         self.endings = data.get("endings", {})
-        self.actions: list[Dict[str, Any]] = data.get("actions", [])
+        actions = data.get("actions", [])
+        if isinstance(actions, dict):
+            actions = list(actions.values())
+        self.actions: list[Dict[str, Any]] = list(actions)
         self.item_states: Dict[str, str] = {
             item_id: item_data.get("state")
             for item_id, item_data in self.items.items()
@@ -42,6 +45,9 @@ class World:
     def from_file(cls, path: str | Path, debug: bool = False) -> "World":
         with open(path, encoding="utf-8") as fh:
             data = yaml.safe_load(fh)
+        actions = data.get("actions", {})
+        if isinstance(actions, dict):
+            data["actions"] = list(actions.values())
         return cls(data, debug=debug)
 
     @classmethod
