@@ -55,6 +55,8 @@ actions:
       item_condition:
         - item: locked_chest
           state: open
+        - item: ashen_crown
+          location: ruins
   interpret_map:
     trigger: use
     item: map_fragment
