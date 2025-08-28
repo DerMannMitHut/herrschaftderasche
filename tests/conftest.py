@@ -34,7 +34,7 @@ def data_dir(tmp_path):
                 "target_item": "gem",
                 "preconditions": {"is_location": "room2"},
                 "effect": {
-                    "item_condition": {"item": "gem", "state": "green"}
+                    "item_condition": [{"item": "gem", "state": "green"}]
                 },
             }
         },

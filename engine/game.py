@@ -249,13 +249,18 @@ class Game:
         io.output(self.messages["language_set"].format(language=language))
 
     def cmd_talk(self, arg: str) -> None:
-        if arg:
+        if not arg:
             self.cmd_unknown(arg)
             return
+        npc_name_cf = arg.casefold()
         for npc_id, npc in self.world.npcs.items():
+            names = npc.get("names", [])
+            if not any(name.casefold() == npc_name_cf for name in names):
+                continue
             meet = npc.get("meet", {})
             if meet.get("location") != self.world.current:
-                continue
+                io.output(self.messages["no_npc"])
+                return
             state = self.world.npc_state(npc_id)
             states = npc.get("states", {})
             talk_cfg = states.get(state, {})

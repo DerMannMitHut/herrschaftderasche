@@ -53,23 +53,23 @@ uses:
       is_location: ruins
     effect:
       item_condition:
-        item: locked_chest
-        state: open
+        - item: locked_chest
+          state: open
   interpret_map:
     item: map_fragment
     preconditions:
       npc_met: ashram
     effect:
       item_condition:
-        item: map_fragment
-        state: readable
+        - item: map_fragment
+          state: readable
   open_ruins:
     preconditions:
       npc_help: ashram
     effect:
       item_condition:
-        item: ashen_crown
-        location: ruins
+        - item: ashen_crown
+          location: ruins
 
 start: hut
 

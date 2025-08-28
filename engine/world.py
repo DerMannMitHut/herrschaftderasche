@@ -268,8 +268,12 @@ class World:
 
     def apply_effect(self, effect: Dict[str, Any]) -> None:
         item_cond = effect.get("item_condition")
-        if item_cond:
-            self.apply_item_condition(item_cond)
+        if not item_cond:
+            return
+        if isinstance(item_cond, dict):
+            item_cond = [item_cond]
+        for cond in item_cond:
+            self.apply_item_condition(cond)
 
     def describe_current(self, messages: Dict[str, str] | None = None) -> str:
         room = self.rooms[self.current]
