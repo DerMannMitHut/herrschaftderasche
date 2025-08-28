@@ -288,13 +288,15 @@ class Game:
             io.output(self.messages["use_failure"])
             self._check_end()
             return
-        for use in self.world.uses:
-            if use.get("item") == item_id and use.get("target_item") == target_id:
-                if not self.world.check_preconditions(use.get("preconditions")):
+        for action in self.world.actions:
+            if action.get("trigger") != "use":
+                continue
+            if action.get("item") == item_id and action.get("target_item") == target_id:
+                if not self.world.check_preconditions(action.get("preconditions")):
                     continue
-                effect = use.get("effect", {})
+                effect = action.get("effect", {})
                 self.world.apply_effect(effect)
-                message = use.get("success")
+                message = action.get("messages", {}).get("success")
                 if message:
                     io.output(message)
                 else:

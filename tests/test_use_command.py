@@ -12,9 +12,11 @@ def test_use_success(data_dir, monkeypatch):
     g.cmd_use("Sword", "Gem")
     assert g.world.item_states["gem"] == "green"
     success_msg = next(
-        u["success"]
-        for u in g.world.uses
-        if u.get("item") == "sword" and u.get("target_item") == "gem"
+        a["messages"]["success"]
+        for a in g.world.actions
+        if a.get("trigger") == "use"
+        and a.get("item") == "sword"
+        and a.get("target_item") == "gem"
     )
     assert outputs[-2:] == [success_msg, "The gem is green."]
 

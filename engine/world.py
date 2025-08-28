@@ -16,7 +16,7 @@ class World:
         self.current = data["start"]
         self.inventory: list[str] = data.get("inventory", [])
         self.endings = data.get("endings", {})
-        self.uses: list[Dict[str, Any]] = data.get("uses", [])
+        self.actions: list[Dict[str, Any]] = data.get("actions", [])
         self.item_states: Dict[str, str] = {
             item_id: item_data.get("state")
             for item_id, item_data in self.items.items()
@@ -105,13 +105,13 @@ class World:
             elif lang_cfg is not None:
                 ending["description"] = lang_cfg
             endings[end_id] = ending
-        uses: list[Dict[str, Any]] = []
-        base_uses = base.get("uses", {})
-        lang_uses = lang.get("uses", {})
-        for use_id, cfg_use in base_uses.items():
-            use = dict(cfg_use)
-            use.update(lang_uses.get(use_id, {}))
-            uses.append(use)
+        actions: list[Dict[str, Any]] = []
+        base_actions = base.get("actions", {})
+        lang_actions = lang.get("actions", {})
+        for action_id, cfg_action in base_actions.items():
+            action = dict(cfg_action)
+            action.update(lang_actions.get(action_id, {}))
+            actions.append(action)
         npcs: Dict[str, Any] = base.get("npcs", {})
         lang_npcs = lang.get("npcs", {})
         for npc_id, npc_data in lang_npcs.items():
@@ -133,7 +133,7 @@ class World:
             "rooms": rooms,
             "start": base["start"],
             "endings": endings,
-            "uses": uses,
+            "actions": actions,
             "npcs": npcs,
         }
         return cls(data, debug=debug)

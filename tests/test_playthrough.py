@@ -14,8 +14,8 @@ def test_game_reaches_ending(data_dir, monkeypatch):
     with open(data_dir / "en" / "world.yaml", encoding="utf-8") as fh:
         en = yaml.safe_load(fh)
 
-    open_ruins_effect = generic["uses"]["open_ruins"]["effect"]
-    open_ruins_message = en["uses"]["open_ruins"]["success"]
+    open_ruins_effect = generic["actions"]["open_ruins"]["effect"]
+    open_ruins_message = en["actions"]["open_ruins"]["messages"]["success"]
     ending_text = en["endings"]["crown_returned"]
 
     outputs: list[str] = []

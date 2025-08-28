@@ -63,13 +63,16 @@ npcs:
       helped:
         talk: "Ashram nods; he is already helping you."
 
-uses:
-  use_key:
-    success: "The key turns with a click and the chest unlocks."
+actions:
+  open_chest:
+    messages:
+      success: "The key turns with a click and the chest unlocks."
   interpret_map:
-    success: "Ashram helps you decipher the faded map."
+    messages:
+      success: "Ashram helps you decipher the faded map."
   open_ruins:
-    success: "With Ashram's aid the ruins reveal a hidden chamber."
+    messages:
+      success: "With Ashram's aid the ruins reveal a hidden chamber."
 
 endings:
   crown_returned: "With the Ashen Crown reclaimed, you return to the village as its destined ruler."
