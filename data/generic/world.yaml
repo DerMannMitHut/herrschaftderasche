@@ -55,6 +55,8 @@ actions:
       item_condition:
         - item: locked_chest
           state: open
+        - item: ashen_crown
+          location: ruins
   interpret_map:
     trigger: talk
     item: ashram
@@ -68,9 +70,9 @@ actions:
       item_condition:
         - item: map_fragment
           state: readable
-      exits:
-        - from: forest
-          to: ruins
+      add_exit:
+        - room: forest
+          target: ruins
   open_ruins:
     trigger: use
     preconditions:

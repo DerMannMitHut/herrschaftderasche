@@ -226,7 +226,7 @@ class Game:
             self.cmd_unknown(arg)
             return
         direction = arg
-        if self.world.move(direction):
+        if self.world.can_move(direction) and self.world.move(direction):
             io.output(self.world.describe_current(self.messages))
             self._check_npc_event()
         else:
