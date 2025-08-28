@@ -23,7 +23,6 @@ rooms:
       - map_fragment
     exits:
       - hut
-      - ruins
       - ash_village
   ruins:
     items:
@@ -67,6 +66,17 @@ actions:
       item_condition:
         - item: map_fragment
           state: readable
+      add_exit:
+        - room: forest
+          target: ruins
+  open_ruins:
+    trigger: use
+    preconditions:
+      npc_help: ashram
+    effect:
+      item_condition:
+        - item: ashen_crown
+          location: ruins
 
 start: hut
 
