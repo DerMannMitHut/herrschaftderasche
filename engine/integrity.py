@@ -71,6 +71,18 @@ def check_translations(language: str, data_dir: Path) -> List[str]:
         for room_id in lang_rooms:
             if room_id not in base_rooms:
                 warnings.append(f"Translation for unused room '{room_id}' ignored")
+        base_actions = base_world.get("actions", {})
+        lang_actions = lang_world.get("actions", {})
+        for action_id in base_actions:
+            if action_id not in lang_actions:
+                warnings.append(
+                    f"Missing translation for action '{action_id}'"
+                )
+        for action_id in lang_actions:
+            if action_id not in base_actions:
+                warnings.append(
+                    f"Translation for unused action '{action_id}' ignored"
+                )
 
     return warnings
 

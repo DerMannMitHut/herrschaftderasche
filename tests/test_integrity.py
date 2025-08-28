@@ -1,7 +1,7 @@
 import pytest
 import yaml
 
-from engine import game
+from engine import game, io
 
 
 def test_invalid_exit_causes_error(data_dir, capsys):
@@ -41,3 +41,16 @@ def test_invalid_npc_location_causes_error(data_dir, capsys):
         game.Game(str(data_dir / "en" / "world.yaml"), "en")
     out = capsys.readouterr().out
     assert "nowhere" in out
+
+
+def test_missing_action_translation_warns(data_dir, monkeypatch):
+    en_path = data_dir / "en" / "world.yaml"
+    with open(en_path, encoding="utf-8") as fh:
+        en_world = yaml.safe_load(fh)
+    en_world["actions"].pop("cut_gem")
+    with open(en_path, "w", encoding="utf-8") as fh:
+        yaml.safe_dump(en_world, fh)
+    outputs: list[str] = []
+    monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
+    game.Game(str(data_dir / "en" / "world.yaml"), "en")
+    assert any("Missing translation for action 'cut_gem'" in o for o in outputs)
