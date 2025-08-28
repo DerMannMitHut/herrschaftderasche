@@ -23,6 +23,7 @@ look:
   - 'umsehen'
   - 'umgucken'
   - 'schau'
+  - 'schau dich um'
   - 'sieh dich um'
 examine:
   - 'ansehen $a'
@@ -39,14 +40,15 @@ language:
 destroy:
   - 'zerstöre $a'
   - 'vernichte $a'
+  - 'mach $a kaputt'
 wear:
   - 'trage $a'
   - 'zieh $a an'
   - 'ziehe $a an'
 use:
   - 'benutze $a mit $b'
-  - 'verwende $a für $b'
+  - 'verwende $a mit $b'
 talk:
-  - 'rede $a'
-  - 'sprich $a'
+  - 'rede mit $a'
+  - 'sprich mit $a'
 

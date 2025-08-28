@@ -39,14 +39,18 @@ language:
 destroy:
   - 'destroy $a'
   - 'break $a'
+  - 'smash $a'
 wear:
   - 'wear $a'
   - 'equip $a'
   - 'put on $a'
 use:
   - 'use $a on $b'
+  - 'use $a with $b'
   - 'apply $a to $b'
 talk:
-  - 'talk $a'
-  - 'speak $a'
+  - 'talk to $a'
+  - 'talk with $a'
+  - 'speak to $a'
+  - 'speak with $a'
 
