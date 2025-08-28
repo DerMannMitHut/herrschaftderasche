@@ -1,53 +1,56 @@
 go:
-  - "go"
-  - "move"
-  - "walk"
+  - 'go $a'
+  - 'move $a'
+  - 'walk $a'
 quit:
-  - "quit"
-  - "exit"
-  - "leave"
+  - 'quit'
+  - 'exit'
+  - 'leave'
 take:
-  - "take"
-  - "grab"
-  - "pick up"
-  - ["pick", "up"]
+  - 'take $a'
+  - 'grab $a'
+  - 'pick up $a'
 drop:
-  - "drop"
-  - "discard"
-  - "leave"
-  - "put down"
-  - ["put", "down"]
+  - 'drop $a'
+  - 'discard $a'
+  - 'leave $a'
+  - 'put down $a'
 inventory:
-  - "inventory"
-  - "inv"
+  - 'inventory'
+  - 'inv'
 look:
-  - "look"
-  - "look around"
-  - "l"
-  - "scan"
+  - 'look'
+  - 'look around'
+  - 'l'
+  - 'scan'
 examine:
-  - "examine"
-  - "look at"
-  - "inspect"
-  - "check"
+  - 'examine $a'
+  - 'look at $a'
+  - 'inspect $a'
+  - 'check $a'
 help:
-  - "help"
-  - "h"
+  - 'help'
+  - 'h'
+  - 'help $a'
+  - 'h $a'
 language:
-  - "language"
-  - "lang"
+  - 'language $a'
+  - 'lang $a'
 destroy:
-  - "destroy"
-  - "break"
+  - 'destroy $a'
+  - 'break $a'
+  - 'smash $a'
 wear:
-  - "wear"
-  - "equip"
-  - "put on"
-  - ["put", "on"]
+  - 'wear $a'
+  - 'equip $a'
+  - 'put on $a'
 use:
-  - "use"
-  - "apply"
+  - 'use $a on $b'
+  - 'use $a with $b'
+  - 'apply $a to $b'
 talk:
-  - "talk"
-  - "speak"
+  - 'talk to $a'
+  - 'talk with $a'
+  - 'speak to $a'
+  - 'speak with $a'
 

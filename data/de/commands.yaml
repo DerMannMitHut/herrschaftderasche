@@ -1,53 +1,54 @@
 go:
-  - "gehe"
-  - "geh"
-  - "laufe"
+  - 'gehe $a'
+  - 'geh $a'
+  - 'laufe $a'
 quit:
-  - "beenden"
-  - "ende"
-  - "verlassen"
+  - 'beenden'
+  - 'ende'
+  - 'verlassen'
 take:
-  - "nimm"
-  - "nehme"
-  - "aufheben"
-  - "mitnehmen"
-  - ["heb", "auf"]
-  - ["hebe", "auf"]
+  - 'nimm $a'
+  - 'nehme $a'
+  - 'heb $a auf'
+  - 'hebe $a auf'
 drop:
-  - ["lege", "ab"]
-  - ["lass", "fallen"]
-  - "werfen"
+  - 'lege $a ab'
+  - 'lass $a fallen'
+  - 'wirf $a weg'
 inventory:
-  - "inventar"
-  - "inv"
+  - 'inventar'
+  - 'inv'
 look:
-  - "umschau"
-  - "umsehen"
-  - "umgucken"
-  - "schau"
-  - "sieh dich um"
+  - 'umschau'
+  - 'umsehen'
+  - 'umgucken'
+  - 'schau'
+  - 'schau dich um'
+  - 'sieh dich um'
 examine:
-  - "ansehen"
-  - "schau an"
-  - "betrachte"
-  - "untersuche"
+  - 'ansehen $a'
+  - 'schau $a an'
+  - 'betrachte $a'
+  - 'untersuche $a'
 help:
-  - "hilfe"
-  - "h"
+  - 'hilfe'
+  - 'h'
+  - 'hilfe $a'
+  - 'h $a'
 language:
-  - "sprache"
+  - 'sprache $a'
 destroy:
-  - "zerstöre"
-  - "vernichte"
+  - 'zerstöre $a'
+  - 'vernichte $a'
+  - 'mach $a kaputt'
 wear:
-  - "trage"
-  - "anziehen"
-  - ["zieh", "an"]
-  - ["ziehe", "an"]
+  - 'trage $a'
+  - 'zieh $a an'
+  - 'ziehe $a an'
 use:
-  - "benutze"
-  - "verwende"
+  - 'benutze $a mit $b'
+  - 'verwende $a mit $b'
 talk:
-  - "rede"
-  - "sprich"
+  - 'rede mit $a'
+  - 'sprich mit $a'
 

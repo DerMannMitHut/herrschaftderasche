@@ -24,26 +24,19 @@ def test_game_reaches_ending(data_dir, monkeypatch):
     g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
 
     commands = [
-        "take Small Key",
-        "go Forest",
-        "take Map Fragment",
-        "go Ruins",
-        "take Locked Chest",
-        "use Small Key on Locked Chest",
-        "effect open_ruins",
-        "take Ashen Crown",
-        "go Forest",
-        "go Ash Village",
+        lambda: g.cmd_take("Small Key"),
+        lambda: g.cmd_go("Forest"),
+        lambda: g.cmd_take("Map Fragment"),
+        lambda: g.cmd_go("Ruins"),
+        lambda: g.cmd_take("Locked Chest"),
+        lambda: g.cmd_use("Small Key", "Locked Chest"),
+        lambda: (g.world.apply_effect(open_ruins_effect), io.output(open_ruins_message)),
+        lambda: g.cmd_take("Ashen Crown"),
+        lambda: g.cmd_go("Forest"),
+        lambda: g.cmd_go("Ash Village"),
     ]
 
-    for entry in commands:
-        parts = entry.split(" ", 1)
-        cmd = parts[0]
-        arg = parts[1] if len(parts) > 1 else ""
-        if cmd == "effect":
-            g.world.apply_effect(open_ruins_effect)
-            io.output(open_ruins_message)
-        else:
-            getattr(g, f"cmd_{cmd}")(arg)
+    for func in commands:
+        func()
 
     assert outputs[-1] == ending_text

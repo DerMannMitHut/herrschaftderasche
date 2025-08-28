@@ -1,6 +1,8 @@
 """Core game loop."""
 
 from pathlib import Path
+import re
+from typing import Callable, cast
 
 import yaml
 
@@ -45,23 +47,9 @@ class Game:
         self.commands = i18n.load_commands(self.language)
         self.command_info = i18n.load_command_info()
         self.command_keys = list(self.command_info.keys())
-        self.cmd_patterns: list[tuple[str, str, str]] = []
+        self.cmd_patterns: list[tuple[re.Pattern[str], str, str]] = []
         self.reverse_cmds: dict[str, tuple[str, str]] = {}
-        for key in self.command_keys:
-            val = self.commands.get(key)
-            if isinstance(val, list):
-                for entry in val:
-                    if isinstance(entry, list):
-                        name, suffix = entry
-                    else:
-                        name, suffix = entry, ""
-                    self.cmd_patterns.append((name, key, suffix))
-                    self.reverse_cmds[name] = (key, suffix)
-            elif isinstance(val, str):
-                self.cmd_patterns.append((val, key, ""))
-                self.reverse_cmds[val] = (key, "")
-        self.cmd_patterns.sort(key=lambda x: len(x[0]), reverse=True)
-        self.reverse_cmds["language"] = ("language", "")
+        self._build_cmd_patterns()
         self.running = True
 
     def run(self) -> None:
@@ -73,13 +61,22 @@ class Game:
                 raw = io.get_input()
                 raw = llm.interpret(raw)
                 raw = parser.parse(raw)
-                for name, cmd_key, suffix in self.cmd_patterns:
-                    if raw == name or raw.startswith(name + " "):
-                        arg = raw[len(name):].strip()
-                        arg = self._strip_suffix(arg, suffix)
-                        handler = getattr(self, f"cmd_{cmd_key}", self.cmd_unknown)
-                        handler(arg)
-                        break
+                for pattern, cmd_key, _ in self.cmd_patterns:
+                    match = pattern.fullmatch(raw)
+                    if not match:
+                        continue
+                    groups = match.groupdict()
+                    handler = getattr(self, f"cmd_{cmd_key}", self.cmd_unknown)
+                    if cmd_key == "use":
+                        a = groups.get("a", "").strip()
+                        b = groups.get("b", "").strip()
+                        use_handler = cast(Callable[[str, str], None], handler)
+                        use_handler(a, b)
+                    else:
+                        arg = groups.get("a", "") or groups.get("b", "") or ""
+                        other_handler = cast(Callable[[str], None], handler)
+                        other_handler(arg.strip())
+                    break
                 else:
                     self.cmd_unknown(raw)
         except (EOFError, KeyboardInterrupt):
@@ -197,49 +194,24 @@ class Game:
         if not arg:
             names: list[str] = []
             for key in self.command_keys:
-                val = self.commands.get(key)
-                if isinstance(val, list):
-                    first = val[0]
-                    if isinstance(first, list):
-                        names.append(first[0])
-                    else:
-                        names.append(first)
-                elif isinstance(val, str):
-                    names.append(val)
+                val = self.commands.get(key, [])
+                entries = val if isinstance(val, list) else [val]
+                first = entries[0]
+                names.append(first.split()[0])
             io.output(self.messages["help"].format(commands=", ".join(names)))
             return
         cmd_info = self.reverse_cmds.get(arg)
-        if not cmd_info:
-            for name, key_candidate, _ in self.cmd_patterns:
-                if arg == name or arg.startswith(name + " "):
-                    cmd_info = (key_candidate, "")
-                    break
         if not cmd_info:
             self.cmd_unknown(arg)
             return
         key, _ = cmd_info
         entries = self.commands.get(key, [])
         entries = entries if isinstance(entries, list) else [entries]
-        meta = self.command_info.get(key, {})
-        required = meta.get("arguments", 0)
-        optional = meta.get("optional_arguments", 0)
         usages: list[str] = []
         for entry in entries:
-            if isinstance(entry, list):
-                name, suffix = entry
-            else:
-                name, suffix = entry, ""
-            if key == "use":
-                usage = f"{name} <> on <> {suffix}".strip()
-            else:
-                placeholders = " ".join("<>" for _ in range(required))
-                if key == "help" and optional == 1:
-                    opt = "<command>"
-                else:
-                    opt = " ".join("<>" for _ in range(optional))
-                if opt:
-                    placeholders = f"{placeholders} {opt}".strip()
-                usage = f"{name} {placeholders} {suffix}".strip()
+            if self.command_info.get(key, {}).get("optional_arguments") and "$" not in entry:
+                continue
+            usage = entry.replace("$a", "<>").replace("$b", "<>")
             usages.append(usage)
         header = self.messages.get("help_usage", "Usage of \"{command}\" and synonyms:")
         io.output(header.format(command=key) + "\n" + "\n".join(usages))
@@ -269,21 +241,7 @@ class Game:
         self.commands = commands
         self.cmd_patterns = []
         self.reverse_cmds = {}
-        for key in self.command_keys:
-            val = self.commands.get(key)
-            if isinstance(val, list):
-                for entry in val:
-                    if isinstance(entry, list):
-                        name, suffix = entry
-                    else:
-                        name, suffix = entry, ""
-                    self.cmd_patterns.append((name, key, suffix))
-                    self.reverse_cmds[name] = (key, suffix)
-            elif isinstance(val, str):
-                self.cmd_patterns.append((val, key, ""))
-                self.reverse_cmds[val] = (key, "")
-        self.cmd_patterns.sort(key=lambda x: len(x[0]), reverse=True)
-        self.reverse_cmds["language"] = ("language", "")
+        self._build_cmd_patterns()
         io.output(self.messages["language_set"].format(language=language))
 
     def cmd_talk(self, arg: str) -> None:
@@ -312,11 +270,10 @@ class Game:
             return
         io.output(self.messages["no_npc"])
 
-    def cmd_use(self, arg: str) -> None:
-        if " on " not in arg:
-            self.cmd_unknown(arg)
+    def cmd_use(self, item_name: str, target_name: str) -> None:
+        if not item_name or not target_name:
+            self.cmd_unknown("use")
             return
-        item_name, target_name = [part.strip() for part in arg.split(" on ", 1)]
         item_id = None
         target_id = None
         item_name_cf = item_name.casefold()
@@ -346,6 +303,37 @@ class Game:
                 return
         io.output(self.messages["use_failure"])
         self._check_end()
+
+    def _build_cmd_patterns(self) -> None:
+        for key in self.command_keys:
+            val = self.commands.get(key, [])
+            entries = val if isinstance(val, list) else [val]
+            for entry in entries:
+                pattern, base = self._compile_command(entry)
+                self.cmd_patterns.append((pattern, key, entry))
+                if base not in self.reverse_cmds:
+                    self.reverse_cmds[base] = (key, entry)
+        self.cmd_patterns.sort(key=lambda x: len(x[0].pattern), reverse=True)
+        self.reverse_cmds["language"] = ("language", "language")
+
+    def _compile_command(self, pattern: str) -> tuple[re.Pattern[str], str]:
+        tokens = pattern.split()
+        placeholder_positions = [i for i, t in enumerate(tokens) if t in ("$a", "$b")]
+        last_placeholder = placeholder_positions[-1] if placeholder_positions else -1
+        base = None
+        parts: list[str] = []
+        for idx, token in enumerate(tokens):
+            if token == "$a":
+                part = r"(?P<a>.+)" if idx == last_placeholder else r"(?P<a>.+?)"
+            elif token == "$b":
+                part = r"(?P<b>.+)" if idx == last_placeholder else r"(?P<b>.+?)"
+            else:
+                if base is None:
+                    base = token
+                part = re.escape(token)
+            parts.append(part)
+        regex = r"^" + r"\s+".join(parts) + r"$"
+        return re.compile(regex), base or pattern
 
     def cmd_unknown(self, arg: str) -> None:
         io.output(self.messages["unknown_command"])

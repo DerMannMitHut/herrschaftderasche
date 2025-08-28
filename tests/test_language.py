@@ -8,7 +8,8 @@ def test_language_switch(data_dir, monkeypatch):
     g.cmd_language("de")
     assert g.messages["farewell"] == "Auf Wiedersehen!"
     assert g.commands["look"][0] == "umschau"
-    assert g.commands["examine"][0] == "ansehen"
+    assert g.commands["examine"][0] == "ansehen $a"
+    assert g.commands["talk"][0] == "rede mit $a"
     assert g.reverse_cmds["hilfe"][0] == "help"
     assert g.reverse_cmds["language"][0] == "language"
     assert g.reverse_cmds["sprache"][0] == "language"
