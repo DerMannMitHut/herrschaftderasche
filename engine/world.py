@@ -250,6 +250,8 @@ class World:
             self.set_item_state(item_id, state)
         location = cond.get("location")
         if location:
+            if location == "CURRENT_ROOM":
+                location = self.current
             if item_id in self.inventory:
                 self.inventory.remove(item_id)
                 self.debug(f"inventory {self.inventory}")

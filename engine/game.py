@@ -95,6 +95,56 @@ class Game:
             return arg[: -len(suffix) - 1].strip()
         return arg
 
+    def _find_item_id(self, name: str, *, in_inventory: bool = False) -> str | None:
+        if not name:
+            return None
+        name_cf = name.casefold()
+        if not in_inventory:
+            room = self.world.rooms[self.world.current]
+            for item_id in room.get("items", []):
+                names = self.world.items.get(item_id, {}).get("names", [])
+                if any(n.casefold() == name_cf for n in names):
+                    return item_id
+        for item_id in self.world.inventory:
+            names = self.world.items.get(item_id, {}).get("names", [])
+            if any(n.casefold() == name_cf for n in names):
+                return item_id
+        return None
+
+    def _execute_action(
+        self, trigger: str, item_id: str, target_id: str | None = None
+    ) -> bool:
+        for action in self.world.actions:
+            if action.get("trigger") != trigger:
+                continue
+            if action.get("item") and action.get("item") != item_id:
+                continue
+            if action.get("target_item") and action.get("target_item") != target_id:
+                continue
+            if not self.world.check_preconditions(action.get("preconditions")):
+                continue
+            effect = action.get("effect", {})
+            self.world.apply_effect(effect)
+            message = action.get("messages", {}).get("success")
+            if message:
+                io.output(message)
+            return True
+        return False
+
+    def describe_item(self, item_name: str) -> None:
+        if not item_name:
+            self.cmd_unknown(item_name)
+            return
+        item_id = self._find_item_id(item_name)
+        if not item_id:
+            io.output(self.messages["item_not_present"])
+            return
+        desc = self.world.describe_item(item_name)
+        if desc:
+            io.output(desc)
+        self._execute_action("examine", item_id)
+        self._check_end()
+
     def cmd_quit(self, arg: str) -> None:
         self._save_state()
         io.output(self.messages["farewell"])
@@ -169,14 +219,7 @@ class Game:
         io.output(self.world.describe_current(self.messages))
 
     def cmd_examine(self, arg: str) -> None:
-        if not arg:
-            self.cmd_unknown(arg)
-            return
-        desc = self.world.describe_item(arg)
-        if desc:
-            io.output(desc)
-        else:
-            io.output(self.messages["item_not_present"])
+        self.describe_item(arg)
 
     def cmd_go(self, arg: str) -> None:
         if not arg:
@@ -274,35 +317,15 @@ class Game:
         if not item_name or not target_name:
             self.cmd_unknown("use")
             return
-        item_id = None
-        target_id = None
-        item_name_cf = item_name.casefold()
-        target_name_cf = target_name.casefold()
-        for inv_id in self.world.inventory:
-            names = self.world.items.get(inv_id, {}).get("names", [])
-            if item_id is None and any(name.casefold() == item_name_cf for name in names):
-                item_id = inv_id
-            if target_id is None and any(name.casefold() == target_name_cf for name in names):
-                target_id = inv_id
+        item_id = self._find_item_id(item_name, in_inventory=True)
+        target_id = self._find_item_id(target_name, in_inventory=True)
         if not item_id or not target_id:
             io.output(self.messages["use_failure"])
             self._check_end()
             return
-        for action in self.world.actions:
-            if action.get("trigger") != "use":
-                continue
-            if action.get("item") == item_id and action.get("target_item") == target_id:
-                if not self.world.check_preconditions(action.get("preconditions")):
-                    continue
-                effect = action.get("effect", {})
-                self.world.apply_effect(effect)
-                message = action.get("messages", {}).get("success")
-                if message:
-                    io.output(message)
-                else:
-                    io.output(self.messages["use_failure"])
-                self._check_end()
-                return
+        if self._execute_action("use", item_id, target_id):
+            self._check_end()
+            return
         io.output(self.messages["use_failure"])
         self._check_end()
 

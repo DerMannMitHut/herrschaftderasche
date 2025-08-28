@@ -7,7 +7,7 @@ import argparse
 # Ensure repository root is on the path when executed directly
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from engine.game import run
+from engine.game import run  # noqa: E402
 
 
 if __name__ == "__main__":
