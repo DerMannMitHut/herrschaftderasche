@@ -25,9 +25,9 @@ items:
       - Truhe
     states:
       closed:
-        description: "Eine stabile Truhe mit einfachem Schloss."
+        description: "Eine stabile Truhe, leider verschlossen. Du musst den richtigen Schlüssel benutzen, um sie zu öffnen."
       open:
-        description: "Die Truhe steht offen und zeigt ihren Inhalt."
+        description: "Die Truhe steht offen und zeigt ihren Inhalt. Sie ist voller Asche, und darin eine Krone."
 
 rooms:
   hut:
@@ -59,9 +59,9 @@ npcs:
       text: "Ashram tritt aus den Schatten und bietet seine Hilfe an."
     states:
       met:
-        talk: "Ashram hört sich dein Anliegen an und sagt seine Hilfe zu."
+        talk: "Ashram hört sich dein Anliegen an und sagt seine Hilfe zu. Er könnte dir helfen, Schriftstücke zu entziffern."
       helped:
-        talk: "Ashram nickt; er unterstützt dich bereits."
+        talk: "Ashram nickt dir zu und sagt: 'Zeige mir etwas, bei dem ich dir helfen soll.'"
 
 actions:
   open_chest:
@@ -69,7 +69,10 @@ actions:
       success: "Der Schlüssel klickt, und die Truhe entriegelt sich."
   interpret_map:
     messages:
-      success: "Ashram hilft dir, die verblasste Karte zu entziffern."
+      success: "Ashram hilft dir, die verblasste Karte zu entziffern. Damit kannst du jetzt deinen Weg finden."
+  find_crown:
+    messages:
+      success: "Eine Krone ist darin, halb verdeckt von einer Schicht Asche. Du nimmst sie an dich."
 
 endings:
   crown_returned: "Mit der Aschenkrone kehrst du ins Dorf zurück und erfüllst dein Schicksal."

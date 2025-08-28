@@ -11,3 +11,4 @@ destroy: {arguments: 1}
 wear: {arguments: 1}
 use: {arguments: 2}
 talk: {arguments: 1}
+show: {arguments: 2}

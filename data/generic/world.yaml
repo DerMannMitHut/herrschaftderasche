@@ -19,8 +19,6 @@ rooms:
     exits:
       - forest
   forest:
-    items:
-      - map_fragment
     exits:
       - hut
       - ash_village
@@ -30,7 +28,8 @@ rooms:
     exits:
       - forest
   ash_village:
-    items: []
+    items:
+      - map_fragment
     exits:
       - forest
 
@@ -45,6 +44,22 @@ npcs:
       location: forest
 
 actions:
+  interpret_map:
+    trigger: show
+    item: map_fragment
+    target_npc: ashram
+    preconditions:
+      npc_condition:
+        - npc: ashram
+          state: met
+    effect:
+      item_condition:
+        - item: map_fragment
+          state: readable
+      add_exit:
+        - room: hut
+          target: ruins
+
   open_chest:
     trigger: use
     item: small_key
@@ -55,28 +70,18 @@ actions:
       item_condition:
         - item: locked_chest
           state: open
-        - item: ashen_crown
-          location: ruins
-  interpret_map:
-    trigger: use
-    item: map_fragment
-    preconditions:
-      npc_met: ashram
+
+  find_crown:
+    trigger: examine
+    item: locked_chest
+    precondition:
+      item_conditions:
+        - item: locked_chest
+          state: open
     effect:
-      item_condition:
-        - item: map_fragment
-          state: readable
-      add_exit:
-        - room: forest
-          target: ruins
-  open_ruins:
-    trigger: use
-    preconditions:
-      npc_help: ashram
-    effect:
-      item_condition:
+      item_conditions:
         - item: ashen_crown
-          location: ruins
+          location: INVENTORY
 
 start: hut
 
