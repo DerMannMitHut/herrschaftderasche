@@ -16,6 +16,7 @@ class World:
         self.current = data["start"]
         self.inventory: list[str] = data.get("inventory", [])
         self.endings = data.get("endings", {})
+        self.intro = data.get("intro", "")
         actions = data.get("actions", [])
         if isinstance(actions, dict):
             actions = list(actions.values())
@@ -169,6 +170,7 @@ class World:
             "endings": endings,
             "actions": actions,
             "npcs": npcs,
+            "intro": lang.get("intro", ""),
         }
         return cls(data, debug=debug)
 
@@ -337,11 +339,15 @@ class World:
                 desc += " " + messages["items_here"].format(items=", ".join(item_names))
             else:  # pragma: no cover - fallback without messages
                 desc += " You see here: " + ", ".join(item_names)
-        room_npcs = [
-            npc.get("names", [npc_id])[0]
-            for npc_id, npc in self.npcs.items()
-            if npc.get("meet", {}).get("location") == self.current
-        ]
+        room_npcs = []
+        for npc_id, npc in self.npcs.items():
+            meet = npc.get("meet", {})
+            if meet.get("location") != self.current:
+                continue
+            pre = meet.get("preconditions")
+            if pre and not self.check_preconditions(pre):
+                continue
+            room_npcs.append(npc.get("names", [npc_id])[0])
         if room_npcs:
             if messages:
                 desc += " " + messages["npcs_here"].format(npcs=", ".join(room_npcs))

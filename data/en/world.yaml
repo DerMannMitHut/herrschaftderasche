@@ -1,3 +1,4 @@
+intro: "You wake in a small hut, the world outside shrouded in ash."
 items:
   small_key:
     names:
@@ -52,6 +53,17 @@ rooms:
     description: "A village blanketed in ash."
 
 npcs:
+  villager:
+    names:
+      - Marek
+      - Villager
+    meet:
+      text: "A villager named Marek approaches you with a wary look."
+    states:
+      met:
+        talk: "'Bring the Ashen Crown to the village,' Marek urges. 'Seek the hermit Ashram in the forest; he will aid you.'"
+      helped:
+        talk: "Marek nods. 'Don't forget the crown.'"
   ashram:
     names:
       - Ashram

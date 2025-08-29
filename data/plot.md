@@ -2,7 +2,7 @@
 
 ## Grundidee
 
-Der Spieler ist auf der Suche nach einem geheimnisvollen Artefakt (die **Aschenkrone**). Ein NSC, ein alter Gelehrter oder Wanderer, begleitet oder unterstützt den Spieler – gibt Hinweise, öffnet verschlossene Wege, deutet Zusammenhänge. Ziel ist es, die Krone zu bergen und an den richtigen Ort zu bringen.
+Der Spieler erwacht in einer verlassenen Hütte, draußen liegt die Welt unter Asche. Im Aschendorf bittet der Dorfbewohner **Marek** ihn, die **Aschenkrone** zurückzubringen und weist auf den Einsiedler **Ashram** im Wald hin. Ashram erscheint dort erst nach dem Gespräch mit Marek und hilft, eine fragmentierte Karte zu deuten. Ziel ist es, die Krone zu bergen und ins Aschendorf zu bringen.
 
 ---
 
@@ -14,7 +14,7 @@ Der Spieler ist auf der Suche nach einem geheimnisvollen Artefakt (die **Aschenk
   
 * **Wald**
 
-  * Ein mysteriöser NSC (z. B. **Der Gelehrte Ashram**) trifft den Spieler.
+  * Ashram erscheint hier erst, nachdem zuvor mit Marek gesprochen wurde.
   * Ashram gibt Ratschläge, erklärt Dinge, kennt die Legenden.
   
 * **Ruinenstätte**
@@ -38,6 +38,11 @@ Der Spieler ist auf der Suche nach einem geheimnisvollen Artefakt (die **Aschenk
 
 ## NSC
 
+* **Marek, der Dorfbewohner**
+
+  * Gibt den Auftrag, die Aschenkrone ins Aschendorf zu bringen.
+  * Weist auf Ashram im Wald hin.
+
 * **Ashram, der Gelehrte**
 
   * Alter Mann, kennt Mythen und Rätsel.
@@ -50,6 +55,7 @@ Der Spieler ist auf der Suche nach einem geheimnisvollen Artefakt (die **Aschenk
 ## Ablauf
 
 1. **Hütte**: Spieler findet den Schlüssel.
-2. **Wald**: Begegnung mit Ashram → er deutet die Karte und der Zugang zu den Ruinen erscheint
-3. **Ruinenstätte**: Die Truhe kann geöffnet werden → Die Krone erscheint.
-4. **Aschendorf**: Spieler bringt Krone zurück → Ende.
+2. **Aschendorf**: Gespräch mit Marek → Auftrag und Hinweis auf Ashram.
+3. **Wald**: Nach dem Gespräch erscheint Ashram, deutet die Karte und der Zugang zu den Ruinen entsteht.
+4. **Ruinenstätte**: Die Truhe kann geöffnet werden → Die Krone erscheint.
+5. **Aschendorf**: Spieler bringt Krone zurück → Ende.

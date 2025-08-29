@@ -65,6 +65,7 @@ class Game:
             with open(self.save_path, encoding="utf-8") as fh:
                 save_data = yaml.safe_load(fh) or {}
         self.language = str(save_data.get("language", language))
+        self._show_intro = not save_data
         lang_world_path = self.data_dir / self.language / "world.yaml"
 
         warnings = integrity.check_translations(self.language, self.data_dir)
@@ -96,6 +97,8 @@ class Game:
         self.running = True
 
     def run(self) -> None:
+        if self._show_intro and self.world.intro:
+            io.output(self.world.intro)
         io.output(self.world.describe_current(self.messages))
         self._check_npc_event()
         self._check_end()
@@ -429,7 +432,10 @@ class Game:
             meet = npc.get("meet", {})
             loc = meet.get("location")
             text = meet.get("text")
+            pre = meet.get("preconditions")
             if loc == self.world.current and self.world.npc_state(npc_id) != "met":
+                if pre and not self.world.check_preconditions(pre):
+                    continue
                 if text:
                     io.output(text)
                 self.world.meet_npc(npc_id)
