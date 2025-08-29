@@ -59,9 +59,9 @@ npcs:
       text: "Ashram steps from the shadows and offers his help."
     states:
       met:
-        talk: "Ashram listens to your plight and offers his aid."
+        talk: "Ashram listens to your plight and offers his aid. He can help decipher writings."
       helped:
-        talk: "Ashram nods; he is already helping you."
+        talk: "Ashram nods and says: 'Show me something you'd like help with.'"
 
 actions:
   open_chest:
@@ -69,7 +69,10 @@ actions:
       success: "The key turns with a click and the chest unlocks."
   interpret_map:
     messages:
-      success: "Ashram helps you decipher the faded map."
+      success: "Ashram helps you decipher the faded map. You can now find your way."
+  find_crown:
+    messages:
+      success: "Half buried in ash, a crown glints. You take it with you."
 
 endings:
   crown_returned: "With the Ashen Crown reclaimed, you return to the village as its destined ruler."
