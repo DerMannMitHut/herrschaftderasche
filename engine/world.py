@@ -6,11 +6,25 @@ import sys
 
 import yaml
 
-from .world_model import Action, Item, Npc, Room
+from .world_model import Action, Item, Npc, Room, LocationTag, StateTag
+
+
+def _convert_tags(obj: Any) -> Any:
+    if isinstance(obj, dict):
+        return {k: _convert_tags(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_convert_tags(v) for v in obj]
+    if isinstance(obj, str):
+        if obj in LocationTag._value2member_map_:
+            return LocationTag(obj)
+        if obj in StateTag._value2member_map_:
+            return StateTag(obj)
+    return obj
 
 
 class World:
     def __init__(self, data: Dict[str, Any], debug: bool = False):
+        data = _convert_tags(data)
         self._debug_enabled = debug
         raw_rooms = data.get("rooms", {})
         raw_items = data.get("items", {})
@@ -44,12 +58,12 @@ class World:
             act if isinstance(act, Action) else Action(**act)
             for act in normalized
         ]
-        self.item_states: Dict[str, str] = {
+        self.item_states: Dict[str, str | StateTag] = {
             item_id: item_data.state
             for item_id, item_data in self.items.items()
             if item_data.state is not None
         }
-        self.npc_states: Dict[str, str] = {
+        self.npc_states: Dict[str, str | StateTag] = {
             npc_id: npc_data.state
             for npc_id, npc_data in self.npcs.items()
             if npc_data.state is not None
@@ -58,8 +72,8 @@ class World:
             room_id: list(room.items) for room_id, room in self.rooms.items()
         }
         self._base_inventory: list[str] = list(self.inventory)
-        self._base_item_states: Dict[str, str] = dict(self.item_states)
-        self._base_npc_states: Dict[str, str] = dict(self.npc_states)
+        self._base_item_states: Dict[str, str | StateTag] = dict(self.item_states)
+        self._base_npc_states: Dict[str, str | StateTag] = dict(self.npc_states)
 
         for room in self.rooms.values():
             exits = room.exits
@@ -189,6 +203,12 @@ class World:
                     npc_cfg.setdefault(key, {}).update(value)
                 else:
                     npc_cfg[key] = value
+        items = _convert_tags(items)
+        rooms = _convert_tags(rooms)
+        endings = _convert_tags(endings)
+        actions = [_convert_tags(a) for a in actions]
+        npcs = _convert_tags(npcs)
+
         data = {
             "items": {item_id: Item(**cfg) for item_id, cfg in items.items()},
             "rooms": {room_id: Room(**cfg) for room_id, cfg in rooms.items()},
@@ -216,13 +236,15 @@ class World:
         states_diff: Dict[str, str] = {}
         for item_id, cur_state in self.item_states.items():
             if self._base_item_states.get(item_id) != cur_state:
-                states_diff[item_id] = cur_state
+                val = cur_state.value if isinstance(cur_state, StateTag) else cur_state
+                states_diff[item_id] = val
         if states_diff:
             state["item_states"] = states_diff
         npc_states_diff: Dict[str, str] = {}
         for npc_id, cur_state in self.npc_states.items():
             if self._base_npc_states.get(npc_id) != cur_state:
-                npc_states_diff[npc_id] = cur_state
+                val = cur_state.value if isinstance(cur_state, StateTag) else cur_state
+                npc_states_diff[npc_id] = val
         if npc_states_diff:
             state["npc_states"] = npc_states_diff
         return state
@@ -249,13 +271,25 @@ class World:
         item_states = data.get("item_states", {})
         for item_id, state in item_states.items():
             if item_id in self.item_states:
-                self.item_states[item_id] = state
-                self.items[item_id].state = state
+                val = (
+                    StateTag(state)
+                    if isinstance(state, str)
+                    and state in StateTag._value2member_map_
+                    else state
+                )
+                self.item_states[item_id] = val
+                self.items[item_id].state = val
         npc_states = data.get("npc_states", {})
         for npc_id, state in npc_states.items():
             if npc_id in self.npc_states:
-                self.npc_states[npc_id] = state
-                self.npcs[npc_id].state = state
+                val = (
+                    StateTag(state)
+                    if isinstance(state, str)
+                    and state in StateTag._value2member_map_
+                    else state
+                )
+                self.npc_states[npc_id] = val
+                self.npcs[npc_id].state = val
 
     # Condition / effect handling -------------------------------------------------
 
@@ -264,15 +298,25 @@ class World:
         if not item_id:
             return False
         state = cond.get("state")
-        if state and self.item_states.get(item_id) != state:
-            return False
+        if state is not None:
+            expected = state.value if isinstance(state, StateTag) else state
+            current = self.item_states.get(item_id)
+            if isinstance(current, StateTag):
+                current = current.value
+            if current != expected:
+                return False
         location = cond.get("location")
         if location:
-            if location == "INVENTORY":
+            if location is LocationTag.INVENTORY:
                 if item_id not in self.inventory:
                     return False
+            elif location is LocationTag.CURRENT_ROOM:
+                room = self.rooms.get(self.current)
+                if not room or item_id not in room.items:
+                    return False
             else:
-                room = self.rooms.get(location)
+                room_id = location
+                room = self.rooms.get(room_id)
                 if not room or item_id not in room.items:
                     return False
         return True
@@ -280,7 +324,7 @@ class World:
     def _check_npc_condition(self, cond: Dict[str, Any]) -> bool:
         npc_id = cond.get("npc")
         state = cond.get("state")
-        if not npc_id or not state:
+        if not npc_id or state is None:
             return False
         return self.npc_state(npc_id) == state
 
@@ -288,16 +332,16 @@ class World:
         if not pre:
             return True
         loc = pre.get("is_location")
-        if loc and self.current != loc:
+        if loc and self.current != (loc.value if isinstance(loc, LocationTag) else loc):
             return False
         item_cond = pre.get("item_condition")
         if item_cond and not self._check_item_condition(item_cond):
             return False
         npc_met = pre.get("npc_met")
-        if npc_met and not self._check_npc_condition({"npc": npc_met, "state": "met"}):
+        if npc_met and not self._check_npc_condition({"npc": npc_met, "state": StateTag.MET}):
             return False
         npc_help = pre.get("npc_help")
-        if npc_help and not self._check_npc_condition({"npc": npc_help, "state": "helped"}):
+        if npc_help and not self._check_npc_condition({"npc": npc_help, "state": StateTag.HELPED}):
             return False
         npc_cond = pre.get("npc_state")
         if npc_cond and not self._check_npc_condition(npc_cond):
@@ -316,11 +360,11 @@ class World:
         if not item_id:
             return
         state = cond.get("state")
-        if state:
+        if state is not None:
             self.set_item_state(item_id, state)
         location = cond.get("location")
         if location:
-            if location == "CURRENT_ROOM":
+            if location is LocationTag.CURRENT_ROOM:
                 location = self.current
             if item_id in self.inventory:
                 self.inventory.remove(item_id)
@@ -330,13 +374,14 @@ class World:
                 if item_id in items:
                     items.remove(item_id)
                     self.debug(f"room {room_id} items {items}")
-            if location == "INVENTORY":
+            if location is LocationTag.INVENTORY:
                 self.inventory.append(item_id)
                 self.debug(f"inventory {self.inventory}")
             else:
-                room = self.rooms.setdefault(location, Room())
+                room_id = location
+                room = self.rooms.setdefault(room_id, Room())
                 room.items.append(item_id)
-                self.debug(f"room {location} items {room.items}")
+                self.debug(f"room {room_id} items {room.items}")
 
     def apply_effect(self, effect: Dict[str, Any]) -> None:
         item_cond = effect.get("item_condition") or effect.get("item_conditions")
@@ -404,7 +449,8 @@ class World:
             if any(name.casefold() == item_name_cf for name in names):
                 state = self.item_states.get(item_id)
                 if state:
-                    desc = item.states.get(state, {}).get("description")
+                    state_key = state.value if isinstance(state, StateTag) else state
+                    desc = item.states.get(state_key, {}).get("description")
                     if desc is not None:
                         return desc
                 return item.description
@@ -416,7 +462,8 @@ class World:
             if any(name.casefold() == item_name_cf for name in names):
                 state = self.item_states.get(item_id)
                 if state:
-                    desc = item.states.get(state, {}).get("description")
+                    state_key = state.value if isinstance(state, StateTag) else state
+                    desc = item.states.get(state_key, {}).get("description")
                     if desc is not None:
                         return desc
                 return item.description
@@ -504,7 +551,7 @@ class World:
         self.debug(f"item {item_id} state {state}")
         return True
 
-    def set_npc_state(self, npc_id: str, state: str) -> bool:
+    def set_npc_state(self, npc_id: str, state: str | StateTag) -> bool:
         """Set the state for an NPC if the state exists.
 
         Returns True if the state was changed, False otherwise."""
@@ -512,11 +559,17 @@ class World:
         if not npc:
             return False
         states = npc.states
-        if not states or state not in states:
+        state_key = state.value if isinstance(state, StateTag) else state
+        if not states or state_key not in states:
             return False
-        self.npc_states[npc_id] = state
-        npc.state = state
-        self.debug(f"npc {npc_id} state {state}")
+        value = (
+            StateTag(state_key)
+            if state_key in StateTag._value2member_map_
+            else state_key
+        )
+        self.npc_states[npc_id] = value
+        npc.state = value
+        self.debug(f"npc {npc_id} state {state_key}")
         return True
 
     def meet_npc(self, npc_id: str) -> bool:
@@ -525,14 +578,14 @@ class World:
         if not npc:
             return False
         states = npc.states
-        if "met" not in states:
+        if StateTag.MET.value not in states:
             return False
-        self.npc_states[npc_id] = "met"
-        npc.state = "met"
-        self.debug(f"npc {npc_id} state met")
+        self.npc_states[npc_id] = StateTag.MET
+        npc.state = StateTag.MET
+        self.debug(f"npc {npc_id} state {StateTag.MET.value}")
         return True
 
-    def npc_state(self, npc_id: str) -> str | None:
+    def npc_state(self, npc_id: str) -> str | StateTag | None:
         """Return the current state of an NPC."""
         return self.npc_states.get(npc_id)
 

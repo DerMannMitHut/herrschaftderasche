@@ -1,4 +1,5 @@
 from engine import game
+from engine.world_model import LocationTag
 
 
 def test_apply_effect_multiple_item_conditions(data_dir):
@@ -8,7 +9,7 @@ def test_apply_effect_multiple_item_conditions(data_dir):
         {
             "item_condition": [
                 {"item": "gem", "state": "green"},
-                {"item": "sword", "location": "INVENTORY"},
+                {"item": "sword", "location": LocationTag.INVENTORY},
             ]
         }
     )

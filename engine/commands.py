@@ -7,8 +7,8 @@ from dataclasses import dataclass
 from functools import wraps
 from typing import Callable, cast
 
-from . import world
-from .interfaces import IOBackend
+from . import io, world
+from .world_model import StateTag
 from .language import LanguageManager
 from .persistence import SaveManager
 
@@ -399,14 +399,15 @@ class CommandProcessor:
             return
         npc = self.world.npcs[npc_id]
         state = self.world.npc_state(npc_id)
-        talk_cfg = npc.get("states", {}).get(state, {})
+        state_key = state.value if isinstance(state, StateTag) else state
+        talk_cfg = npc.get("states", {}).get(state_key, {})
         text = talk_cfg.get("talk")
         if text:
             self.io.output(text)
         else:
-            self.io.output(self.language_manager.messages["no_npc"])
-        if state != "helped":
-            self.world.set_npc_state(npc_id, "helped")
+            io.output(self.language_manager.messages["no_npc"])
+        if state != StateTag.HELPED:
+            self.world.set_npc_state(npc_id, StateTag.HELPED)
 
     @require_args(2)
     def cmd_use(self, item_name: str, target_name: str) -> None:

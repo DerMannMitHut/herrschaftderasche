@@ -1,6 +1,7 @@
 import yaml
 from engine.world import World
-from engine import game
+from engine import game, io
+from engine.world_model import StateTag
 
 
 def make_world() -> World:
@@ -21,13 +22,13 @@ def test_meet_npc_changes_state():
     w = make_world()
     assert w.npc_state("old_man") == "unknown"
     assert w.meet_npc("old_man")
-    assert w.npc_state("old_man") == "met"
+    assert w.npc_state("old_man") == StateTag.MET
 
 
 def test_set_npc_state_changes_state():
     w = make_world()
-    assert w.set_npc_state("old_man", "helped")
-    assert w.npc_state("old_man") == "helped"
+    assert w.set_npc_state("old_man", StateTag.HELPED)
+    assert w.npc_state("old_man") == StateTag.HELPED
 
 
 def test_npc_state_saved_and_loaded(tmp_path):
@@ -37,7 +38,7 @@ def test_npc_state_saved_and_loaded(tmp_path):
     w.save(save_path)
     new = make_world()
     new.load_state(save_path)
-    assert new.npc_state("old_man") == "met"
+    assert new.npc_state("old_man") == StateTag.MET
     with open(save_path, encoding="utf-8") as fh:
         data = yaml.safe_load(fh)
     assert data["npc_states"] == {"old_man": "met"}
@@ -48,7 +49,7 @@ def test_npc_event_triggered_on_room_change(data_dir, capsys):
     g.command_processor.cmd_go("Room 2")
     out = capsys.readouterr().out
     assert "The old man greets you." in out
-    assert g.world.npc_state("old_man") == "met"
+    assert g.world.npc_state("old_man") == StateTag.MET
     g.command_processor.cmd_go("Room 3")
     capsys.readouterr()
     g.command_processor.cmd_go("Room 2")
@@ -100,10 +101,10 @@ def test_action_requires_npc_met():
 def test_action_requires_npc_help():
     w = make_world()
     pre_help = {"npc_help": "old_man"}
-    pre_state = {"npc_state": {"npc": "old_man", "state": "helped"}}
+    pre_state = {"npc_state": {"npc": "old_man", "state": StateTag.HELPED}}
     assert not w.check_preconditions(pre_help)
     assert not w.check_preconditions(pre_state)
-    w.npc_states["old_man"] = "helped"
-    w.npcs["old_man"]["state"] = "helped"
+    w.npc_states["old_man"] = StateTag.HELPED
+    w.npcs["old_man"]["state"] = StateTag.HELPED
     assert w.check_preconditions(pre_help)
     assert w.check_preconditions(pre_state)

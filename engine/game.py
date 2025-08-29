@@ -6,11 +6,11 @@ from pathlib import Path
 
 import yaml
 
-from engine import parser, world, integrity
+from engine import io, parser, world, llm, integrity
+from .world_model import StateTag
 from .interfaces import IOBackend, LLMBackend
 from .io import ConsoleIO
 from .llm import NoOpLLM
-
 from .commands import CommandProcessor
 from .language import LanguageManager
 from .persistence import SaveManager
@@ -110,7 +110,10 @@ class Game:
             loc = meet.get("location")
             text = meet.get("text")
             pre = meet.get("preconditions")
-            if loc == self.world.current and self.world.npc_state(npc_id) != "met":
+            if (
+                loc == self.world.current
+                and self.world.npc_state(npc_id) != StateTag.MET
+            ):
                 if pre and not self.world.check_preconditions(pre):
                     continue
                 if text:

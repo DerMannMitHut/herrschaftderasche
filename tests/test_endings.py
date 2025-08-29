@@ -1,5 +1,6 @@
 import yaml
-from engine import game
+from engine import game, io
+from engine.world_model import LocationTag
 
 
 def test_end_condition_inventory_and_location(data_dir, io_backend):
@@ -14,7 +15,7 @@ def test_end_condition_inventory_and_location(data_dir, io_backend):
             "win": {
                 "preconditions": {
                     "is_location": "room2",
-                    "item_condition": {"item": "crown", "location": "INVENTORY"},
+                    "item_condition": {"item": "crown", "location": LocationTag.INVENTORY.value},
                 }
             }
         },

@@ -1,4 +1,5 @@
 from engine import game
+from engine.world_model import StateTag
 
 
 def test_debug_outputs_after_state_changes(data_dir, capsys):
@@ -18,6 +19,6 @@ def test_debug_outputs_after_state_changes(data_dir, capsys):
     err = capsys.readouterr().err
     assert "-- item gem state green" in err
 
-    g.world.set_npc_state("old_man", "helped")
+    g.world.set_npc_state("old_man", StateTag.HELPED)
     err = capsys.readouterr().err
     assert "-- npc old_man state helped" in err
