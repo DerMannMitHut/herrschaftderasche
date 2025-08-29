@@ -148,12 +148,18 @@ class Game:
         name_cf = name.casefold()
         if not in_inventory:
             room = self.world.rooms[self.world.current]
-            for item_id in room.get("items", []):
-                names = self.world.items.get(item_id, {}).get("names", [])
+            for item_id in room.items:
+                if item_id in self.world.items:
+                    names = self.world.items[item_id].names
+                else:
+                    names = []
                 if any(n.casefold() == name_cf for n in names):
                     return item_id
         for item_id in self.world.inventory:
-            names = self.world.items.get(item_id, {}).get("names", [])
+            if item_id in self.world.items:
+                names = self.world.items[item_id].names
+            else:
+                names = []
             if any(n.casefold() == name_cf for n in names):
                 return item_id
         return None
@@ -163,10 +169,10 @@ class Game:
             return None
         name_cf = name.casefold()
         for npc_id, npc in self.world.npcs.items():
-            names = npc.get("names", [])
+            names = npc.names
             if not any(n.casefold() == name_cf for n in names):
                 continue
-            if npc.get("meet", {}).get("location") != self.world.current:
+            if npc.meet.get("location") != self.world.current:
                 return None
             return npc_id
         return None
@@ -218,19 +224,19 @@ class Game:
         self, trigger: str, item_id: str, target_id: str | None = None
     ) -> bool:
         for action in self.world.actions:
-            if action.get("trigger") != trigger:
+            if action.trigger != trigger:
                 continue
-            if action.get("item") and action.get("item") != item_id:
+            if action.item and action.item != item_id:
                 continue
-            if action.get("target_item") and action.get("target_item") != target_id:
+            if action.target_item and action.target_item != target_id:
                 continue
-            if action.get("target_npc") and action.get("target_npc") != target_id:
+            if action.target_npc and action.target_npc != target_id:
                 continue
-            if not self.world.check_preconditions(action.get("preconditions")):
+            if not self.world.check_preconditions(action.preconditions):
                 continue
-            effect = action.get("effect", {})
+            effect = action.effect
             self.world.apply_effect(effect)
-            message = action.get("messages", {}).get("success")
+            message = action.messages.get("success") if action.messages else None
             if message:
                 io.output(message)
             return True
@@ -375,7 +381,7 @@ class Game:
             return
         npc = self.world.npcs[npc_id]
         state = self.world.npc_state(npc_id)
-        talk_cfg = npc.get("states", {}).get(state, {})
+        talk_cfg = npc.states.get(state, {}) if state else {}
         text = talk_cfg.get("talk")
         if text:
             io.output(text)
@@ -429,7 +435,7 @@ class Game:
 
     def _check_npc_event(self) -> None:
         for npc_id, npc in self.world.npcs.items():
-            meet = npc.get("meet", {})
+            meet = npc.meet
             loc = meet.get("location")
             text = meet.get("text")
             pre = meet.get("preconditions")

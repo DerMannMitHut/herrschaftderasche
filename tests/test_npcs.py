@@ -105,6 +105,6 @@ def test_action_requires_npc_help():
     assert not w.check_preconditions(pre_help)
     assert not w.check_preconditions(pre_state)
     w.npc_states["old_man"] = "helped"
-    w.npcs["old_man"]["state"] = "helped"
+    w.npcs["old_man"].state = "helped"
     assert w.check_preconditions(pre_help)
     assert w.check_preconditions(pre_state)

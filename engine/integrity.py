@@ -94,13 +94,13 @@ def validate_world_structure(w: world.World) -> List[str]:
 
     # Rooms, exits and items -------------------------------------------------
     for room_id, room in w.rooms.items():
-        exits = room.get("exits", {})
+        exits = room.exits
         for target in exits:
             if target not in w.rooms:
                 errors.append(
                     f"Room '{room_id}' has exit to missing room '{target}'"
                 )
-        for item in room.get("items", []):
+        for item in room.items:
             if item not in w.items:
                 errors.append(
                     f"Room '{room_id}' contains missing item '{item}'"
@@ -112,20 +112,20 @@ def validate_world_structure(w: world.World) -> List[str]:
 
     # Actions ----------------------------------------------------------------
     for action in w.actions:
-        trigger = action.get("trigger")
+        trigger = action.trigger
         if not trigger:
             errors.append("Action missing trigger")
         if trigger != "use":
             continue
-        item = action.get("item")
+        item = action.item
         if item and item not in w.items:
             errors.append(f"Action references missing item '{item}'")
-        target_item = action.get("target_item")
+        target_item = action.target_item
         if target_item and target_item not in w.items:
             errors.append(
                 f"Action references missing target item '{target_item}'"
             )
-        pre = action.get("preconditions", {})
+        pre = action.preconditions or {}
         loc = pre.get("is_location")
         if loc and loc not in w.rooms:
             errors.append(
@@ -142,7 +142,7 @@ def validate_world_structure(w: world.World) -> List[str]:
             errors.append(
                 f"Action precondition references missing location '{cond_loc}'"
             )
-        eff = action.get("effect", {}).get("item_condition", [])
+        eff = action.effect.get("item_condition", [])
         if isinstance(eff, dict):
             eff = [eff]
         for cond in eff:
@@ -152,10 +152,11 @@ def validate_world_structure(w: world.World) -> List[str]:
                     f"Action effect references missing item '{eff_item}'"
                 )
             eff_state = cond.get("state")
-            if eff_item and eff_state and eff_state not in w.items.get(eff_item, {}).get("states", {}):
-                errors.append(
-                    f"Action effect references missing state '{eff_state}' for item '{eff_item}'"
-                )
+            if eff_item and eff_state:
+                if eff_item in w.items and eff_state not in w.items[eff_item].states:
+                    errors.append(
+                        f"Action effect references missing state '{eff_state}' for item '{eff_item}'"
+                    )
             eff_loc = cond.get("location")
             if eff_loc and eff_loc != "INVENTORY" and eff_loc not in w.rooms:
                 errors.append(
@@ -164,14 +165,14 @@ def validate_world_structure(w: world.World) -> List[str]:
 
     # NPCs -------------------------------------------------------------------
     for npc_id, npc in w.npcs.items():
-        meet = npc.get("meet", {})
+        meet = npc.meet
         loc = meet.get("location")
         if loc and loc not in w.rooms:
             errors.append(
                 f"NPC '{npc_id}' references missing room '{loc}'"
             )
-        state = npc.get("state")
-        if state and state not in npc.get("states", {}):
+        state = npc.state
+        if state and state not in npc.states:
             errors.append(
                 f"NPC '{npc_id}' has undefined state '{state}'"
             )
@@ -196,10 +197,11 @@ def validate_world_structure(w: world.World) -> List[str]:
                 f"Ending '{end_id}' references missing location '{cond_loc}'"
             )
         state = cond.get("state")
-        if cond_item and state and state not in w.items.get(cond_item, {}).get("states", {}):
-            errors.append(
-                f"Ending '{end_id}' references missing state '{state}' for item '{cond_item}'"
-            )
+        if cond_item and state:
+            if cond_item in w.items and state not in w.items[cond_item].states:
+                errors.append(
+                    f"Ending '{end_id}' references missing state '{state}' for item '{cond_item}'"
+                )
 
     return errors
 
@@ -237,7 +239,7 @@ def validate_save(data: Dict[str, Any], w: world.World) -> List[str]:
                 f"Save references missing item '{item_id}' in item_states"
             )
         else:
-            states = w.items.get(item_id, {}).get("states", {})
+            states = w.items[item_id].states
             if state not in states:
                 errors.append(
                     f"Save references missing state '{state}' for item '{item_id}'"
@@ -249,7 +251,7 @@ def validate_save(data: Dict[str, Any], w: world.World) -> List[str]:
                 f"Save references missing NPC '{npc_id}' in npc_states"
             )
         else:
-            states = w.npcs.get(npc_id, {}).get("states", {})
+            states = w.npcs[npc_id].states
             if state not in states:
                 errors.append(
                     f"Save references missing state '{state}' for NPC '{npc_id}'"

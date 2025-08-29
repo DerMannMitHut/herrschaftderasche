@@ -65,8 +65,8 @@ def test_load_state_applies_differences(tmp_path):
 
     assert new.current == "room3"
     assert new.inventory == []
-    assert new.rooms["room2"].get("items", []) == []
-    assert new.rooms["room3"].get("items", []) == ["crown", "sword"]
+    assert new.rooms["room2"].items == []
+    assert new.rooms["room3"].items == ["crown", "sword"]
     with open(save_path, encoding="utf-8") as fh:
         data = yaml.safe_load(fh)
     assert "inventory" not in data

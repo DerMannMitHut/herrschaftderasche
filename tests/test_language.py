@@ -14,7 +14,7 @@ def test_language_switch(data_dir, monkeypatch):
     assert g.reverse_cmds["language"][0] == "language"
     assert g.reverse_cmds["sprache"][0] == "language"
     assert outputs[-1] == g.messages["language_set"].format(language="de")
-    assert g.world.items["sword"]["names"][0] == "Schwert"
+    assert g.world.items["sword"].names[0] == "Schwert"
 
 
 def test_language_persistence(data_dir, monkeypatch):
@@ -27,7 +27,7 @@ def test_language_persistence(data_dir, monkeypatch):
     assert g2.language == "de"
     assert g2.messages["farewell"] == "Auf Wiedersehen!"
     assert g2.reverse_cmds["language"][0] == "language"
-    assert g2.world.items["sword"]["names"][0] == "Schwert"
+    assert g2.world.items["sword"].names[0] == "Schwert"
 
 
 def test_language_command_base_word(data_dir, monkeypatch):
