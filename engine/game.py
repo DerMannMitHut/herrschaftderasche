@@ -2,11 +2,54 @@
 
 from pathlib import Path
 import re
+from dataclasses import dataclass
 from typing import Callable, cast
 
 import yaml
 
 from engine import io, parser, world, llm, i18n, integrity
+
+
+@dataclass
+class StateChange:
+    state: str
+    message_key: str
+
+
+STATE_COMMANDS: dict[str, StateChange] = {
+    "destroy": StateChange("destroyed", "destroyed"),
+    "wear": StateChange("worn", "worn"),
+}
+
+
+@dataclass
+class ActionConfig:
+    trigger: str
+    item_in_inventory: bool
+    target_is_npc: bool
+    item_missing_key: str
+    target_missing_key: str
+    failure_key: str
+
+
+ACTION_COMMANDS: dict[str, ActionConfig] = {
+    "use": ActionConfig(
+        trigger="use",
+        item_in_inventory=False,
+        target_is_npc=False,
+        item_missing_key="use_failure",
+        target_missing_key="use_failure",
+        failure_key="use_failure",
+    ),
+    "show": ActionConfig(
+        trigger="show",
+        item_in_inventory=True,
+        target_is_npc=True,
+        item_missing_key="not_carrying",
+        target_missing_key="no_npc",
+        failure_key="use_failure",
+    ),
+}
 
 
 class Game:
@@ -67,15 +110,16 @@ class Game:
                         continue
                     groups = match.groupdict()
                     handler = getattr(self, f"cmd_{cmd_key}", self.cmd_unknown)
-                    if cmd_key == "use":
+                    info = self.command_info.get(cmd_key, {})
+                    if info.get("arguments") == 2:
                         a = groups.get("a", "").strip()
                         b = groups.get("b", "").strip()
-                        use_handler = cast(Callable[[str, str], None], handler)
-                        use_handler(a, b)
+                        two_handler = cast(Callable[[str, str], None], handler)
+                        two_handler(a, b)
                     else:
                         arg = groups.get("a", "") or groups.get("b", "") or ""
-                        other_handler = cast(Callable[[str], None], handler)
-                        other_handler(arg.strip())
+                        one_handler = cast(Callable[[str], None], handler)
+                        one_handler(arg.strip())
                     break
                 else:
                     self.cmd_unknown(raw)
@@ -110,6 +154,62 @@ class Game:
             if any(n.casefold() == name_cf for n in names):
                 return item_id
         return None
+
+    def _find_npc_id(self, name: str) -> str | None:
+        if not name:
+            return None
+        name_cf = name.casefold()
+        for npc_id, npc in self.world.npcs.items():
+            names = npc.get("names", [])
+            if not any(n.casefold() == name_cf for n in names):
+                continue
+            if npc.get("meet", {}).get("location") != self.world.current:
+                return None
+            return npc_id
+        return None
+
+    def _state_command(self, cmd: str, item_name: str) -> None:
+        if not item_name:
+            self.cmd_unknown(item_name)
+            return
+        cfg = STATE_COMMANDS[cmd]
+        item_id = self._find_item_id(item_name, in_inventory=True)
+        if not item_id:
+            io.output(self.messages["not_carrying"])
+            self._check_end()
+            return
+        if not self.world.set_item_state(item_id, cfg.state):
+            io.output(self.messages["use_failure"])
+            self._check_end()
+            return
+        self.world.inventory.remove(item_id)
+        self.world.debug(f"inventory {self.world.inventory}")
+        io.output(self.messages[cfg.message_key].format(item=item_name))
+        self._check_end()
+
+    def _action_command(
+        self, cmd: str, item_name: str, target_name: str
+    ) -> None:
+        cfg = ACTION_COMMANDS[cmd]
+        if not item_name or not target_name:
+            self.cmd_unknown(cmd)
+            return
+        item_id = self._find_item_id(item_name, in_inventory=cfg.item_in_inventory)
+        if not item_id:
+            io.output(self.messages[cfg.item_missing_key])
+            self._check_end()
+            return
+        finder = self._find_npc_id if cfg.target_is_npc else self._find_item_id
+        target_id = finder(target_name)
+        if not target_id:
+            io.output(self.messages[cfg.target_missing_key])
+            self._check_end()
+            return
+        if self._execute_action(cfg.trigger, item_id, target_id):
+            self._check_end()
+            return
+        io.output(self.messages[cfg.failure_key])
+        self._check_end()
 
     def _execute_action(
         self, trigger: str, item_id: str, target_id: str | None = None
@@ -179,40 +279,10 @@ class Game:
         self._check_end()
 
     def cmd_destroy(self, arg: str) -> None:
-        if not arg:
-            self.cmd_unknown(arg)
-            return
-        item = arg
-        item_cf = item.casefold()
-        for item_id in list(self.world.inventory):
-            names = self.world.items.get(item_id, {}).get("names", [])
-            if any(name.casefold() == item_cf for name in names):
-                self.world.inventory.remove(item_id)
-                self.world.debug(f"inventory {self.world.inventory}")
-                self.world.set_item_state(item_id, "destroyed")
-                io.output(self.messages["destroyed"].format(item=item))
-                break
-        else:
-            io.output(self.messages["not_carrying"])
-        self._check_end()
+        self._state_command("destroy", arg)
 
     def cmd_wear(self, arg: str) -> None:
-        if not arg:
-            self.cmd_unknown(arg)
-            return
-        item = arg
-        item_cf = item.casefold()
-        for item_id in list(self.world.inventory):
-            names = self.world.items.get(item_id, {}).get("names", [])
-            if any(name.casefold() == item_cf for name in names):
-                self.world.inventory.remove(item_id)
-                self.world.debug(f"inventory {self.world.inventory}")
-                self.world.set_item_state(item_id, "worn")
-                io.output(self.messages["worn"].format(item=item))
-                break
-        else:
-            io.output(self.messages["not_carrying"])
-        self._check_end()
+        self._state_command("wear", arg)
 
     def cmd_look(self, arg: str) -> None:
         if arg:
@@ -290,75 +360,29 @@ class Game:
         io.output(self.messages["language_set"].format(language=language))
 
     def cmd_show(self, item_name: str, npc_name: str) -> None:
-        if not item_name or not npc_name:
-            self.cmd_unknown("show")
-            return
-        item_id = self._find_item_id(item_name, in_inventory=True)
-        if not item_id:
-            io.output(self.messages["not_carrying"])
-            self._check_end()
-            return
-        npc_name_cf = npc_name.casefold()
-        for npc_id, npc in self.world.npcs.items():
-            names = npc.get("names", [])
-            if not any(name.casefold() == npc_name_cf for name in names):
-                continue
-            if npc.get("meet", {}).get("location") != self.world.current:
-                io.output(self.messages["no_npc"])
-                self._check_end()
-                return
-            if self._execute_action("show", item_id, npc_id):
-                self._check_end()
-                return
-            break
-        else:
-            io.output(self.messages["no_npc"])
-            self._check_end()
-            return
-        io.output(self.messages["use_failure"])
-        self._check_end()
+        self._action_command("show", item_name, npc_name)
 
     def cmd_talk(self, arg: str) -> None:
         if not arg:
             self.cmd_unknown(arg)
             return
-        npc_name_cf = arg.casefold()
-        for npc_id, npc in self.world.npcs.items():
-            names = npc.get("names", [])
-            if not any(name.casefold() == npc_name_cf for name in names):
-                continue
-            meet = npc.get("meet", {})
-            if meet.get("location") != self.world.current:
-                io.output(self.messages["no_npc"])
-                return
-            state = self.world.npc_state(npc_id)
-            states = npc.get("states", {})
-            talk_cfg = states.get(state, {})
-            text = talk_cfg.get("talk")
-            if text:
-                io.output(text)
-            else:
-                io.output(self.messages["no_npc"])
-            if state != "helped":
-                self.world.set_npc_state(npc_id, "helped")
+        npc_id = self._find_npc_id(arg)
+        if not npc_id:
+            io.output(self.messages["no_npc"])
             return
-        io.output(self.messages["no_npc"])
+        npc = self.world.npcs[npc_id]
+        state = self.world.npc_state(npc_id)
+        talk_cfg = npc.get("states", {}).get(state, {})
+        text = talk_cfg.get("talk")
+        if text:
+            io.output(text)
+        else:
+            io.output(self.messages["no_npc"])
+        if state != "helped":
+            self.world.set_npc_state(npc_id, "helped")
 
     def cmd_use(self, item_name: str, target_name: str) -> None:
-        if not item_name or not target_name:
-            self.cmd_unknown("use")
-            return
-        item_id = self._find_item_id(item_name)
-        target_id = self._find_item_id(target_name)
-        if not item_id or not target_id:
-            io.output(self.messages["use_failure"])
-            self._check_end()
-            return
-        if self._execute_action("use", item_id, target_id):
-            self._check_end()
-            return
-        io.output(self.messages["use_failure"])
-        self._check_end()
+        self._action_command("use", item_name, target_name)
 
     def _build_cmd_patterns(self) -> None:
         for key in self.command_keys:
