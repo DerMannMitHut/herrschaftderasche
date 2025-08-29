@@ -4,12 +4,12 @@ from engine import game
 def test_debug_outputs_after_state_changes(data_dir, capsys):
     g = game.Game(str(data_dir / "en" / "world.yaml"), "en", debug=True)
     capsys.readouterr()
-    g.cmd_go("Room 2")
+    g.command_processor.cmd_go("Room 2")
     err = capsys.readouterr().err
     assert "-- location room2" in err
     assert "-- npc old_man state met" in err
 
-    g.cmd_take("Gem")
+    g.command_processor.cmd_take("Gem")
     err = capsys.readouterr().err
     assert "-- inventory ['gem']" in err
     assert "-- room room2 items []" in err

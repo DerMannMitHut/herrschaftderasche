@@ -34,8 +34,8 @@ def test_end_condition_inventory_and_location(data_dir, monkeypatch):
     outputs: list[str] = []
     monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
     g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
-    g.cmd_take("Crown")
-    g.cmd_go("Room2")
+    g.command_processor.cmd_take("Crown")
+    g.command_processor.cmd_go("Room2")
     assert outputs[-1] == "You win!"
 
 
@@ -71,7 +71,7 @@ def test_end_condition_inventory_lacks(data_dir, monkeypatch):
     outputs: list[str] = []
     monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
     g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
-    g.cmd_go("Room2")
+    g.command_processor.cmd_go("Room2")
     assert outputs[-1] == "No crown, no victory."
 
 
@@ -107,7 +107,7 @@ def test_end_condition_or_room_has(data_dir, monkeypatch):
     outputs: list[str] = []
     monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
     g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
-    g.cmd_go("Room2")
+    g.command_processor.cmd_go("Room2")
     assert outputs[-1] == "You see the sword and know your quest is over."
 
 

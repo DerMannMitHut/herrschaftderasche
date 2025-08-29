@@ -6,5 +6,8 @@ def test_take_uses_canonical_name(data_dir, monkeypatch):
     monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
     g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
     assert g.world.move("Room 3")
-    g.cmd_take("sword")
-    assert outputs[-1] == g.messages["taken"].format(item="Sword")
+    g.command_processor.cmd_take("sword")
+    assert (
+        outputs[-1]
+        == g.language_manager.messages["taken"].format(item="Sword")
+    )

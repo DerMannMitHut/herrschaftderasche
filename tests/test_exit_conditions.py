@@ -13,20 +13,20 @@ def test_ruins_inaccessible_without_map(data_dir, monkeypatch):
     monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
 
     g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
-    g.cmd_go("Forest")
+    g.command_processor.cmd_go("Forest")
     assert g.world.current == "forest"
 
-    g.cmd_go("Ruins")
+    g.command_processor.cmd_go("Ruins")
     assert g.world.current == "forest"
-    assert outputs[-1] == g.messages["cannot_move"]
+    assert outputs[-1] == g.language_manager.messages["cannot_move"]
 
-    g.cmd_go("Ash Village")
-    g.cmd_talk("Villager")
-    g.cmd_take("Map Fragment")
-    g.cmd_go("Forest")
-    g.cmd_talk("Ashram")
-    g.cmd_show("Map Fragment", "Ashram")
-    g.cmd_go("Hut")
-    g.cmd_go("Ruins")
+    g.command_processor.cmd_go("Ash Village")
+    g.command_processor.cmd_talk("Villager")
+    g.command_processor.cmd_take("Map Fragment")
+    g.command_processor.cmd_go("Forest")
+    g.command_processor.cmd_talk("Ashram")
+    g.command_processor.cmd_show("Map Fragment", "Ashram")
+    g.command_processor.cmd_go("Hut")
+    g.command_processor.cmd_go("Ruins")
     assert g.world.current == "ruins"
 

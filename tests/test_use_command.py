@@ -8,7 +8,7 @@ def test_use_success(data_dir, monkeypatch):
     assert g.world.move("Room 3")
     assert g.world.take("Sword")
     assert g.world.move("Room 2")
-    g.cmd_use("Sword", "Gem")
+    g.command_processor.cmd_use("Sword", "Gem")
     assert g.world.item_states["gem"] == "green"
     success_msg = next(
         a["messages"]["success"]
@@ -30,7 +30,7 @@ def test_use_item_in_room(data_dir, monkeypatch):
     assert g.world.take("Sword")
     assert g.world.move("Room 2")
     assert g.world.drop("Sword")
-    g.cmd_use("Sword", "Gem")
+    g.command_processor.cmd_use("Sword", "Gem")
     assert g.world.item_states["gem"] == "green"
     success_msg = next(
         a["messages"]["success"]
@@ -51,7 +51,7 @@ def test_use_invalid(data_dir, monkeypatch):
     assert g.world.move("Room 2")
     assert g.world.take("Gem")
     assert g.world.move("Room 3")
-    g.cmd_use("Sword", "Gem")
+    g.command_processor.cmd_use("Sword", "Gem")
     assert g.world.item_states["gem"] == "red"
-    assert outputs[-1] == g.messages["use_failure"]
+    assert outputs[-1] == g.language_manager.messages["use_failure"]
 
