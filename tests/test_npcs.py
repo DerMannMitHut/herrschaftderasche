@@ -25,6 +25,13 @@ def test_meet_npc_changes_state():
     assert w.npc_state("old_man") == StateTag.MET
 
 
+def test_meet_npc_ignores_other_states():
+    w = make_world()
+    w.set_npc_state("old_man", StateTag.HELPED)
+    assert not w.meet_npc("old_man")
+    assert w.npc_state("old_man") == StateTag.HELPED
+
+
 def test_set_npc_state_changes_state():
     w = make_world()
     assert w.set_npc_state("old_man", StateTag.HELPED)
@@ -55,6 +62,7 @@ def test_npc_event_triggered_on_room_change(data_dir, capsys):
     g.command_processor.cmd_go("Room 2")
     out = capsys.readouterr().out
     assert "The old man greets you." not in out
+    assert "The old man nods at you." in out
 
 
 def test_npc_event_triggered_on_start(tmp_path, monkeypatch, io_backend):

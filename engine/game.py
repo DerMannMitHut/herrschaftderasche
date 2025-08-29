@@ -110,17 +110,22 @@ class Game:
         for npc_id, npc in self.world.npcs.items():
             meet = npc.get("meet", {})
             loc = meet.get("location")
-            text = meet.get("text")
             pre = meet.get("preconditions")
-            if (
-                loc == self.world.current
-                and self.world.npc_state(npc_id) != StateTag.MET
-            ):
-                if pre and not self.world.check_preconditions(pre):
-                    continue
+            if loc != self.world.current:
+                continue
+            state = self.world.npc_state(npc_id)
+            if pre and not self.world.check_preconditions(pre):
+                continue
+            if state == "unknown":
+                text = meet.get("text")
                 if text:
                     self.io.output(text)
                 self.world.meet_npc(npc_id)
+            else:
+                state_key = state.value if isinstance(state, StateTag) else state
+                text = npc.get("states", {}).get(state_key, {}).get("text")
+                if text:
+                    self.io.output(text)
 
     def run(self) -> None:
         if self._show_intro and self.world.intro:

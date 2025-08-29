@@ -61,8 +61,10 @@ npcs:
       text: "Ein Dorfbewohner namens Marek tritt näher und schaut dich eindringlich an."
     states:
       met:
+        text: "Marek wartet hoffnungsvoll auf deine Rückkehr."
         talk: "'Bring die Aschenkrone ins Dorf', sagt Marek. 'Im Wald lebt der Einsiedler Ashram, er kann dir helfen.'"
       helped:
+        text: "Marek begrüßt dich dankbar für deine Hilfe."
         talk: "Marek nickt dir zu. 'Vergiss die Krone nicht.'"
   ashram:
     names:
@@ -71,8 +73,10 @@ npcs:
       text: "Ashram tritt aus den Schatten und bietet seine Hilfe an."
     states:
       met:
+        text: "Ashram sieht dich ruhig an."
         talk: "Ashram hört sich dein Anliegen an und sagt seine Hilfe zu. Er könnte dir helfen, Schriftstücke zu entziffern."
       helped:
+        text: "Ashram nickt nachdenklich, bereit zu helfen."
         talk: "Ashram nickt dir zu und sagt: 'Zeige mir etwas, bei dem ich dir helfen soll.'"
 
 actions:

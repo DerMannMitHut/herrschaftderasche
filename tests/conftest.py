@@ -103,10 +103,12 @@ def data_dir(tmp_path):
                 "meet": {"text": "The old man greets you."},
                 "states": {
                     "met": {
-                        "talk": "You tell the old man about your quest. He agrees to help."
+                        "text": "The old man nods at you.",
+                        "talk": "You tell the old man about your quest. He agrees to help.",
                     },
                     "helped": {
-                        "talk": "The old man has already offered his aid."
+                        "text": "The old man smiles at you.",
+                        "talk": "The old man has already offered his aid.",
                     },
                 },
             }
@@ -146,10 +148,12 @@ def data_dir(tmp_path):
                 "meet": {"text": "Der alte Mann grüßt dich."},
                 "states": {
                     "met": {
-                        "talk": "Du erzählst dem alten Mann von deiner Suche. Er hilft dir."
+                        "text": "Der alte Mann nickt dir zu.",
+                        "talk": "Du erzählst dem alten Mann von deiner Suche. Er hilft dir.",
                     },
                     "helped": {
-                        "talk": "Der alte Mann hat dir bereits geholfen."
+                        "text": "Der alte Mann lächelt dich an.",
+                        "talk": "Der alte Mann hat dir bereits geholfen.",
                     },
                 },
             }
