@@ -6,7 +6,7 @@ from pathlib import Path
 
 import yaml
 
-from engine import io, parser, world, llm, integrity
+from engine import parser, world, integrity
 from .world_model import StateTag
 from .interfaces import IOBackend, LLMBackend
 from .io import ConsoleIO
@@ -69,6 +69,7 @@ class Game:
                 self.io.output(f"ERROR: {msg}")
             raise SystemExit("Integrity check failed")
 
+        log_data = save_data.get("log") if save_data else None
         if save_data:
             self.world.load_state(self.save_manager.save_path)
             self.save_manager.cleanup()
@@ -85,6 +86,7 @@ class Game:
             self.stop,
             self._update_world,
             self.io,
+            log=log_data,
         )
         self.running = True
 
@@ -135,7 +137,11 @@ class Game:
         except (EOFError, KeyboardInterrupt):
             self.io.output(self.language_manager.messages["farewell"])
         finally:
-            self.save_manager.save(self.world, self.language_manager.language)
+            self.save_manager.save(
+                self.world,
+                self.language_manager.language,
+                self.command_processor.log,
+            )
 
 
 def run(

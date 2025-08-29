@@ -8,9 +8,10 @@ from functools import wraps
 from typing import Callable, cast
 
 from . import io, world
-from .world_model import StateTag
 from .language import LanguageManager
-from .persistence import SaveManager
+from .persistence import LogEntry, SaveManager
+from .world_model import StateTag
+from .interfaces import IOBackend
 
 
 def require_args(n: int) -> Callable[[Callable[..., None]], Callable[..., None]]:
@@ -92,6 +93,7 @@ class CommandProcessor:
         stop: Callable[[], None],
         update_world: Callable[[world.World], None],
         io: IOBackend,
+        log: list[LogEntry] | None = None,
     ) -> None:
         self.world = world
         self.language_manager = language
@@ -102,7 +104,9 @@ class CommandProcessor:
         self._update_world = update_world
         self.io = io
         self.command_info = language.command_info
-        self.command_keys = list(self.command_info.keys())
+        self.command_info["show_log"] = {"optional_arguments": True}
+        self.command_keys = [k for k in self.command_info.keys() if k != "show_log"]
+        self.log = log or []
         self.cmd_patterns: list[tuple[re.Pattern[str], str, str]] = []
         self.reverse_cmds: dict[str, tuple[str, str]] = {}
         self._build_cmd_patterns()
@@ -111,33 +115,48 @@ class CommandProcessor:
     def execute(self, raw: str) -> None:
         """Execute the command contained in ``raw``."""
 
-        for pattern, cmd_key, _ in self.cmd_patterns:
-            match = pattern.fullmatch(raw)
-            if not match:
-                continue
-            groups = match.groupdict()
-            handler = getattr(self, f"cmd_{cmd_key}", self.cmd_unknown)
-            info = self.command_info.get(cmd_key, {})
-            arg_count = info.get("arguments", 0)
-            if arg_count == 2:
-                a = groups.get("a", "").strip()
-                b = groups.get("b", "").strip()
-                two_handler = cast(Callable[[str, str], None], handler)
-                two_handler(a, b)
-            elif arg_count == 1:
-                arg = groups.get("a", "") or groups.get("b", "") or ""
-                one_handler = cast(Callable[[str], None], handler)
-                one_handler(arg.strip())
-            elif info.get("optional_arguments"):
-                arg = groups.get("a", "") or groups.get("b", "") or ""
-                opt_handler = cast(Callable[[str | None], None], handler)
-                opt_handler(arg.strip() or None)
+        before = self.world.to_state()
+        outputs: list[str] = []
+        original_output = self.io.output
+
+        def capture(text: str) -> None:
+            outputs.append(text)
+            original_output(text)
+
+        self.io.output = capture
+        try:
+            for pattern, cmd_key, _ in self.cmd_patterns:
+                match = pattern.fullmatch(raw)
+                if not match:
+                    continue
+                groups = match.groupdict()
+                handler = getattr(self, f"cmd_{cmd_key}", self.cmd_unknown)
+                info = self.command_info.get(cmd_key, {})
+                arg_count = info.get("arguments", 0)
+                if arg_count == 2:
+                    a = groups.get("a", "").strip()
+                    b = groups.get("b", "").strip()
+                    two_handler = cast(Callable[[str, str], None], handler)
+                    two_handler(a, b)
+                elif arg_count == 1:
+                    arg = groups.get("a", "") or groups.get("b", "") or ""
+                    one_handler = cast(Callable[[str], None], handler)
+                    one_handler(arg.strip())
+                elif info.get("optional_arguments"):
+                    arg = groups.get("a", "") or groups.get("b", "") or ""
+                    opt_handler = cast(Callable[[str | None], None], handler)
+                    opt_handler(arg.strip() or None)
+                else:
+                    zero_handler = cast(Callable[[], None], handler)
+                    zero_handler()
+                break
             else:
-                zero_handler = cast(Callable[[], None], handler)
-                zero_handler()
-            break
-        else:
-            self.cmd_unknown(raw)
+                self.cmd_unknown(raw)
+        finally:
+            self.io.output = original_output
+        after = self.world.to_state()
+        if before != after:
+            self.log.append(LogEntry(raw, outputs))
 
     # ------------------------------------------------------------------
     def _build_cmd_patterns(self) -> None:
@@ -153,6 +172,9 @@ class CommandProcessor:
                     self.reverse_cmds[base] = (key, entry)
         self.cmd_patterns.sort(key=lambda x: len(x[0].pattern), reverse=True)
         self.reverse_cmds["language"] = ("language", "language")
+        pattern = re.compile(r"^show_log(?:\s+(?P<a>\d+))?$")
+        self.cmd_patterns.append((pattern, "show_log", "show_log"))
+        self.reverse_cmds["show_log"] = ("show_log", "show_log")
 
     def _compile_command(self, pattern: str) -> tuple[re.Pattern[str], str]:
         tokens = pattern.split()
@@ -285,7 +307,9 @@ class CommandProcessor:
     # Command handlers
     @require_args(0)
     def cmd_quit(self) -> None:
-        self.save_manager.save(self.world, self.language_manager.language)
+        self.save_manager.save(
+            self.world, self.language_manager.language, self.log
+        )
         self.io.output(self.language_manager.messages["farewell"])
         self.stop()
 
@@ -342,6 +366,8 @@ class CommandProcessor:
             for key in self.command_keys:
                 val = self.language_manager.commands.get(key, [])
                 entries = val if isinstance(val, list) else [val]
+                if not entries:
+                    continue
                 first = entries[0]
                 names.append(first.split()[0])
             self.io.output(
@@ -368,11 +394,29 @@ class CommandProcessor:
         )
         self.io.output(header.format(command=key) + "\n" + "\n".join(usages))
 
+    @require_args(0)
+    def cmd_show_log(self, count: str | None = None) -> None:
+        n = None
+        if count:
+            if not count.isdigit():
+                self.cmd_unknown("show_log")
+                return
+            n = int(count)
+        entries = self.log[-n:] if n else self.log
+        lines: list[str] = []
+        for entry in entries:
+            lines.append(f"> {entry.command}")
+            lines.extend(entry.output)
+        if lines:
+            self.io.output("\n".join(lines))
+
     @require_args(1)
     def cmd_language(self, language: str) -> None:
         language = language.strip()
         try:
-            new_world = self.language_manager.switch(language, self.world, self.save_manager)
+            new_world = self.language_manager.switch(
+                language, self.world, self.save_manager, self.log
+            )
         except ValueError:
             self.io.output(
                 self.language_manager.messages.get(

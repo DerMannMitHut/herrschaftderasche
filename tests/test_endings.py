@@ -1,5 +1,5 @@
 import yaml
-from engine import game, io
+from engine import game
 from engine.world_model import LocationTag
 
 

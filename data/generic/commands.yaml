@@ -12,3 +12,4 @@ wear: {arguments: 1}
 use: {arguments: 2}
 talk: {arguments: 1}
 show: {arguments: 2}
+show_log: {optional_arguments: 1}

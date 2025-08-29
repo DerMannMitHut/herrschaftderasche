@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from . import world
-from .persistence import SaveManager
+from .persistence import LogEntry, SaveManager
 from .interfaces import IOBackend
 from . import i18n
 
@@ -22,7 +22,13 @@ class LanguageManager:
         self.commands = i18n.load_commands(language, io)
         self.command_info = i18n.load_command_info(io)
 
-    def switch(self, language: str, current_world: world.World, save_manager: SaveManager) -> world.World:
+    def switch(
+        self,
+        language: str,
+        current_world: world.World,
+        save_manager: SaveManager,
+        log: list[LogEntry],
+    ) -> world.World:
         """Switch the game to a different language.
 
         Returns the reloaded world instance.  Raises ``ValueError`` if the
@@ -38,7 +44,7 @@ class LanguageManager:
         except FileNotFoundError as exc:  # pragma: no cover - defensive programming
             raise ValueError("Unknown language") from exc
 
-        save_manager.save(current_world, self.language)
+        save_manager.save(current_world, self.language, log)
         new_world.load_state(save_manager.save_path)
         save_manager.cleanup()
 

@@ -1,6 +1,6 @@
 import yaml
 from engine.world import World
-from engine import game, io
+from engine import game
 from engine.world_model import StateTag
 
 

@@ -56,4 +56,7 @@ talk:
 show:
   - 'show $a to $b'
   - 'present $a to $b'
+show_log:
+  - 'show_log'
+  - 'show_log $a'
 
