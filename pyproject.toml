@@ -15,6 +15,9 @@ pytest-cov = "^5.0"
 pyright = "^1.1"
 ruff = "*"
 
+[tool.poetry.scripts]
+"herrschaft-der-asche" = "game.main:run_cli"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

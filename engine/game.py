@@ -8,23 +8,34 @@ import yaml
 
 from engine import io, parser, world, llm, integrity
 from .world_model import StateTag
-
+from .interfaces import IOBackend, LLMBackend
+from .io import ConsoleIO
+from .llm import NoOpLLM
 from .commands import CommandProcessor
 from .language import LanguageManager
 from .persistence import SaveManager
 
 
 class Game:
-    def __init__(self, world_data_path: str, language: str, debug: bool = False) -> None:
+    def __init__(
+        self,
+        world_data_path: str,
+        language: str,
+        io_backend: IOBackend | None = None,
+        llm_backend: LLMBackend | None = None,
+        debug: bool = False,
+    ) -> None:
         data_path = Path(world_data_path)
         self.data_dir = data_path.parent.parent
         self.debug = debug
+        self.io = io_backend or ConsoleIO()
+        self.llm = llm_backend or NoOpLLM()
         self.save_manager = SaveManager(self.data_dir)
 
         try:
             save_data = self.save_manager.load()
         except (FileNotFoundError, yaml.YAMLError) as exc:
-            io.output(f"ERROR: Failed to load save file: {exc}")
+            self.io.output(f"ERROR: Failed to load save file: {exc}")
             raise SystemExit from exc
 
         self._show_intro = not save_data
@@ -35,19 +46,19 @@ class Game:
         try:
             self.world = world.World.from_files(generic_path, lang_world_path, debug=debug)
         except FileNotFoundError as exc:
-            io.output(f"ERROR: Missing world file: {exc}")
+            self.io.output(f"ERROR: Missing world file: {exc}")
             raise SystemExit from exc
         except yaml.YAMLError as exc:
-            io.output(f"ERROR: Invalid world file: {exc}")
+            self.io.output(f"ERROR: Invalid world file: {exc}")
             raise SystemExit from exc
 
         try:
             warnings = integrity.check_translations(self._language, self.data_dir)
         except (FileNotFoundError, yaml.YAMLError) as exc:
-            io.output(f"ERROR: Failed to load translations: {exc}")
+            self.io.output(f"ERROR: Failed to load translations: {exc}")
             raise SystemExit from exc
         for msg in warnings:
-            io.output(f"WARNING: {msg}")
+            self.io.output(f"WARNING: {msg}")
 
         errors = integrity.validate_world_structure(self.world)
         if save_data:
@@ -55,7 +66,7 @@ class Game:
 
         if errors:
             for msg in errors:
-                io.output(f"ERROR: {msg}")
+                self.io.output(f"ERROR: {msg}")
             raise SystemExit("Integrity check failed")
 
         if save_data:
@@ -63,7 +74,7 @@ class Game:
             self.save_manager.cleanup()
 
         self.language_manager = LanguageManager(
-            self.data_dir, self._language, debug=debug
+            self.data_dir, self._language, self.io, debug=debug
         )
         self.command_processor = CommandProcessor(
             self.world,
@@ -73,6 +84,7 @@ class Game:
             self._check_npc_event,
             self.stop,
             self._update_world,
+            self.io,
         )
         self.running = True
 
@@ -89,7 +101,7 @@ class Game:
     def _check_end(self) -> None:
         ending = self.world.check_endings()
         if ending:
-            io.output(ending)
+            self.io.output(ending)
             self.running = False
 
     def _check_npc_event(self) -> None:
@@ -105,27 +117,39 @@ class Game:
                 if pre and not self.world.check_preconditions(pre):
                     continue
                 if text:
-                    io.output(text)
+                    self.io.output(text)
                 self.world.meet_npc(npc_id)
 
     def run(self) -> None:
         if self._show_intro and self.world.intro:
-            io.output(self.world.intro)
-        io.output(self.world.describe_current(self.language_manager.messages))
+            self.io.output(self.world.intro)
+        self.io.output(self.world.describe_current(self.language_manager.messages))
         self._check_npc_event()
         self._check_end()
         try:
             while self.running:
-                raw = io.get_input()
-                raw = llm.interpret(raw)
+                raw = self.io.get_input()
+                raw = self.llm.interpret(raw)
                 raw = parser.parse(raw)
                 self.command_processor.execute(raw)
         except (EOFError, KeyboardInterrupt):
-            io.output(self.language_manager.messages["farewell"])
+            self.io.output(self.language_manager.messages["farewell"])
         finally:
             self.save_manager.save(self.world, self.language_manager.language)
 
 
-def run(world_data_path: str, language: str = "en", debug: bool = False) -> None:
-    Game(world_data_path, language, debug=debug).run()
+def run(
+    world_data_path: str,
+    language: str = "en",
+    io_backend: IOBackend | None = None,
+    llm_backend: LLMBackend | None = None,
+    debug: bool = False,
+) -> None:
+    Game(
+        world_data_path,
+        language,
+        io_backend=io_backend,
+        llm_backend=llm_backend,
+        debug=debug,
+    ).run()
 

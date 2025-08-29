@@ -1,10 +1,10 @@
 import shutil
 from pathlib import Path
 import yaml
-from engine import game, io
+from engine import game
 
 
-def test_game_reaches_ending(data_dir, monkeypatch):
+def test_game_reaches_ending(data_dir, io_backend):
     root = Path(__file__).resolve().parents[1]
     shutil.copy(root / "data" / "generic" / "world.yaml", data_dir / "generic" / "world.yaml")
     shutil.copy(root / "data" / "en" / "world.yaml", data_dir / "en" / "world.yaml")
@@ -13,10 +13,7 @@ def test_game_reaches_ending(data_dir, monkeypatch):
         en = yaml.safe_load(fh)
     ending_text = en["endings"]["crown_returned"]
 
-    outputs: list[str] = []
-    monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
-
-    g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
+    g = game.Game(str(data_dir / "en" / "world.yaml"), "en", io_backend=io_backend)
 
     cp = g.command_processor
     commands = [
@@ -39,4 +36,4 @@ def test_game_reaches_ending(data_dir, monkeypatch):
     for func in commands:
         func()
 
-    assert outputs[-1] == ending_text
+    assert io_backend.outputs[-1] == ending_text

@@ -91,6 +91,7 @@ class CommandProcessor:
         check_npc_event: Callable[[], None],
         stop: Callable[[], None],
         update_world: Callable[[world.World], None],
+        io: IOBackend,
     ) -> None:
         self.world = world
         self.language_manager = language
@@ -99,6 +100,7 @@ class CommandProcessor:
         self.check_npc_event = check_npc_event
         self.stop = stop
         self._update_world = update_world
+        self.io = io
         self.command_info = language.command_info
         self.command_keys = list(self.command_info.keys())
         self.cmd_patterns: list[tuple[re.Pattern[str], str, str]] = []
@@ -210,16 +212,16 @@ class CommandProcessor:
         cfg = STATE_COMMANDS[cmd]
         item_id = self._find_item_id(item_name, in_inventory=True)
         if not item_id:
-            io.output(self.language_manager.messages["not_carrying"])
+            self.io.output(self.language_manager.messages["not_carrying"])
             self.check_end()
             return
         if not self.world.set_item_state(item_id, cfg.state):
-            io.output(self.language_manager.messages["use_failure"])
+            self.io.output(self.language_manager.messages["use_failure"])
             self.check_end()
             return
         self.world.inventory.remove(item_id)
         self.world.debug(f"inventory {self.world.inventory}")
-        io.output(self.language_manager.messages[cfg.message_key].format(item=item_name))
+        self.io.output(self.language_manager.messages[cfg.message_key].format(item=item_name))
         self.check_end()
 
     def _action_command(
@@ -228,19 +230,19 @@ class CommandProcessor:
         cfg = ACTION_COMMANDS[cmd]
         item_id = self._find_item_id(item_name, in_inventory=cfg.item_in_inventory)
         if not item_id:
-            io.output(self.language_manager.messages[cfg.item_missing_key])
+            self.io.output(self.language_manager.messages[cfg.item_missing_key])
             self.check_end()
             return
         finder = self._find_npc_id if cfg.target_is_npc else self._find_item_id
         target_id = finder(target_name)
         if not target_id:
-            io.output(self.language_manager.messages[cfg.target_missing_key])
+            self.io.output(self.language_manager.messages[cfg.target_missing_key])
             self.check_end()
             return
         if self._execute_action(cfg.trigger, item_id, target_id):
             self.check_end()
             return
-        io.output(self.language_manager.messages[cfg.failure_key])
+        self.io.output(self.language_manager.messages[cfg.failure_key])
         self.check_end()
 
     def _execute_action(
@@ -261,7 +263,7 @@ class CommandProcessor:
             self.world.apply_effect(effect)
             message = action.messages.get("success")
             if message:
-                io.output(message)
+                self.io.output(message)
             return True
         return False
 
@@ -271,11 +273,11 @@ class CommandProcessor:
             return
         item_id = self._find_item_id(item_name)
         if not item_id:
-            io.output(self.language_manager.messages["item_not_present"])
+            self.io.output(self.language_manager.messages["item_not_present"])
             return
         desc = self.world.describe_item(item_name)
         if desc:
-            io.output(desc)
+            self.io.output(desc)
         self._execute_action("examine", item_id)
         self.check_end()
 
@@ -284,28 +286,28 @@ class CommandProcessor:
     @require_args(0)
     def cmd_quit(self) -> None:
         self.save_manager.save(self.world, self.language_manager.language)
-        io.output(self.language_manager.messages["farewell"])
+        self.io.output(self.language_manager.messages["farewell"])
         self.stop()
 
     @require_args(0)
     def cmd_inventory(self) -> None:
-        io.output(self.world.describe_inventory(self.language_manager.messages))
+        self.io.output(self.world.describe_inventory(self.language_manager.messages))
 
     @require_args(1)
     def cmd_take(self, item_name: str) -> None:
         taken = self.world.take(item_name)
         if taken:
-            io.output(self.language_manager.messages["taken"].format(item=taken))
+            self.io.output(self.language_manager.messages["taken"].format(item=taken))
         else:
-            io.output(self.language_manager.messages["item_not_present"])
+            self.io.output(self.language_manager.messages["item_not_present"])
         self.check_end()
 
     @require_args(1)
     def cmd_drop(self, item: str) -> None:
         if self.world.drop(item):
-            io.output(self.language_manager.messages["dropped"].format(item=item))
+            self.io.output(self.language_manager.messages["dropped"].format(item=item))
         else:
-            io.output(self.language_manager.messages["not_carrying"])
+            self.io.output(self.language_manager.messages["not_carrying"])
         self.check_end()
 
     @require_args(1)
@@ -318,7 +320,7 @@ class CommandProcessor:
 
     @require_args(0)
     def cmd_look(self) -> None:
-        io.output(self.world.describe_current(self.language_manager.messages))
+        self.io.output(self.world.describe_current(self.language_manager.messages))
 
     @require_args(1)
     def cmd_examine(self, item_name: str) -> None:
@@ -327,10 +329,10 @@ class CommandProcessor:
     @require_args(1)
     def cmd_go(self, direction: str) -> None:
         if self.world.can_move(direction) and self.world.move(direction):
-            io.output(self.world.describe_current(self.language_manager.messages))
+            self.io.output(self.world.describe_current(self.language_manager.messages))
             self.check_npc_event()
         else:
-            io.output(self.language_manager.messages["cannot_move"])
+            self.io.output(self.language_manager.messages["cannot_move"])
         self.check_end()
 
     @require_args(0)
@@ -342,7 +344,7 @@ class CommandProcessor:
                 entries = val if isinstance(val, list) else [val]
                 first = entries[0]
                 names.append(first.split()[0])
-            io.output(
+            self.io.output(
                 self.language_manager.messages["help"].format(commands=", ".join(names))
             )
             return
@@ -364,7 +366,7 @@ class CommandProcessor:
         header = self.language_manager.messages.get(
             "help_usage", "Usage of \"{command}\" and synonyms:"
         )
-        io.output(header.format(command=key) + "\n" + "\n".join(usages))
+        self.io.output(header.format(command=key) + "\n" + "\n".join(usages))
 
     @require_args(1)
     def cmd_language(self, language: str) -> None:
@@ -372,7 +374,7 @@ class CommandProcessor:
         try:
             new_world = self.language_manager.switch(language, self.world, self.save_manager)
         except ValueError:
-            io.output(
+            self.io.output(
                 self.language_manager.messages.get(
                     "language_unknown", "Unknown language"
                 )
@@ -381,7 +383,7 @@ class CommandProcessor:
         self.world = new_world
         self._update_world(new_world)
         self._build_cmd_patterns()
-        io.output(
+        self.io.output(
             self.language_manager.messages["language_set"].format(language=language)
         )
 
@@ -393,7 +395,7 @@ class CommandProcessor:
     def cmd_talk(self, npc_name: str) -> None:
         npc_id = self._find_npc_id(npc_name)
         if not npc_id:
-            io.output(self.language_manager.messages["no_npc"])
+            self.io.output(self.language_manager.messages["no_npc"])
             return
         npc = self.world.npcs[npc_id]
         state = self.world.npc_state(npc_id)
@@ -401,7 +403,7 @@ class CommandProcessor:
         talk_cfg = npc.get("states", {}).get(state_key, {})
         text = talk_cfg.get("talk")
         if text:
-            io.output(text)
+            self.io.output(text)
         else:
             io.output(self.language_manager.messages["no_npc"])
         if state != StateTag.HELPED:
@@ -412,7 +414,7 @@ class CommandProcessor:
         self._action_command("use", item_name, target_name)
 
     def cmd_unknown(self, arg: str | None = None) -> None:
-        io.output(self.language_manager.messages["unknown_command"])
+        self.io.output(self.language_manager.messages["unknown_command"])
 
 
 __all__ = ["CommandProcessor"]

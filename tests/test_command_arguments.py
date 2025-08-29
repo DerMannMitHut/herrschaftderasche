@@ -1,17 +1,13 @@
-from engine import game, io
+from engine import game
 
 
-def test_missing_argument(monkeypatch, data_dir):
-    outputs: list[str] = []
-    monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
-    g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
+def test_missing_argument(data_dir, io_backend):
+    g = game.Game(str(data_dir / "en" / "world.yaml"), "en", io_backend=io_backend)
     g.command_processor.cmd_take("")
-    assert outputs[-1] == g.language_manager.messages["unknown_command"]
+    assert io_backend.outputs[-1] == g.language_manager.messages["unknown_command"]
 
 
-def test_too_many_arguments(monkeypatch, data_dir):
-    outputs: list[str] = []
-    monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
-    g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
+def test_too_many_arguments(data_dir, io_backend):
+    g = game.Game(str(data_dir / "en" / "world.yaml"), "en", io_backend=io_backend)
     g.command_processor.execute("inventory extra")
-    assert outputs[-1] == g.language_manager.messages["unknown_command"]
+    assert io_backend.outputs[-1] == g.language_manager.messages["unknown_command"]
