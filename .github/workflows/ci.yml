@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          pip install poetry
+          poetry install --no-interaction --with dev
+      - name: Ruff
+        id: ruff
+        run: poetry run ruff .
+        continue-on-error: true
+      - name: Pyright
+        id: pyright
+        run: poetry run pyright
+        continue-on-error: true
+      - name: Pytest
+        id: pytest
+        run: poetry run pytest -q
+        continue-on-error: true
+      - name: Fail if any step failed
+        if: steps.ruff.outcome == 'failure' || steps.pyright.outcome == 'failure' || steps.pytest.outcome == 'failure'
+        run: exit 1
