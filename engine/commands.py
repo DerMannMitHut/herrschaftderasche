@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from functools import wraps
 from typing import Callable, cast
 
-from . import io, world
+from . import world
 from .language import LanguageManager
 from .persistence import LogEntry, SaveManager
 from .world_model import StateTag
