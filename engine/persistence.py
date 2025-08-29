@@ -44,7 +44,10 @@ class SaveManager:
         """Remove the save file if it exists."""
 
         if self.save_path.exists():
-            self.save_path.unlink()
+            try:
+                self.save_path.unlink()
+            except OSError:
+                pass
 
 
 __all__ = ["SaveManager"]

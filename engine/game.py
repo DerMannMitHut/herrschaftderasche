@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import yaml
+
 from engine import io, parser, world, llm, integrity
 
 from .commands import CommandProcessor
@@ -18,17 +20,33 @@ class Game:
         self.debug = debug
         self.save_manager = SaveManager(self.data_dir)
 
-        save_data = self.save_manager.load()
+        try:
+            save_data = self.save_manager.load()
+        except (FileNotFoundError, yaml.YAMLError) as exc:
+            io.output(f"ERROR: Failed to load save file: {exc}")
+            raise SystemExit from exc
+
         self._show_intro = not save_data
         self._language = str(save_data.get("language", language))
         generic_path = self.data_dir / "generic" / "world.yaml"
         lang_world_path = self.data_dir / self._language / "world.yaml"
 
-        warnings = integrity.check_translations(self._language, self.data_dir)
+        try:
+            self.world = world.World.from_files(generic_path, lang_world_path, debug=debug)
+        except FileNotFoundError as exc:
+            io.output(f"ERROR: Missing world file: {exc}")
+            raise SystemExit from exc
+        except yaml.YAMLError as exc:
+            io.output(f"ERROR: Invalid world file: {exc}")
+            raise SystemExit from exc
+
+        try:
+            warnings = integrity.check_translations(self._language, self.data_dir)
+        except (FileNotFoundError, yaml.YAMLError) as exc:
+            io.output(f"ERROR: Failed to load translations: {exc}")
+            raise SystemExit from exc
         for msg in warnings:
             io.output(f"WARNING: {msg}")
-
-        self.world = world.World.from_files(generic_path, lang_world_path, debug=debug)
 
         errors = integrity.validate_world_structure(self.world)
         if save_data:
