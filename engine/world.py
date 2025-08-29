@@ -273,6 +273,13 @@ class World:
         npc_cond = pre.get("npc_state")
         if npc_cond and not self._check_npc_condition(npc_cond):
             return False
+        npc_conditions = pre.get("npc_condition")
+        if npc_conditions:
+            if isinstance(npc_conditions, dict):
+                npc_conditions = [npc_conditions]
+            for cond in npc_conditions:
+                if not self._check_npc_condition(cond):
+                    return False
         return True
 
     def apply_item_condition(self, cond: Dict[str, Any]) -> None:
@@ -303,7 +310,7 @@ class World:
                 self.debug(f"room {location} items {items}")
 
     def apply_effect(self, effect: Dict[str, Any]) -> None:
-        item_cond = effect.get("item_condition")
+        item_cond = effect.get("item_condition") or effect.get("item_conditions")
         if item_cond:
             if isinstance(item_cond, dict):
                 item_cond = [item_cond]

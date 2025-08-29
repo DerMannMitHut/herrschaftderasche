@@ -121,6 +121,8 @@ class Game:
                 continue
             if action.get("target_item") and action.get("target_item") != target_id:
                 continue
+            if action.get("target_npc") and action.get("target_npc") != target_id:
+                continue
             if not self.world.check_preconditions(action.get("preconditions")):
                 continue
             effect = action.get("effect", {})
@@ -286,6 +288,35 @@ class Game:
         self.reverse_cmds = {}
         self._build_cmd_patterns()
         io.output(self.messages["language_set"].format(language=language))
+
+    def cmd_show(self, item_name: str, npc_name: str) -> None:
+        if not item_name or not npc_name:
+            self.cmd_unknown("show")
+            return
+        item_id = self._find_item_id(item_name, in_inventory=True)
+        if not item_id:
+            io.output(self.messages["not_carrying"])
+            self._check_end()
+            return
+        npc_name_cf = npc_name.casefold()
+        for npc_id, npc in self.world.npcs.items():
+            names = npc.get("names", [])
+            if not any(name.casefold() == npc_name_cf for name in names):
+                continue
+            if npc.get("meet", {}).get("location") != self.world.current:
+                io.output(self.messages["no_npc"])
+                self._check_end()
+                return
+            if self._execute_action("show", item_id, npc_id):
+                self._check_end()
+                return
+            break
+        else:
+            io.output(self.messages["no_npc"])
+            self._check_end()
+            return
+        io.output(self.messages["use_failure"])
+        self._check_end()
 
     def cmd_talk(self, arg: str) -> None:
         if not arg:

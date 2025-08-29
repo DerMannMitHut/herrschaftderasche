@@ -20,8 +20,11 @@ def test_ruins_inaccessible_without_map(data_dir, monkeypatch):
     assert g.world.current == "forest"
     assert outputs[-1] == g.messages["cannot_move"]
 
+    g.cmd_go("Ash Village")
     g.cmd_take("Map Fragment")
-    g.cmd_use("Map Fragment", "Map Fragment")
+    g.cmd_go("Forest")
+    g.cmd_show("Map Fragment", "Ashram")
+    g.cmd_go("Hut")
     g.cmd_go("Ruins")
     assert g.world.current == "ruins"
 

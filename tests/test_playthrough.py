@@ -21,12 +21,14 @@ def test_game_reaches_ending(data_dir, monkeypatch):
     commands = [
         lambda: g.cmd_take("Small Key"),
         lambda: g.cmd_go("Forest"),
+        lambda: g.cmd_go("Ash Village"),
         lambda: g.cmd_take("Map Fragment"),
-        lambda: g.cmd_use("Map Fragment", "Map Fragment"),
+        lambda: g.cmd_go("Forest"),
+        lambda: g.cmd_show("Map Fragment", "Ashram"),
+        lambda: g.cmd_go("Hut"),
         lambda: g.cmd_go("Ruins"),
-        lambda: g.cmd_take("Locked Chest"),
         lambda: g.cmd_use("Small Key", "Locked Chest"),
-        lambda: g.cmd_take("Ashen Crown"),
+        lambda: g.cmd_examine("Locked Chest"),
         lambda: g.cmd_go("Forest"),
         lambda: g.cmd_go("Ash Village"),
     ]
