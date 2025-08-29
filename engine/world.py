@@ -6,13 +6,27 @@ import sys
 
 import yaml
 
+from .world_model import Action, Item, Npc, Room
+
 
 class World:
     def __init__(self, data: Dict[str, Any], debug: bool = False):
         self._debug_enabled = debug
-        self.rooms = data["rooms"]
-        self.items = data.get("items", {})
-        self.npcs = data.get("npcs", {})
+        raw_rooms = data.get("rooms", {})
+        raw_items = data.get("items", {})
+        raw_npcs = data.get("npcs", {})
+        self.rooms = {
+            room_id: room if isinstance(room, Room) else Room(**room)
+            for room_id, room in raw_rooms.items()
+        }
+        self.items = {
+            item_id: item if isinstance(item, Item) else Item(**item)
+            for item_id, item in raw_items.items()
+        }
+        self.npcs = {
+            npc_id: npc if isinstance(npc, Npc) else Npc(**npc)
+            for npc_id, npc in raw_npcs.items()
+        }
         self.current = data["start"]
         self.inventory: list[str] = data.get("inventory", [])
         self.endings = data.get("endings", {})
@@ -20,30 +34,39 @@ class World:
         actions = data.get("actions", [])
         if isinstance(actions, dict):
             actions = list(actions.values())
-        self.actions: list[Dict[str, Any]] = list(actions)
+        normalized: list[Any] = []
+        for action in actions:
+            if isinstance(action, dict) and "precondition" in action and "preconditions" not in action:
+                action = dict(action)
+                action["preconditions"] = action.pop("precondition")
+            normalized.append(action)
+        self.actions = [
+            act if isinstance(act, Action) else Action(**act)
+            for act in normalized
+        ]
         self.item_states: Dict[str, str] = {
-            item_id: item_data.get("state")
+            item_id: item_data.state
             for item_id, item_data in self.items.items()
-            if item_data.get("state") is not None
+            if item_data.state is not None
         }
         self.npc_states: Dict[str, str] = {
-            npc_id: npc_data.get("state")
+            npc_id: npc_data.state
             for npc_id, npc_data in self.npcs.items()
-            if npc_data.get("state") is not None
+            if npc_data.state is not None
         }
         self._base_rooms: Dict[str, list[str]] = {
-            room_id: list(room.get("items", [])) for room_id, room in self.rooms.items()
+            room_id: list(room.items) for room_id, room in self.rooms.items()
         }
         self._base_inventory: list[str] = list(self.inventory)
         self._base_item_states: Dict[str, str] = dict(self.item_states)
         self._base_npc_states: Dict[str, str] = dict(self.npc_states)
 
         for room in self.rooms.values():
-            exits = room.get("exits")
+            exits = room.exits
             if not exits:
                 continue
             if isinstance(exits, list):
-                room["exits"] = {e: {"names": [e]} for e in exits}
+                room.exits = {e: {"names": [e]} for e in exits}
                 continue
             new_exits: Dict[str, Dict[str, Any]] = {}
             for target, cfg in exits.items():
@@ -57,7 +80,7 @@ class World:
                         new_exits[target]["preconditions"] = pre
                 else:  # pragma: no cover - legacy single-string syntax
                     new_exits[target] = {"names": [cfg]}
-            room["exits"] = new_exits
+            room.exits = new_exits
 
     def debug(self, message: str) -> None:
         if self._debug_enabled:
@@ -146,6 +169,9 @@ class World:
         for action_id, cfg_action in base_actions.items():
             action = dict(cfg_action)
             action.update(lang_actions.get(action_id, {}))
+            precond = action.pop("precondition", None)
+            if precond is not None and "preconditions" not in action:
+                action["preconditions"] = precond
             actions.append(action)
         npcs: Dict[str, Any] = base.get("npcs", {})
         lang_npcs = lang.get("npcs", {})
@@ -164,12 +190,12 @@ class World:
                 else:
                     npc_cfg[key] = value
         data = {
-            "items": items,
-            "rooms": rooms,
+            "items": {item_id: Item(**cfg) for item_id, cfg in items.items()},
+            "rooms": {room_id: Room(**cfg) for room_id, cfg in rooms.items()},
             "start": base["start"],
             "endings": endings,
-            "actions": actions,
-            "npcs": npcs,
+            "actions": [Action(**a) for a in actions],
+            "npcs": {npc_id: Npc(**cfg) for npc_id, cfg in npcs.items()},
             "intro": lang.get("intro", ""),
         }
         return cls(data, debug=debug)
@@ -181,7 +207,7 @@ class World:
             state["inventory"] = self.inventory
         rooms_diff: Dict[str, list[str]] = {}
         for room_id, room in self.rooms.items():
-            items = list(room.get("items", []))
+            items = list(room.items)
             base_items = self._base_rooms.get(room_id, [])
             if items != base_items:
                 rooms_diff[room_id] = items
@@ -217,19 +243,19 @@ class World:
             if items is None:
                 continue
             if items:
-                room["items"] = items
+                room.items = items
             else:
-                room.pop("items", None)
+                room.items = []
         item_states = data.get("item_states", {})
         for item_id, state in item_states.items():
             if item_id in self.item_states:
                 self.item_states[item_id] = state
-                self.items[item_id]["state"] = state
+                self.items[item_id].state = state
         npc_states = data.get("npc_states", {})
         for npc_id, state in npc_states.items():
             if npc_id in self.npc_states:
                 self.npc_states[npc_id] = state
-                self.npcs[npc_id]["state"] = state
+                self.npcs[npc_id].state = state
 
     # Condition / effect handling -------------------------------------------------
 
@@ -246,7 +272,8 @@ class World:
                 if item_id not in self.inventory:
                     return False
             else:
-                if item_id not in self.rooms.get(location, {}).get("items", []):
+                room = self.rooms.get(location)
+                if not room or item_id not in room.items:
                     return False
         return True
 
@@ -299,7 +326,7 @@ class World:
                 self.inventory.remove(item_id)
                 self.debug(f"inventory {self.inventory}")
             for room_id, room in self.rooms.items():
-                items = room.get("items", [])
+                items = room.items
                 if item_id in items:
                     items.remove(item_id)
                     self.debug(f"room {room_id} items {items}")
@@ -307,9 +334,9 @@ class World:
                 self.inventory.append(item_id)
                 self.debug(f"inventory {self.inventory}")
             else:
-                self.rooms.setdefault(location, {}).setdefault("items", []).append(item_id)
-                items = self.rooms[location].get("items", [])
-                self.debug(f"room {location} items {items}")
+                room = self.rooms.setdefault(location, Room())
+                room.items.append(item_id)
+                self.debug(f"room {location} items {room.items}")
 
     def apply_effect(self, effect: Dict[str, Any]) -> None:
         item_cond = effect.get("item_condition") or effect.get("item_conditions")
@@ -331,29 +358,29 @@ class World:
 
     def describe_current(self, messages: Dict[str, str] | None = None) -> str:
         room = self.rooms[self.current]
-        desc = room["description"]
-        room_items = room.get("items", [])
+        desc = room.description
+        room_items = room.items
         if room_items:
-            item_names = [self.items[i]["names"][0] for i in room_items]
+            item_names = [self.items[i].names[0] for i in room_items]
             if messages:
                 desc += " " + messages["items_here"].format(items=", ".join(item_names))
-            else:  # pragma: no cover - fallback without messages
+            else:  # pragma: no cover - fallback ohne messages
                 desc += " You see here: " + ", ".join(item_names)
         room_npcs = []
         for npc_id, npc in self.npcs.items():
-            meet = npc.get("meet", {})
+            meet = npc.meet
             if meet.get("location") != self.current:
                 continue
             pre = meet.get("preconditions")
             if pre and not self.check_preconditions(pre):
                 continue
-            room_npcs.append(npc.get("names", [npc_id])[0])
+            room_npcs.append((npc.names or [npc_id])[0])
         if room_npcs:
             if messages:
                 desc += " " + messages["npcs_here"].format(npcs=", ".join(room_npcs))
-            else:  # pragma: no cover - fallback without messages
+            else:  # pragma: no cover - fallback ohne messages
                 desc += " You see here: " + ", ".join(room_npcs)
-        exits = room.get("exits", {})
+        exits = room.exits
         if exits:
             exit_names = []
             for cfg in exits.values():
@@ -362,38 +389,42 @@ class World:
                     exit_names.append(names[0])
             if messages:
                 desc += " " + messages["exits"].format(exits=", ".join(exit_names))
-            else:  # pragma: no cover - fallback without messages
+            else:  # pragma: no cover - fallback ohne messages
                 desc += " Exits: " + ", ".join(exit_names)
         return desc
 
     def describe_item(self, item_name: str) -> str | None:
         item_name_cf = item_name.casefold()
         room = self.rooms[self.current]
-        for item_id in room.get("items", []):
-            item = self.items.get(item_id, {})
-            names = item.get("names", [])
+        for item_id in room.items:
+            item = self.items.get(item_id)
+            if not item:
+                continue
+            names = item.names
             if any(name.casefold() == item_name_cf for name in names):
                 state = self.item_states.get(item_id)
                 if state:
-                    desc = item.get("states", {}).get(state, {}).get("description")
+                    desc = item.states.get(state, {}).get("description")
                     if desc is not None:
                         return desc
-                return item.get("description")
+                return item.description
         for item_id in self.inventory:
-            item = self.items.get(item_id, {})
-            names = item.get("names", [])
+            item = self.items.get(item_id)
+            if not item:
+                continue
+            names = item.names
             if any(name.casefold() == item_name_cf for name in names):
                 state = self.item_states.get(item_id)
                 if state:
-                    desc = item.get("states", {}).get(state, {}).get("description")
+                    desc = item.states.get(state, {}).get("description")
                     if desc is not None:
                         return desc
-                return item.get("description")
+                return item.description
         return None
 
     def move(self, exit_name: str) -> bool:
         room = self.rooms[self.current]
-        exits = room.get("exits", {})
+        exits = room.exits
         exit_name_cf = exit_name.casefold()
         for target, cfg in exits.items():
             names = cfg.get("names", [])
@@ -405,7 +436,7 @@ class World:
 
     def can_move(self, exit_name: str) -> bool:
         room = self.rooms[self.current]
-        exits = room.get("exits", {})
+        exits = room.exits
         exit_name_cf = exit_name.casefold()
         for cfg in exits.values():
             names = cfg.get("names", [])
@@ -417,9 +448,10 @@ class World:
     def add_exit(
         self, room_id: str, target: str, pre: Dict[str, Any] | None = None
     ) -> None:
-        room = self.rooms.setdefault(room_id, {})
-        exits = room.setdefault("exits", {})
-        names = self.rooms.get(target, {}).get("names", [target])
+        room = self.rooms.setdefault(room_id, Room())
+        exits = room.exits
+        target_room = self.rooms.get(target)
+        names = target_room.names if target_room else [target]
         exits[target] = {"names": names}
         if pre:
             exits[target]["preconditions"] = pre
@@ -430,10 +462,10 @@ class World:
         Returns the canonical item name if the item was taken, otherwise ``None``.
         """
         room = self.rooms[self.current]
-        items = room.get("items", [])
+        items = room.items
         item_name_cf = item_name.casefold()
         for item_id in list(items):
-            names = self.items.get(item_id, {}).get("names", [])
+            names = self.items.get(item_id, Item()).names
             if any(name.casefold() == item_name_cf for name in names):
                 items.remove(item_id)
                 self.inventory.append(item_id)
@@ -447,13 +479,13 @@ class World:
     def drop(self, item_name: str) -> bool:
         item_name_cf = item_name.casefold()
         for item_id in list(self.inventory):
-            names = self.items.get(item_id, {}).get("names", [])
+            names = self.items.get(item_id, Item()).names
             if any(name.casefold() == item_name_cf for name in names):
                 self.inventory.remove(item_id)
                 room = self.rooms[self.current]
-                room.setdefault("items", []).append(item_id)
+                room.items.append(item_id)
                 self.debug(f"inventory {self.inventory}")
-                self.debug(f"room {self.current} items {room['items']}")
+                self.debug(f"room {self.current} items {room.items}")
                 return True
         return False
 
@@ -464,11 +496,11 @@ class World:
         item = self.items.get(item_id)
         if not item:
             return False
-        states = item.get("states")
+        states = item.states
         if not states or state not in states:
             return False
         self.item_states[item_id] = state
-        item["state"] = state
+        item.state = state
         self.debug(f"item {item_id} state {state}")
         return True
 
@@ -479,11 +511,11 @@ class World:
         npc = self.npcs.get(npc_id)
         if not npc:
             return False
-        states = npc.get("states")
+        states = npc.states
         if not states or state not in states:
             return False
         self.npc_states[npc_id] = state
-        npc["state"] = state
+        npc.state = state
         self.debug(f"npc {npc_id} state {state}")
         return True
 
@@ -492,11 +524,11 @@ class World:
         npc = self.npcs.get(npc_id)
         if not npc:
             return False
-        states = npc.get("states", {})
+        states = npc.states
         if "met" not in states:
             return False
         self.npc_states[npc_id] = "met"
-        npc["state"] = "met"
+        npc.state = "met"
         self.debug(f"npc {npc_id} state met")
         return True
 
@@ -507,7 +539,7 @@ class World:
     def describe_inventory(self, messages: Dict[str, str]) -> str:
         if not self.inventory:
             return messages["inventory_empty"]
-        item_names = [self.items[i]["names"][0] for i in self.inventory]
+        item_names = [self.items[i].names[0] for i in self.inventory]
         return messages["inventory_items"].format(items=", ".join(item_names))
 
     def check_endings(self) -> str | None:
