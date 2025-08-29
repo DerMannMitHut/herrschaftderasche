@@ -435,7 +435,13 @@ class World:
         desc = room.description
         room_items = room.items
         if room_items:
-            item_names = [self.items[i].names[0] for i in room_items]
+            item_names = []
+            for item_id in room_items:
+                item = self.items.get(item_id)
+                if item and item.names:
+                    item_names.append(item.names[0])
+                else:
+                    item_names.append(item_id)
             if messages:
                 desc += " " + messages["items_here"].format(items=", ".join(item_names))
             else:  # pragma: no cover - fallback without messages
