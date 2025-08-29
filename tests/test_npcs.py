@@ -1,6 +1,6 @@
 import yaml
 from engine.world import World
-from engine import game, io
+from engine import game
 
 
 def make_world() -> World:
@@ -56,7 +56,7 @@ def test_npc_event_triggered_on_room_change(data_dir, capsys):
     assert "The old man greets you." not in out
 
 
-def test_npc_event_triggered_on_start(tmp_path, monkeypatch):
+def test_npc_event_triggered_on_start(tmp_path, monkeypatch, io_backend):
     (tmp_path / "generic").mkdir()
     (tmp_path / "en").mkdir()
 
@@ -80,11 +80,10 @@ def test_npc_event_triggered_on_start(tmp_path, monkeypatch):
     with open(tmp_path / "en" / "world.yaml", "w", encoding="utf-8") as fh:
         yaml.safe_dump(en, fh)
 
-    outputs: list[str] = []
-    monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
-    monkeypatch.setattr(io, "get_input", lambda: (_ for _ in ()).throw(EOFError()))
+    outputs = io_backend.outputs
+    monkeypatch.setattr(io_backend, "get_input", lambda prompt='> ': (_ for _ in ()).throw(EOFError()))
 
-    g = game.Game(str(tmp_path / "en" / "world.yaml"), "en")
+    g = game.Game(str(tmp_path / "en" / "world.yaml"), "en", io_backend=io_backend)
     g.run()
 
     assert "Hello there." in outputs

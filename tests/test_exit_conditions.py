@@ -1,24 +1,21 @@
 from pathlib import Path
 import shutil
 
-from engine import game, io
+from engine import game
 
 
-def test_ruins_inaccessible_without_map(data_dir, monkeypatch):
+def test_ruins_inaccessible_without_map(data_dir, io_backend):
     root = Path(__file__).resolve().parents[1]
     shutil.copy(root / "data" / "generic" / "world.yaml", data_dir / "generic" / "world.yaml")
     shutil.copy(root / "data" / "en" / "world.yaml", data_dir / "en" / "world.yaml")
 
-    outputs: list[str] = []
-    monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
-
-    g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
+    g = game.Game(str(data_dir / "en" / "world.yaml"), "en", io_backend=io_backend)
     g.command_processor.cmd_go("Forest")
     assert g.world.current == "forest"
 
     g.command_processor.cmd_go("Ruins")
     assert g.world.current == "forest"
-    assert outputs[-1] == g.language_manager.messages["cannot_move"]
+    assert io_backend.outputs[-1] == g.language_manager.messages["cannot_move"]
 
     g.command_processor.cmd_go("Ash Village")
     g.command_processor.cmd_talk("Villager")

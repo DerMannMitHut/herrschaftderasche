@@ -8,6 +8,35 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
     sys.path.append(str(ROOT_DIR))
 
+from engine.interfaces import IOBackend, LLMBackend
+
+
+class DummyIO(IOBackend):
+    def __init__(self, inputs: list[str] | None = None) -> None:
+        self.inputs = inputs or []
+        self.outputs: list[str] = []
+
+    def get_input(self, prompt: str = "> ") -> str:
+        return self.inputs.pop(0) if self.inputs else ""
+
+    def output(self, text: str) -> None:
+        self.outputs.append(text)
+
+
+class DummyLLM(LLMBackend):
+    def interpret(self, command: str) -> str:
+        return command
+
+
+@pytest.fixture
+def io_backend() -> DummyIO:
+    return DummyIO()
+
+
+@pytest.fixture
+def llm_backend() -> DummyLLM:
+    return DummyLLM()
+
 
 @pytest.fixture
 def data_dir(tmp_path):

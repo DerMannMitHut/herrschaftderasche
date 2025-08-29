@@ -1,8 +1,8 @@
 import yaml
-from engine import game, io
+from engine import game
 
 
-def test_end_condition_inventory_and_location(data_dir, monkeypatch):
+def test_end_condition_inventory_and_location(data_dir, io_backend):
     generic = {
         "items": {"crown": {}},
         "rooms": {
@@ -31,15 +31,13 @@ def test_end_condition_inventory_and_location(data_dir, monkeypatch):
         yaml.safe_dump(generic, fh)
     with open(data_dir / "en" / "world.yaml", "w", encoding="utf-8") as fh:
         yaml.safe_dump(en, fh)
-    outputs: list[str] = []
-    monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
-    g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
+    g = game.Game(str(data_dir / "en" / "world.yaml"), "en", io_backend=io_backend)
     g.command_processor.cmd_take("Crown")
     g.command_processor.cmd_go("Room2")
-    assert outputs[-1] == "You win!"
+    assert io_backend.outputs[-1] == "You win!"
 
 
-def test_end_condition_inventory_lacks(data_dir, monkeypatch):
+def test_end_condition_inventory_lacks(data_dir, io_backend):
     generic = {
         "items": {"crown": {}},
         "rooms": {
@@ -68,14 +66,12 @@ def test_end_condition_inventory_lacks(data_dir, monkeypatch):
         yaml.safe_dump(generic, fh)
     with open(data_dir / "en" / "world.yaml", "w", encoding="utf-8") as fh:
         yaml.safe_dump(en, fh)
-    outputs: list[str] = []
-    monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
-    g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
+    g = game.Game(str(data_dir / "en" / "world.yaml"), "en", io_backend=io_backend)
     g.command_processor.cmd_go("Room2")
-    assert outputs[-1] == "No crown, no victory."
+    assert io_backend.outputs[-1] == "No crown, no victory."
 
 
-def test_end_condition_or_room_has(data_dir, monkeypatch):
+def test_end_condition_or_room_has(data_dir, io_backend):
     generic = {
         "items": {"sword": {}},
         "rooms": {
@@ -104,22 +100,16 @@ def test_end_condition_or_room_has(data_dir, monkeypatch):
         yaml.safe_dump(generic, fh)
     with open(data_dir / "en" / "world.yaml", "w", encoding="utf-8") as fh:
         yaml.safe_dump(en, fh)
-    outputs: list[str] = []
-    monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
-    g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
+    g = game.Game(str(data_dir / "en" / "world.yaml"), "en", io_backend=io_backend)
     g.command_processor.cmd_go("Room2")
-    assert outputs[-1] == "You see the sword and know your quest is over."
+    assert io_backend.outputs[-1] == "You see the sword and know your quest is over."
 
 
-
-
-def test_end_condition_item_state(data_dir, monkeypatch):
-    outputs: list[str] = []
-    monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
-    g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
+def test_end_condition_item_state(data_dir, io_backend):
+    g = game.Game(str(data_dir / "en" / "world.yaml"), "en", io_backend=io_backend)
     g._check_end()
-    assert outputs == []
+    assert io_backend.outputs == []
     assert g.world.set_item_state("gem", "green")
     g._check_end()
-    assert outputs[-1] == "The gem is green."
+    assert io_backend.outputs[-1] == "The gem is green."
 

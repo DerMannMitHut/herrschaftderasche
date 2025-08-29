@@ -1,15 +1,15 @@
 import yaml
 import pytest
-from engine import game, io, parser
+from engine import game, parser
 
 
-def test_save_on_eoferror(data_dir, monkeypatch):
-    g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
+def test_save_on_eoferror(data_dir, monkeypatch, io_backend):
+    g = game.Game(str(data_dir / "en" / "world.yaml"), "en", io_backend=io_backend)
 
     def fake_input(prompt: str = "> ") -> str:  # noqa: ARG001
         raise EOFError
 
-    monkeypatch.setattr(io, "get_input", fake_input)
+    monkeypatch.setattr(io_backend, "get_input", fake_input)
     g.run()
     save_path = data_dir / "save.yaml"
     assert save_path.exists()
@@ -18,9 +18,9 @@ def test_save_on_eoferror(data_dir, monkeypatch):
     assert data["current"] == "start"
 
 
-def test_save_on_exception(data_dir, monkeypatch):
-    g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
-    monkeypatch.setattr(io, "get_input", lambda prompt="> ": "look")
+def test_save_on_exception(data_dir, monkeypatch, io_backend):
+    g = game.Game(str(data_dir / "en" / "world.yaml"), "en", io_backend=io_backend)
+    monkeypatch.setattr(io_backend, "get_input", lambda prompt="> ": "look")
 
     def boom(cmd: str) -> str:  # noqa: ARG001
         raise ValueError("boom")

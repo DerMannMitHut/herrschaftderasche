@@ -5,10 +5,10 @@ from typing import Dict, List, Union
 
 import yaml
 
-from . import io
+from .interfaces import IOBackend
 
 
-def _load_yaml(path: Path) -> dict:
+def _load_yaml(path: Path, io: IOBackend) -> dict:
     try:
         with open(path, encoding="utf-8") as fh:
             return yaml.safe_load(fh)
@@ -20,23 +20,23 @@ def _load_yaml(path: Path) -> dict:
         raise SystemExit from exc
 
 
-def load_messages(language: str) -> Dict[str, str]:
+def load_messages(language: str, io: IOBackend) -> Dict[str, str]:
     """Load translation messages for the given language code."""
     path = (
         Path(__file__).resolve().parent.parent / "data" / language / "messages.yaml"
     )
-    return _load_yaml(path)
+    return _load_yaml(path, io)
 
 
-def load_commands(language: str) -> Dict[str, Union[str, List[str]]]:
+def load_commands(language: str, io: IOBackend) -> Dict[str, Union[str, List[str]]]:
     """Load command translations for the given language code."""
     path = (
         Path(__file__).resolve().parent.parent / "data" / language / "commands.yaml"
     )
-    return _load_yaml(path)
+    return _load_yaml(path, io)
 
 
-def load_command_info() -> Dict[str, Dict[str, int]]:
+def load_command_info(io: IOBackend) -> Dict[str, Dict[str, int]]:
     """Return metadata about the available commands."""
     path = Path(__file__).resolve().parent.parent / "data" / "generic" / "commands.yaml"
-    return _load_yaml(path)
+    return _load_yaml(path, io)
