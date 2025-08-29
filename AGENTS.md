@@ -25,7 +25,7 @@ Die Story soll aus der Sicht einer Person (dem Spieler) passieren.
 ## Richtlinien
 - Programmiersprache: Python 3.12
 - Styleguide: PEP8 + ruff + pyright
-- Tests mit "pytest -q" durchführen; falls möglich besser "pytest --cov -q"
+- Tests mit "pytest -q" durchführen; falls möglich besser "pytest --cov --cov-branch -q"
 - Antworten in Deutsch, Variablen-Namen, Konstanten, etc. in Englisch
 - Vermeide Code-Kommentare zugunsten eines gut lesbaren Codes 
 - Die Engine selber soll frei von plotabhängigem Code sein; der gesamte Plot muss über die generic/world.yaml beshrieben werden. 
