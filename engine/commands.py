@@ -449,7 +449,7 @@ class CommandProcessor:
         if text:
             self.io.output(text)
         else:
-            io.output(self.language_manager.messages["no_npc"])
+            self.io.output(self.language_manager.messages["no_npc"])
         if state != StateTag.HELPED:
             self.world.set_npc_state(npc_id, StateTag.HELPED)
 
