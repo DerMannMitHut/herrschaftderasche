@@ -2,13 +2,20 @@
 
 from __future__ import annotations
 
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Dict, Any, TYPE_CHECKING
+from typing import Any, Dict, List, TYPE_CHECKING
 
 import yaml
 
 if TYPE_CHECKING:  # pragma: no cover - used for type checking only
     from .world import World
+
+
+@dataclass
+class LogEntry:
+    command: str
+    output: List[str]
 
 
 class SaveManager:
@@ -30,13 +37,18 @@ class SaveManager:
         if not self.save_path.exists():
             return {}
         with open(self.save_path, encoding="utf-8") as fh:
-            return yaml.safe_load(fh) or {}
+            data = yaml.safe_load(fh) or {}
+        log_data = data.get("log", [])
+        data["log"] = [LogEntry(**entry) for entry in log_data]
+        return data
 
-    def save(self, world: "World", language: str) -> None:
-        """Persist the current world state and language."""
+    def save(self, world: "World", language: str, log: List[LogEntry] | None = None) -> None:
+        """Persist the current world state, language and log."""
 
         data = world.to_state()
         data["language"] = language
+        if log:
+            data["log"] = [asdict(entry) for entry in log]
         with open(self.save_path, "w", encoding="utf-8") as fh:
             yaml.safe_dump(data, fh)
 
@@ -50,5 +62,5 @@ class SaveManager:
                 pass
 
 
-__all__ = ["SaveManager"]
+__all__ = ["SaveManager", "LogEntry"]
 
