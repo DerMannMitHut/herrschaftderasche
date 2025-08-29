@@ -51,7 +51,7 @@ actions:
     preconditions:
       npc_condition:
         - npc: ashram
-          state: met
+          state: helped
     effect:
       item_condition:
         - item: map_fragment
