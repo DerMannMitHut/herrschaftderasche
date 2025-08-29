@@ -11,7 +11,7 @@ def test_log_records_state_changes_and_show_log(data_dir, io_backend):
     g.command_processor.execute("take gem")
     assert [e.command for e in g.command_processor.log] == ["go room 2", "take gem"]
     g.command_processor.execute("show_log 1")
-    assert io_backend.outputs[-1].splitlines()[0] == "> take gem"
+    assert io_backend.outputs[-1].splitlines()[0] == "|> take gem"
 
 
 def test_log_persisted_in_savegame(data_dir, io_backend):
