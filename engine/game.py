@@ -6,7 +6,7 @@ from pathlib import Path
 
 import yaml
 
-from engine import io, parser, world, llm, integrity
+from engine import parser, world, integrity
 from .world_model import StateTag
 from .interfaces import IOBackend, LLMBackend
 from .io import ConsoleIO

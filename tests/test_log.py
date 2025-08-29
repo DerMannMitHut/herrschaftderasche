@@ -3,6 +3,8 @@ from engine import game
 
 def test_log_records_state_changes_and_show_log(data_dir, io_backend):
     g = game.Game(str(data_dir / "en" / "world.yaml"), "en", io_backend=io_backend)
+    assert "show_log" in g.language_manager.commands
+    assert "show_log" in g.language_manager.command_info
     g.command_processor.execute("look")
     assert g.command_processor.log == []
     g.command_processor.execute("go room 2")

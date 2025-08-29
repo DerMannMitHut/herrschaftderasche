@@ -53,4 +53,7 @@ talk:
   - 'sprich mit $a'
 show:
   - 'zeige $a $b'
+show_log:
+  - 'show_log'
+  - 'show_log $a'
 

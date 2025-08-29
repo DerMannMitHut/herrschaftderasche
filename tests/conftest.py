@@ -8,7 +8,7 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
     sys.path.append(str(ROOT_DIR))
 
-from engine.interfaces import IOBackend, LLMBackend
+from engine.interfaces import IOBackend, LLMBackend  # noqa: E402
 
 
 class DummyIO(IOBackend):
