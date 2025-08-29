@@ -405,8 +405,8 @@ class CommandProcessor:
         entries = self.log[-n:] if n else self.log
         lines: list[str] = []
         for entry in entries:
-            lines.append(f"> {entry.command}")
-            lines.extend(entry.output)
+            lines.append(f"|> {entry.command}")
+            lines.extend(f"| {o}" for o in entry.output)
         if lines:
             self.io.output("\n".join(lines))
 
