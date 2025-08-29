@@ -573,9 +573,12 @@ class World:
         return True
 
     def meet_npc(self, npc_id: str) -> bool:
-        """Mark an NPC as met if a corresponding state exists."""
+        """Mark an NPC as met only if it was unknown."""
         npc = self.npcs.get(npc_id)
         if not npc:
+            return False
+        state = self.npc_states.get(npc_id)
+        if state != "unknown":
             return False
         states = npc.states
         if StateTag.MET.value not in states:
