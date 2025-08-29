@@ -4,20 +4,23 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from . import i18n, world
+from . import world
 from .persistence import SaveManager
+from .interfaces import IOBackend
+from . import i18n
 
 
 class LanguageManager:
     """Manage messages, command translations and language switches."""
 
-    def __init__(self, data_dir: Path, language: str, debug: bool = False):
+    def __init__(self, data_dir: Path, language: str, io: IOBackend, debug: bool = False):
         self.data_dir = data_dir
         self.debug = debug
+        self.io = io
         self.language = language
-        self.messages = i18n.load_messages(language)
-        self.commands = i18n.load_commands(language)
-        self.command_info = i18n.load_command_info()
+        self.messages = i18n.load_messages(language, io)
+        self.commands = i18n.load_commands(language, io)
+        self.command_info = i18n.load_command_info(io)
 
     def switch(self, language: str, current_world: world.World, save_manager: SaveManager) -> world.World:
         """Switch the game to a different language.
@@ -27,8 +30,8 @@ class LanguageManager:
         """
 
         try:
-            messages = i18n.load_messages(language)
-            commands = i18n.load_commands(language)
+            messages = i18n.load_messages(language, self.io)
+            commands = i18n.load_commands(language, self.io)
             generic_path = self.data_dir / "generic" / "world.yaml"
             world_path = self.data_dir / language / "world.yaml"
             new_world = world.World.from_files(generic_path, world_path, debug=self.debug)

@@ -1,5 +1,16 @@
-"""Placeholder for LLM integration via ollama."""
+"""Placeholder LLM backend."""
 
-def interpret(command: str) -> str:
-    """For now, simply return the command unchanged."""
-    return command
+from __future__ import annotations
+
+from .interfaces import LLMBackend
+
+
+class NoOpLLM(LLMBackend):
+    """Backend that returns the command unchanged."""
+
+    def interpret(self, command: str) -> str:
+        return command
+
+
+__all__ = ["NoOpLLM"]
+
