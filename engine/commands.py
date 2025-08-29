@@ -219,19 +219,19 @@ class CommandProcessor:
         self, trigger: str, item_id: str, target_id: str | None = None
     ) -> bool:
         for action in self.world.actions:
-            if action.get("trigger") != trigger:
+            if action.trigger != trigger:
                 continue
-            if action.get("item") and action.get("item") != item_id:
+            if action.item and action.item != item_id:
                 continue
-            if action.get("target_item") and action.get("target_item") != target_id:
+            if action.target_item and action.target_item != target_id:
                 continue
-            if action.get("target_npc") and action.get("target_npc") != target_id:
+            if action.target_npc and action.target_npc != target_id:
                 continue
-            if not self.world.check_preconditions(action.get("preconditions")):
+            if not self.world.check_preconditions(action.preconditions):
                 continue
-            effect = action.get("effect", {})
+            effect = action.effect or {}
             self.world.apply_effect(effect)
-            message = action.get("messages", {}).get("success")
+            message = action.messages.get("success")
             if message:
                 io.output(message)
             return True
