@@ -21,6 +21,7 @@ def test_ruins_inaccessible_without_map(data_dir, monkeypatch):
     assert outputs[-1] == g.messages["cannot_move"]
 
     g.cmd_go("Ash Village")
+    g.cmd_talk("Villager")
     g.cmd_take("Map Fragment")
     g.cmd_go("Forest")
     g.cmd_talk("Ashram")

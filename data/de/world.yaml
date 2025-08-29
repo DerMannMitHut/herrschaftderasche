@@ -1,3 +1,4 @@
+intro: "Du erwachst in einer kleinen Hütte, draußen liegt die Welt unter Asche."
 items:
   small_key:
     names:
@@ -52,6 +53,17 @@ rooms:
     description: "Ein Dorf, das unter einer Schicht Asche liegt."
 
 npcs:
+  villager:
+    names:
+      - Marek
+      - Dorfbewohner
+    meet:
+      text: "Ein Dorfbewohner namens Marek tritt näher und schaut dich eindringlich an."
+    states:
+      met:
+        talk: "'Bring die Aschenkrone ins Dorf', sagt Marek. 'Im Wald lebt der Einsiedler Ashram, er kann dir helfen.'"
+      helped:
+        talk: "Marek nickt dir zu. 'Vergiss die Krone nicht.'"
   ashram:
     names:
       - Ashram

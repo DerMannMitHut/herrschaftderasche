@@ -22,6 +22,7 @@ def test_game_reaches_ending(data_dir, monkeypatch):
         lambda: g.cmd_take("Small Key"),
         lambda: g.cmd_go("Forest"),
         lambda: g.cmd_go("Ash Village"),
+        lambda: g.cmd_talk("Villager"),
         lambda: g.cmd_take("Map Fragment"),
         lambda: g.cmd_go("Forest"),
         lambda: g.cmd_talk("Ashram"),
