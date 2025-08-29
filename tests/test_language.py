@@ -25,7 +25,7 @@ def test_language_persistence(data_dir, monkeypatch):
     monkeypatch.setattr(io, "output", lambda text: outputs.append(text))
     g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
     g.command_processor.cmd_language("de")
-    g.command_processor.cmd_quit("")
+    g.command_processor.cmd_quit()
     g2 = game.Game(str(data_dir / "en" / "world.yaml"), "en")
     assert g2.language == "de"
     assert g2.language_manager.messages["farewell"] == "Auf Wiedersehen!"
