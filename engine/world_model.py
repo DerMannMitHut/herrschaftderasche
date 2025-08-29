@@ -1,7 +1,18 @@
 """Data models for world elements."""
 
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any, Dict, List, Optional
+
+
+class LocationTag(Enum):
+    INVENTORY = "INVENTORY"
+    CURRENT_ROOM = "CURRENT_ROOM"
+
+
+class StateTag(Enum):
+    MET = "met"
+    HELPED = "helped"
 
 
 @dataclass
@@ -32,7 +43,7 @@ class Room:
 class Item:
     names: List[str] = field(default_factory=list)
     description: str = ""
-    state: Optional[str] = None
+    state: Optional[str | StateTag] = None
     states: Dict[str, Dict[str, Any]] = field(default_factory=dict)
 
     def get(self, key: str, default: Any = None) -> Any:  # pragma: no cover - compat
@@ -48,7 +59,7 @@ class Item:
 @dataclass
 class Npc:
     names: List[str] = field(default_factory=list)
-    state: Optional[str] = None
+    state: Optional[str | StateTag] = None
     states: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     meet: Dict[str, Any] = field(default_factory=dict)
 
@@ -82,5 +93,12 @@ class Action:
         setattr(self, key, value)
 
 
-__all__ = ["Room", "Item", "Npc", "Action"]
+__all__ = [
+    "LocationTag",
+    "StateTag",
+    "Room",
+    "Item",
+    "Npc",
+    "Action",
+]
 

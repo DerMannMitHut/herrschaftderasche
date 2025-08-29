@@ -7,6 +7,7 @@ from pathlib import Path
 import yaml
 
 from engine import io, parser, world, llm, integrity
+from .world_model import StateTag
 
 from .commands import CommandProcessor
 from .language import LanguageManager
@@ -97,7 +98,10 @@ class Game:
             loc = meet.get("location")
             text = meet.get("text")
             pre = meet.get("preconditions")
-            if loc == self.world.current and self.world.npc_state(npc_id) != "met":
+            if (
+                loc == self.world.current
+                and self.world.npc_state(npc_id) != StateTag.MET
+            ):
                 if pre and not self.world.check_preconditions(pre):
                     continue
                 if text:

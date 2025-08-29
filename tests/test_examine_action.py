@@ -1,5 +1,5 @@
 from engine import game, io
-from engine.world_model import Action, Item
+from engine.world_model import Action, Item, LocationTag
 
 
 def test_examine_triggers_action(data_dir, monkeypatch):
@@ -14,7 +14,7 @@ def test_examine_triggers_action(data_dir, monkeypatch):
         Action(
             trigger="examine",
             item="stone",
-            effect={"item_condition": {"item": "coin", "location": "CURRENT_ROOM"}},
+            effect={"item_condition": {"item": "coin", "location": LocationTag.CURRENT_ROOM}},
             messages={"success": "You find a coin."},
         )
     )

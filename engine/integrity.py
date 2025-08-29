@@ -8,6 +8,7 @@ from typing import Any, Dict, List
 import yaml
 
 from . import world
+from .world_model import LocationTag, StateTag
 
 
 def check_translations(language: str, data_dir: Path) -> List[str]:
@@ -138,10 +139,16 @@ def validate_world_structure(w: world.World) -> List[str]:
                 f"Action precondition references missing item '{cond_item}'"
             )
         cond_loc = cond.get("location")
-        if cond_loc and cond_loc != "INVENTORY" and cond_loc not in w.rooms:
-            errors.append(
-                f"Action precondition references missing location '{cond_loc}'"
-            )
+        if cond_loc:
+            if isinstance(cond_loc, LocationTag):
+                if cond_loc is not LocationTag.INVENTORY and cond_loc.value not in w.rooms:
+                    errors.append(
+                        f"Action precondition references missing location '{cond_loc.value}'"
+                    )
+            elif cond_loc not in w.rooms:
+                errors.append(
+                    f"Action precondition references missing location '{cond_loc}'"
+                )
         eff = action.get("effect", {}).get("item_condition", [])
         if isinstance(eff, dict):
             eff = [eff]
@@ -157,10 +164,16 @@ def validate_world_structure(w: world.World) -> List[str]:
                     f"Action effect references missing state '{eff_state}' for item '{eff_item}'"
                 )
             eff_loc = cond.get("location")
-            if eff_loc and eff_loc != "INVENTORY" and eff_loc not in w.rooms:
-                errors.append(
-                    f"Action effect references missing location '{eff_loc}'"
-                )
+            if eff_loc:
+                if isinstance(eff_loc, LocationTag):
+                    if eff_loc is not LocationTag.INVENTORY and eff_loc.value not in w.rooms:
+                        errors.append(
+                            f"Action effect references missing location '{eff_loc.value}'"
+                        )
+                elif eff_loc not in w.rooms:
+                    errors.append(
+                        f"Action effect references missing location '{eff_loc}'"
+                    )
 
     # NPCs -------------------------------------------------------------------
     for npc_id, npc in w.npcs.items():
@@ -171,9 +184,10 @@ def validate_world_structure(w: world.World) -> List[str]:
                 f"NPC '{npc_id}' references missing room '{loc}'"
             )
         state = npc.get("state")
-        if state and state not in npc.get("states", {}):
+        state_key = state.value if isinstance(state, StateTag) else state
+        if state_key and state_key not in npc.get("states", {}):
             errors.append(
-                f"NPC '{npc_id}' has undefined state '{state}'"
+                f"NPC '{npc_id}' has undefined state '{state_key}'"
             )
 
     # Endings ----------------------------------------------------------------
@@ -191,10 +205,16 @@ def validate_world_structure(w: world.World) -> List[str]:
                 f"Ending '{end_id}' references missing item '{cond_item}'"
             )
         cond_loc = cond.get("location")
-        if cond_loc and cond_loc != "INVENTORY" and cond_loc not in w.rooms:
-            errors.append(
-                f"Ending '{end_id}' references missing location '{cond_loc}'"
-            )
+        if cond_loc:
+            if isinstance(cond_loc, LocationTag):
+                if cond_loc is not LocationTag.INVENTORY and cond_loc.value not in w.rooms:
+                    errors.append(
+                        f"Ending '{end_id}' references missing location '{cond_loc.value}'"
+                    )
+            elif cond_loc not in w.rooms:
+                errors.append(
+                    f"Ending '{end_id}' references missing location '{cond_loc}'"
+                )
         state = cond.get("state")
         if cond_item and state and state not in w.items.get(cond_item, {}).get("states", {}):
             errors.append(
