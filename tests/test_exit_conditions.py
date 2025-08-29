@@ -23,6 +23,7 @@ def test_ruins_inaccessible_without_map(data_dir, monkeypatch):
     g.cmd_go("Ash Village")
     g.cmd_take("Map Fragment")
     g.cmd_go("Forest")
+    g.cmd_talk("Ashram")
     g.cmd_show("Map Fragment", "Ashram")
     g.cmd_go("Hut")
     g.cmd_go("Ruins")
