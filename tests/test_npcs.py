@@ -45,13 +45,13 @@ def test_npc_state_saved_and_loaded(tmp_path):
 
 def test_npc_event_triggered_on_room_change(data_dir, capsys):
     g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
-    g.cmd_go("Room 2")
+    g.command_processor.cmd_go("Room 2")
     out = capsys.readouterr().out
     assert "The old man greets you." in out
     assert g.world.npc_state("old_man") == "met"
-    g.cmd_go("Room 3")
+    g.command_processor.cmd_go("Room 3")
     capsys.readouterr()
-    g.cmd_go("Room 2")
+    g.command_processor.cmd_go("Room 2")
     out = capsys.readouterr().out
     assert "The old man greets you." not in out
 

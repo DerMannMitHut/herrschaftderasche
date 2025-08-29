@@ -20,7 +20,7 @@ def test_examine_triggers_action(data_dir, monkeypatch):
         }
     )
 
-    g.describe_item("Stone")
+    g.command_processor.describe_item("Stone")
 
     assert outputs[-2:] == ["A stone.", "You find a coin."]
     assert "coin" in g.world.rooms[g.world.current].get("items", [])

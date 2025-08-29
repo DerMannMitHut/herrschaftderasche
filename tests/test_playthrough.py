@@ -18,21 +18,22 @@ def test_game_reaches_ending(data_dir, monkeypatch):
 
     g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
 
+    cp = g.command_processor
     commands = [
-        lambda: g.cmd_take("Small Key"),
-        lambda: g.cmd_go("Forest"),
-        lambda: g.cmd_go("Ash Village"),
-        lambda: g.cmd_talk("Villager"),
-        lambda: g.cmd_take("Map Fragment"),
-        lambda: g.cmd_go("Forest"),
-        lambda: g.cmd_talk("Ashram"),
-        lambda: g.cmd_show("Map Fragment", "Ashram"),
-        lambda: g.cmd_go("Hut"),
-        lambda: g.cmd_go("Ruins"),
-        lambda: g.cmd_use("Small Key", "Locked Chest"),
-        lambda: g.cmd_examine("Locked Chest"),
-        lambda: g.cmd_go("Forest"),
-        lambda: g.cmd_go("Ash Village"),
+        lambda: cp.cmd_take("Small Key"),
+        lambda: cp.cmd_go("Forest"),
+        lambda: cp.cmd_go("Ash Village"),
+        lambda: cp.cmd_talk("Villager"),
+        lambda: cp.cmd_take("Map Fragment"),
+        lambda: cp.cmd_go("Forest"),
+        lambda: cp.cmd_talk("Ashram"),
+        lambda: cp.cmd_show("Map Fragment", "Ashram"),
+        lambda: cp.cmd_go("Hut"),
+        lambda: cp.cmd_go("Ruins"),
+        lambda: cp.cmd_use("Small Key", "Locked Chest"),
+        lambda: cp.cmd_examine("Locked Chest"),
+        lambda: cp.cmd_go("Forest"),
+        lambda: cp.cmd_go("Ash Village"),
     ]
 
     for func in commands:
