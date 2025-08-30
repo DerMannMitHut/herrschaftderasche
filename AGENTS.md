@@ -16,7 +16,10 @@
 - Tests schnell: `poetry run pytest -q`
 - Tests mit Coverage: `poetry run pytest --cov --cov-branch -q`
 - Abhängigkeiten: `poetry add <pkg>`; Dev-Tools: `poetry add --group dev ruff pyright pytest pytest-cov`
- - Ausführen (Beispiel): `poetry run herrschaft-der-asche --language de`
+ - Ausführen:
+   - Entry-Point: `poetry run herrschaft-der-asche --language de`
+   - Modulstart: `poetry run python -m game.main --language de`
+   - Notfall (Dateiaufruf): `poetry run PYTHONPATH=. python game/main.py --language de`
 
 ## Coding Style & Benennung
 - Stil: PEP8, geprüft via ruff; Typen via pyright
