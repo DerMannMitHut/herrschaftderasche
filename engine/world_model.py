@@ -82,8 +82,8 @@ class Action:
     item: Optional[str] = None
     target_item: Optional[str] = None
     target_npc: Optional[str] = None
-    preconditions: Optional[Dict[str, Any]] = None
-    effect: Optional[Dict[str, Any]] = None
+    preconditions: Optional[list[Dict[str, Any]]] = None
+    effect: Optional[list[Dict[str, Any]]] = None
     messages: Dict[str, str] = field(default_factory=dict)
 
     def get(self, key: str, default: Any = None) -> Any:  # pragma: no cover - compat

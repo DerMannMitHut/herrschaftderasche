@@ -13,10 +13,17 @@ def test_end_condition_inventory_and_location(data_dir, io_backend):
         "start": "room1",
         "endings": {
             "win": {
-                "preconditions": {
-                    "is_location": "room2",
-                    "item_condition": {"item": "crown", "location": LocationTag.INVENTORY.value},
-                }
+                "preconditions": [
+                    {"is_location": "room2"},
+                    {
+                        "item_conditions": [
+                            {
+                                "item": "crown",
+                                "location": LocationTag.INVENTORY.value,
+                            }
+                        ]
+                    },
+                ]
             }
         },
     }
@@ -48,10 +55,10 @@ def test_end_condition_inventory_lacks(data_dir, io_backend):
         "start": "room1",
         "endings": {
             "fail": {
-                "preconditions": {
-                    "is_location": "room2",
-                    "item_condition": {"item": "crown", "location": "room1"},
-                }
+                "preconditions": [
+                    {"is_location": "room2"},
+                    {"item_conditions": [{"item": "crown", "location": "room1"}]},
+                ]
             }
         },
     }
@@ -82,10 +89,10 @@ def test_end_condition_or_room_has(data_dir, io_backend):
         "start": "room1",
         "endings": {
             "done": {
-                "preconditions": {
-                    "is_location": "room2",
-                    "item_condition": {"item": "sword", "location": "room2"},
-                }
+                "preconditions": [
+                    {"is_location": "room2"},
+                    {"item_conditions": [{"item": "sword", "location": "room2"}]},
+                ]
             }
         },
     }
@@ -113,4 +120,3 @@ def test_end_condition_item_state(data_dir, io_backend):
     assert g.world.set_item_state("gem", "green")
     g._check_end()
     assert io_backend.outputs[-1] == "The gem is green."
-

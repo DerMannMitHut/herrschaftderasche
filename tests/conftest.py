@@ -62,18 +62,16 @@ def data_dir(tmp_path):
                 "trigger": "use",
                 "item": "sword",
                 "target_item": "gem",
-                "preconditions": {"is_location": "room2"},
-                "effect": {
-                    "item_condition": [{"item": "gem", "state": "green"}]
-                },
+                "preconditions": [{"is_location": "room2"}],
+                "effect": [{"item_conditions": [{"item": "gem", "state": "green"}]}],
             }
         },
         "start": "start",
         "endings": {
             "green_gem": {
-                "preconditions": {
-                    "item_condition": {"item": "gem", "state": "green"}
-                }
+                "preconditions": [
+                    {"item_conditions": [{"item": "gem", "state": "green"}]}
+                ]
             }
         },
     }
@@ -113,13 +111,7 @@ def data_dir(tmp_path):
                 },
             }
         },
-        "actions": {
-            "cut_gem": {
-                "messages": {
-                    "success": "The gem now gleams green."
-                }
-            }
-        },
+        "actions": {"cut_gem": {"messages": {"success": "The gem now gleams green."}}},
         "endings": {"green_gem": "The gem is green."},
     }
 
@@ -159,11 +151,7 @@ def data_dir(tmp_path):
             }
         },
         "actions": {
-            "cut_gem": {
-                "messages": {
-                    "success": "Das Juwel leuchtet jetzt grün."
-                }
-            }
+            "cut_gem": {"messages": {"success": "Das Juwel leuchtet jetzt grün."}}
         },
         "endings": {"green_gem": "Das Juwel ist grün."},
     }
@@ -179,5 +167,3 @@ def data_dir(tmp_path):
             yaml.safe_dump(data, fh)
 
     return tmp_path
-
-

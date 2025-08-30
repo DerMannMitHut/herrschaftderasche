@@ -10,7 +10,11 @@ def make_world() -> World:
             "old_man": {
                 "state": "unknown",
                 "states": {"unknown": {}, "met": {}, "helped": {}},
-            }
+            },
+            "old_woman": {
+                "state": "unknown",
+                "states": {"unknown": {}, "met": {}, "helped": {}},
+            },
         },
         "rooms": {"room1": {"description": "Room 1.", "exits": {}}},
         "start": "room1",
@@ -110,7 +114,7 @@ def test_npc_event_triggered_on_start(tmp_path, monkeypatch, io_backend):
 
 def test_action_requires_npc_met():
     w = make_world()
-    pre = {"npc_met": "old_man"}
+    pre = [{"npc_met": "old_man"}]
     assert not w.check_preconditions(pre)
     w.meet_npc("old_man")
     assert w.check_preconditions(pre)
@@ -118,11 +122,27 @@ def test_action_requires_npc_met():
 
 def test_action_requires_npc_help():
     w = make_world()
-    pre_help = {"npc_help": "old_man"}
-    pre_state = {"npc_state": {"npc": "old_man", "state": StateTag.HELPED}}
+    pre_help = [{"npc_help": "old_man"}]
+    pre_state = [{"npc_state": {"npc": "old_man", "state": StateTag.HELPED}}]
     assert not w.check_preconditions(pre_help)
     assert not w.check_preconditions(pre_state)
     w.npc_states["old_man"] = StateTag.HELPED
     w.npcs["old_man"]["state"] = StateTag.HELPED
     assert w.check_preconditions(pre_help)
     assert w.check_preconditions(pre_state)
+
+
+def test_action_requires_multiple_npc_conditions():
+    w = make_world()
+    pre = [
+        {
+            "npc_conditions": [
+                {"npc": "old_man", "state": StateTag.MET},
+                {"npc": "old_woman", "state": StateTag.HELPED},
+            ]
+        }
+    ]
+    assert not w.check_preconditions(pre)
+    w.meet_npc("old_man")
+    w.set_npc_state("old_woman", StateTag.HELPED)
+    assert w.check_preconditions(pre)
