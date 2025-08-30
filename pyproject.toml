@@ -6,7 +6,7 @@ authors = ["Der Mann mit Hut <dermannmithut@metstuebchen.de>"]
 packages = [{ include = "engine" }]
 
 [tool.poetry.dependencies]
-python = ">=3.11,<4.0"
+python = ">=3.12,<4.0"
 pyyaml = "^6.0"
 
 [tool.poetry.group.dev.dependencies]
