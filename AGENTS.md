@@ -1,34 +1,46 @@
-# AGENTS.md
+# Repository Guidelines
 
-## Zweck
-Dieses Dokument beschreibt die Idee des Projektes und wie AI-Agents mit dem Code umgehen sollen.
+## Projektstruktur & Module
+- `engine/`: Plot-agnostische Engine (Kernlogik, keine Story-Abhängigkeiten)
+- `data/`: Welt-/Plotdaten. Sprachspezifisch unter `data/<lang>/world.yaml`; Defaults unter `data/generic/*`
+- `game/`: CLI-Einstieg (`game/main.py`), startet die Engine mit einer `world.yaml`
+- `tests/`: Pytest-Suite, spiegelt Modulstruktur wider
 
+## Build, Test & lokale Entwicklung
+- Python-Version: 3.11+ (empfohlen 3.12). Empfohlenes Setup mit Poetry:
+  - `poetry env use 3.12`
+  - `poetry install`
+  - Interaktive Shell: `poetry shell` (alternativ Befehle mit `poetry run ...`)
+- Lint: `poetry run ruff check .` und Format: `poetry run ruff format .`
+- Typen: `poetry run pyright`
+- Tests schnell: `poetry run pytest -q`
+- Tests mit Coverage: `poetry run pytest --cov --cov-branch -q`
+- Abhängigkeiten: `poetry add <pkg>`; Dev-Tools: `poetry add --group dev ruff pyright pytest pytest-cov`
+ - Ausführen (Beispiel): `poetry run herrschaft-der-asche --language de`
 
-## Projektidee
-Ich möchte ein Textadventure schreiben. Dazu möchte ich eine Engine machen, mit der das ganze Spiel funktioniert. Anschließend möchte ich diese Engine benutzen, um ein kleines Adventure zu erstellen.
+## Coding Style & Benennung
+- Stil: PEP8, geprüft via ruff; Typen via pyright
+- Lesbarkeit vor Kommentaren; vermeide überflüssige Code-Kommentare
+- Bezeichner (Variablen, Funktionen, Klassen, Konstanten) in Englisch
+- Muster: `snake_case` (Funktionen/Variablen/Module), `PascalCase` (Klassen), `UPPER_SNAKE_CASE` (Konstanten)
+- Strukturiere Rückgaben mit `@dataclass` statt anonymer `dict`
 
-Besonderheit soll sein, dass zur Laufzeit über ollama ein LLM verfügbar ist, welches das Spiel unterstützen soll. Mögliche Anwendungsgebiete für das LLM sind:
-- Interpretation der Eingabebefehle des Nutzers (weg von starren Befehlen, hin zu natürlicher Sprache)
-- Natürliche Gespräche mit NSC in der Spielwelt
-- Ausgabe von Beschreibungstexten der dynamischen Spielwelt
+## Test-Richtlinien
+- Framework: pytest; Dateinamen: `tests/test_*.py`
+- Schreibe gezielte Unit-Tests für neue/änderte Logik; mocke I/O und LLM-Aufrufe
+- Bevorzugt hohe Abdeckung; nutze `--cov --cov-branch` für Regressionsschutz
+- Beispiel: Engine-APIs gegen Fixtures testen; Plot-Validierung gegen `data/generic/world.yaml`
 
-Dieses Projekt umfasst also:
-- Engine erstellen
-- Plot erstellen
-- Plot mit der Engine umsetzen
+## Commits & Pull Requests
+- Commits: Conventional Commits (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`); Imperativ, kurz, präzise
+- PRs: klare Beschreibung, Motivation, Änderungsliste, ggf. Screenshots/Logs
+- Checkliste vor Merge: Lint ok, Typprüfung ok, Tests (inkl. Coverage) grün, relevante Doku angepasst
 
-Ich möchte diese drei Dinge parallel hochziehen: Die Engine ermöglicht das Spiel, der Plot fordert Erweiterungen der Engine, so dass er dann mit der Engine umgesetzt werden kann.
+## Agent-/LLM- und Architektur-Hinweise
+- Die Engine bleibt strikt plot-frei; Story/Regeln liegen in `data/*/world.yaml`
+- LLM (ollama) nur über eine interne Schnittstelle verwenden (Adapter/Port), damit Tests deterministisch bleiben
+- Keine Netzwerkanfragen in Unit-Tests; Adapter mocken und Eingaben/Ausgaben als Dataclasses modellieren
 
-Die Story soll aus der Sicht einer Person (dem Spieler) passieren.
-
-
-## Richtlinien
-- Programmiersprache: Python 3.12
-- Styleguide: PEP8 + ruff + pyright
-- Tests mit "pytest -q" durchführen; falls möglich besser "pytest --cov --cov-branch -q"
-- Antworten in Deutsch, Variablen-Namen, Konstanten, etc. in Englisch
-- Vermeide Code-Kommentare zugunsten eines gut lesbaren Codes 
-- Die Engine selber soll frei von plotabhängigem Code sein; der gesamte Plot muss über die generic/world.yaml beshrieben werden. 
-- Anstatt anonymer dicts für strukturierte Rückgabe von Daten, verwende @dataclass classes
-  Beispiel: statt `return {'a': 1, 'b': 'bbb'}` mache `return Ab(a=1, b='bbb')` mit entsprechender Dataclass.
-- 
+## Sicherheit & Konfiguration
+- Keine Secrets ins Repo; Konfiguration über Umgebungsvariablen (z. B. `OLLAMA_BASE_URL`, `OLLAMA_MODEL`)
+- Optional `.env.local` nutzen; sichere Defaults vorsehen
