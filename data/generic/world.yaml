@@ -51,9 +51,9 @@ npcs:
     meet:
       location: forest
       preconditions:
-        npc_state:
-          npc: villager
-          state: helped
+        npc_conditions:
+          - npc: villager
+            state: helped
 
 actions:
   interpret_map:
@@ -61,15 +61,15 @@ actions:
     item: map_fragment
     target_npc: ashram
     preconditions:
-      - npc_conditions:
-          - npc: ashram
-            state: helped
+      npc_conditions:
+        - npc: ashram
+          state: helped
     effect:
-      - item_conditions:
-          - item: map_fragment
-            state: readable
-      - add_exit:
-          room: hut
+      item_conditions:
+        - item: map_fragment
+          state: readable
+      add_exits:
+        - room: hut
           target: ruins
 
   open_chest:
@@ -77,30 +77,30 @@ actions:
     item: small_key
     target_item: locked_chest
     preconditions:
-      - is_location: ruins
+      is_location: ruins
     effect:
-      - item_conditions:
-          - item: locked_chest
-            state: open
+      item_conditions:
+        - item: locked_chest
+          state: open
 
   find_crown:
     trigger: examine
     item: locked_chest
     preconditions:
-      - item_conditions:
-          - item: locked_chest
-            state: open
+      item_conditions:
+        - item: locked_chest
+          state: open
     effect:
-      - item_conditions:
-          - item: ashen_crown
-            location: INVENTORY
+      item_conditions:
+        - item: ashen_crown
+          location: INVENTORY
 
 start: hut
 
 endings:
   crown_returned:
     preconditions:
-      - is_location: ash_village
-      - item_conditions:
-          - item: ashen_crown
-            location: INVENTORY
+      is_location: ash_village
+      item_conditions:
+        - item: ashen_crown
+          location: INVENTORY

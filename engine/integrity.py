@@ -11,6 +11,33 @@ from . import world
 from .world_model import LocationTag, StateTag
 
 
+def _merge_conditions(parts: List[Dict[str, Any]]) -> Dict[str, Any]:
+    merged: Dict[str, Any] = {}
+    for part in parts:
+        for key, value in part.items():
+            if key in ("item_condition", "item_conditions"):
+                lst = merged.setdefault("item_conditions", [])
+                if isinstance(value, list):
+                    lst.extend(value)
+                else:
+                    lst.append(value)
+            elif key in ("npc_condition", "npc_conditions"):
+                lst = merged.setdefault("npc_conditions", [])
+                if isinstance(value, list):
+                    lst.extend(value)
+                else:
+                    lst.append(value)
+            elif key in ("add_exit", "add_exits"):
+                lst = merged.setdefault("add_exits", [])
+                if isinstance(value, list):
+                    lst.extend(value)
+                else:
+                    lst.append(value)
+            else:
+                merged[key] = value
+    return merged
+
+
 def check_translations(language: str, data_dir: Path) -> List[str]:
     """Check translation files for completeness and report warnings.
 
@@ -116,89 +143,149 @@ def validate_world_structure(w: world.World) -> List[str]:
         target_item = action.get("target_item")
         if target_item and target_item not in w.items:
             errors.append(f"Action references missing target item '{target_item}'")
-        pre_list = action.get("preconditions") or []
-        if isinstance(pre_list, dict):
-            pre_list = [pre_list]
-        for pre in pre_list:
-            loc = pre.get("is_location")
-            if loc and loc not in w.rooms:
-                errors.append(f"Action precondition references missing room '{loc}'")
-            conds = pre.get("item_conditions") or pre.get("item_condition") or []
-            if isinstance(conds, dict):
-                conds = [conds]
-            for cond in conds:
-                cond_item = cond.get("item")
-                if cond_item and cond_item not in w.items:
-                    errors.append(
-                        f"Action precondition references missing item '{cond_item}'"
-                    )
-                cond_loc = cond.get("location")
-                if cond_loc:
-                    if isinstance(cond_loc, LocationTag):
-                        if (
-                            cond_loc is not LocationTag.INVENTORY
-                            and cond_loc.value not in w.rooms
-                        ):
-                            errors.append(
-                                f"Action precondition references missing location '{cond_loc.value}'"
-                            )
-                    elif cond_loc not in w.rooms:
+        pre = action.get("preconditions") or {}
+        if isinstance(pre, list):
+            pre = _merge_conditions(pre)
+        loc = pre.get("is_location")
+        if loc and loc not in w.rooms:
+            errors.append(f"Action precondition references missing room '{loc}'")
+        conds = pre.get("item_conditions") or pre.get("item_condition") or []
+        if isinstance(conds, dict):
+            conds = [conds]
+        for cond in conds:
+            cond_item = cond.get("item")
+            if cond_item and cond_item not in w.items:
+                errors.append(
+                    f"Action precondition references missing item '{cond_item}'"
+                )
+            cond_loc = cond.get("location")
+            if cond_loc:
+                if isinstance(cond_loc, LocationTag):
+                    if (
+                        cond_loc is not LocationTag.INVENTORY
+                        and cond_loc.value not in w.rooms
+                    ):
                         errors.append(
-                            f"Action precondition references missing location '{cond_loc}'"
+                            f"Action precondition references missing location '{cond_loc.value}'"
                         )
-            npc_conds = pre.get("npc_conditions") or pre.get("npc_condition") or []
-            if isinstance(npc_conds, dict):
-                npc_conds = [npc_conds]
-            for cond in npc_conds:
-                cond_npc = cond.get("npc")
-                if cond_npc and cond_npc not in w.npcs:
+                elif cond_loc not in w.rooms:
                     errors.append(
-                        f"Action precondition references missing NPC '{cond_npc}'"
+                        f"Action precondition references missing location '{cond_loc}'"
                     )
-                cond_state = cond.get("state")
-                if cond_npc and cond_state:
-                    state_key = (
-                        cond_state.value
-                        if isinstance(cond_state, StateTag)
-                        else cond_state
+        npc_conds = pre.get("npc_conditions") or pre.get("npc_condition") or []
+        if isinstance(npc_conds, dict):
+            npc_conds = [npc_conds]
+        for cond in npc_conds:
+            cond_npc = cond.get("npc")
+            if cond_npc and cond_npc not in w.npcs:
+                errors.append(
+                    f"Action precondition references missing NPC '{cond_npc}'"
+                )
+            cond_state = cond.get("state")
+            if cond_npc and cond_state:
+                state_key = (
+                    cond_state.value if isinstance(cond_state, StateTag) else cond_state
+                )
+                if state_key not in w.npcs.get(cond_npc, {}).get("states", {}):
+                    errors.append(
+                        f"Action precondition references missing state '{state_key}' for NPC '{cond_npc}'"
                     )
-                    if state_key not in w.npcs.get(cond_npc, {}).get("states", {}):
+        eff = action.get("effect") or {}
+        if isinstance(eff, list):
+            eff = _merge_conditions(eff)
+        conds = eff.get("item_conditions") or eff.get("item_condition") or []
+        if isinstance(conds, dict):
+            conds = [conds]
+        for cond in conds:
+            eff_item = cond.get("item")
+            if eff_item and eff_item not in w.items:
+                errors.append(f"Action effect references missing item '{eff_item}'")
+            eff_state = cond.get("state")
+            if (
+                eff_item
+                and eff_state
+                and eff_state not in w.items.get(eff_item, {}).get("states", {})
+            ):
+                errors.append(
+                    f"Action effect references missing state '{eff_state}' for item '{eff_item}'"
+                )
+            eff_loc = cond.get("location")
+            if eff_loc:
+                if isinstance(eff_loc, LocationTag):
+                    if (
+                        eff_loc is not LocationTag.INVENTORY
+                        and eff_loc.value not in w.rooms
+                    ):
                         errors.append(
-                            f"Action precondition references missing state '{state_key}' for NPC '{cond_npc}'"
+                            f"Action effect references missing location '{eff_loc.value}'"
                         )
-        eff_list = action.get("effect") or []
-        if isinstance(eff_list, dict):
-            eff_list = [eff_list]
-        for eff in eff_list:
-            conds = eff.get("item_conditions") or eff.get("item_condition") or []
-            if isinstance(conds, dict):
-                conds = [conds]
-            for cond in conds:
-                eff_item = cond.get("item")
-                if eff_item and eff_item not in w.items:
-                    errors.append(f"Action effect references missing item '{eff_item}'")
-                eff_state = cond.get("state")
-                if (
-                    eff_item
-                    and eff_state
-                    and eff_state not in w.items.get(eff_item, {}).get("states", {})
-                ):
+                elif eff_loc not in w.rooms:
                     errors.append(
-                        f"Action effect references missing state '{eff_state}' for item '{eff_item}'"
+                        f"Action effect references missing location '{eff_loc}'"
                     )
-                eff_loc = cond.get("location")
-                if eff_loc:
-                    if isinstance(eff_loc, LocationTag):
-                        if (
-                            eff_loc is not LocationTag.INVENTORY
-                            and eff_loc.value not in w.rooms
-                        ):
-                            errors.append(
-                                f"Action effect references missing location '{eff_loc.value}'"
-                            )
-                    elif eff_loc not in w.rooms:
+        npc_conds = eff.get("npc_conditions") or eff.get("npc_condition") or []
+        if isinstance(npc_conds, dict):
+            npc_conds = [npc_conds]
+        for cond in npc_conds:
+            cond_npc = cond.get("npc")
+            if cond_npc and cond_npc not in w.npcs:
+                errors.append(f"Action effect references missing NPC '{cond_npc}'")
+            cond_state = cond.get("state")
+            if cond_npc and cond_state:
+                state_key = (
+                    cond_state.value if isinstance(cond_state, StateTag) else cond_state
+                )
+                if state_key not in w.npcs.get(cond_npc, {}).get("states", {}):
+                    errors.append(
+                        f"Action effect references missing state '{state_key}' for NPC '{cond_npc}'"
+                    )
+            cond_loc = cond.get("location")
+            if cond_loc:
+                if isinstance(cond_loc, LocationTag):
+                    if (
+                        cond_loc is not LocationTag.CURRENT_ROOM
+                        and cond_loc.value not in w.rooms
+                    ):
                         errors.append(
-                            f"Action effect references missing location '{eff_loc}'"
+                            f"Action effect references missing location '{cond_loc.value}'"
+                        )
+                elif cond_loc not in w.rooms:
+                    errors.append(
+                        f"Action effect references missing location '{cond_loc}'"
+                    )
+        add_exits = eff.get("add_exits") or eff.get("add_exit") or []
+        if isinstance(add_exits, dict):
+            add_exits = [add_exits]
+        for cfg in add_exits:
+            room = cfg.get("room")
+            target = cfg.get("target")
+            if room and room not in w.rooms:
+                errors.append(
+                    f"Action effect references missing room '{room}' for add_exit"
+                )
+            if target and target not in w.rooms:
+                errors.append(
+                    f"Action effect references missing target room '{target}' for add_exit"
+                )
+            pre = cfg.get("preconditions")
+            if isinstance(pre, list):
+                pre = _merge_conditions(pre)
+            if pre:
+                loc = pre.get("is_location")
+                if loc and loc not in w.rooms:
+                    errors.append(
+                        "Action effect exit precondition references missing room "
+                        f"'{loc}'"
+                    )
+                conds = pre.get("item_conditions") or []
+                if isinstance(conds, dict):
+                    conds = [conds]
+                for cond in conds:
+                    cond_item = cond.get("item")
+                    if cond_item and cond_item not in w.items:
+                        errors.append(
+                            "Action effect exit precondition references missing item "
+                            f"'{cond_item}'"
                         )
 
     # NPCs -------------------------------------------------------------------
@@ -214,67 +301,62 @@ def validate_world_structure(w: world.World) -> List[str]:
 
     # Endings ----------------------------------------------------------------
     for end_id, ending in w.endings.items():
-        pre_list = ending.get("preconditions") or []
-        if isinstance(pre_list, dict):
-            pre_list = [pre_list]
-        for pre in pre_list:
-            loc = pre.get("is_location")
-            if loc and loc not in w.rooms:
+        pre = ending.get("preconditions") or {}
+        if isinstance(pre, list):
+            pre = _merge_conditions(pre)
+        loc = pre.get("is_location")
+        if loc and loc not in w.rooms:
+            errors.append(
+                f"Ending '{end_id}' precondition references missing room '{loc}'"
+            )
+        conds = pre.get("item_conditions") or pre.get("item_condition") or []
+        if isinstance(conds, dict):
+            conds = [conds]
+        for cond in conds:
+            cond_item = cond.get("item")
+            if cond_item and cond_item not in w.items:
                 errors.append(
-                    f"Ending '{end_id}' precondition references missing room '{loc}'"
+                    f"Ending '{end_id}' references missing item '{cond_item}'"
                 )
-            conds = pre.get("item_conditions") or pre.get("item_condition") or []
-            if isinstance(conds, dict):
-                conds = [conds]
-            for cond in conds:
-                cond_item = cond.get("item")
-                if cond_item and cond_item not in w.items:
-                    errors.append(
-                        f"Ending '{end_id}' references missing item '{cond_item}'"
-                    )
-                cond_loc = cond.get("location")
-                if cond_loc:
-                    if isinstance(cond_loc, LocationTag):
-                        if (
-                            cond_loc is not LocationTag.INVENTORY
-                            and cond_loc.value not in w.rooms
-                        ):
-                            errors.append(
-                                f"Ending '{end_id}' references missing location '{cond_loc.value}'"
-                            )
-                    elif cond_loc not in w.rooms:
+            cond_loc = cond.get("location")
+            if cond_loc:
+                if isinstance(cond_loc, LocationTag):
+                    if (
+                        cond_loc is not LocationTag.INVENTORY
+                        and cond_loc.value not in w.rooms
+                    ):
                         errors.append(
-                            f"Ending '{end_id}' references missing location '{cond_loc}'"
+                            f"Ending '{end_id}' references missing location '{cond_loc.value}'"
                         )
-                state = cond.get("state")
-                if (
-                    cond_item
-                    and state
-                    and state not in w.items.get(cond_item, {}).get("states", {})
-                ):
+                elif cond_loc not in w.rooms:
                     errors.append(
-                        f"Ending '{end_id}' references missing state '{state}' for item '{cond_item}'"
+                        f"Ending '{end_id}' references missing location '{cond_loc}'"
                     )
-            npc_conds = pre.get("npc_conditions") or pre.get("npc_condition") or []
-            if isinstance(npc_conds, dict):
-                npc_conds = [npc_conds]
-            for cond in npc_conds:
-                cond_npc = cond.get("npc")
-                if cond_npc and cond_npc not in w.npcs:
+            state = cond.get("state")
+            if (
+                cond_item
+                and state
+                and state not in w.items.get(cond_item, {}).get("states", {})
+            ):
+                errors.append(
+                    f"Ending '{end_id}' references missing state '{state}' for item '{cond_item}'"
+                )
+        npc_conds = pre.get("npc_conditions") or pre.get("npc_condition") or []
+        if isinstance(npc_conds, dict):
+            npc_conds = [npc_conds]
+        for cond in npc_conds:
+            cond_npc = cond.get("npc")
+            if cond_npc and cond_npc not in w.npcs:
+                errors.append(f"Ending '{end_id}' references missing NPC '{cond_npc}'")
+            cond_state = cond.get("state")
+            if cond_npc and cond_state:
+                state_key = (
+                    cond_state.value if isinstance(cond_state, StateTag) else cond_state
+                )
+                if state_key not in w.npcs.get(cond_npc, {}).get("states", {}):
                     errors.append(
-                        f"Ending '{end_id}' references missing NPC '{cond_npc}'"
+                        f"Ending '{end_id}' references missing state '{state_key}' for NPC '{cond_npc}'"
                     )
-                cond_state = cond.get("state")
-                if cond_npc and cond_state:
-                    state_key = (
-                        cond_state.value
-                        if isinstance(cond_state, StateTag)
-                        else cond_state
-                    )
-                    if state_key not in w.npcs.get(cond_npc, {}).get("states", {}):
-                        errors.append(
-                            f"Ending '{end_id}' references missing state '{state_key}' for NPC '{cond_npc}'"
-                        )
 
     return errors
 
