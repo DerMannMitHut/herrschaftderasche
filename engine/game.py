@@ -44,7 +44,9 @@ class Game:
         lang_world_path = self.data_dir / self._language / "world.yaml"
 
         try:
-            self.world = world.World.from_files(generic_path, lang_world_path, debug=debug)
+            self.world = world.World.from_files(
+                generic_path, lang_world_path, debug=debug
+            )
         except FileNotFoundError as exc:
             self.io.output(f"ERROR: Missing world file: {exc}")
             raise SystemExit from exc
@@ -107,12 +109,13 @@ class Game:
             self.running = False
 
     def _check_npc_event(self) -> None:
-        for npc_id, npc in self.world.npcs.items():
-            meet = npc.get("meet", {})
-            loc = meet.get("location")
-            pre = meet.get("preconditions")
-            if loc != self.world.current:
+        room = self.world.rooms[self.world.current]
+        for npc_id in list(room.occupants):
+            npc = self.world.npcs.get(npc_id)
+            if not npc:
                 continue
+            meet = npc.get("meet", {})
+            pre = meet.get("preconditions")
             state = self.world.npc_state(npc_id)
             if pre and not self.world.check_preconditions(pre):
                 continue
@@ -163,4 +166,3 @@ def run(
         llm_backend=llm_backend,
         debug=debug,
     ).run()
-

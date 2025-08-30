@@ -1,5 +1,7 @@
 """Data models for world elements."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
@@ -21,6 +23,7 @@ class Room:
     description: str = ""
     items: List[str] = field(default_factory=list)
     exits: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    occupants: List[str] = field(default_factory=list)
 
     def get(self, key: str, default: Any = None) -> Any:  # pragma: no cover - compat
         return getattr(self, key, default)
@@ -101,4 +104,3 @@ __all__ = [
     "Npc",
     "Action",
 ]
-
