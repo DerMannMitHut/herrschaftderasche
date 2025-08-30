@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Herrschaft der Asche launcher
+# Usage examples:
+#   ./hda --language de
+#   ./hda --language en --debug
+
+if ! command -v poetry >/dev/null 2>&1; then
+  echo "Poetry ist nicht installiert oder nicht im PATH." >&2
+  echo "Siehe https://python-poetry.org/docs/#installation" >&2
+  exit 1
+fi
+
+exec poetry run herrschaft-der-asche "$@"
+
