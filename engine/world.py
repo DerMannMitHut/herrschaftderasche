@@ -50,13 +50,16 @@ class World:
             actions = list(actions.values())
         normalized: list[Any] = []
         for action in actions:
-            if isinstance(action, dict) and "precondition" in action and "preconditions" not in action:
+            if (
+                isinstance(action, dict)
+                and "precondition" in action
+                and "preconditions" not in action
+            ):
                 action = dict(action)
                 action["preconditions"] = action.pop("precondition")
             normalized.append(action)
         self.actions = [
-            act if isinstance(act, Action) else Action(**act)
-            for act in normalized
+            act if isinstance(act, Action) else Action(**act) for act in normalized
         ]
         self.item_states: Dict[str, str | StateTag] = {
             item_id: item_data.state
@@ -74,6 +77,11 @@ class World:
         self._base_inventory: list[str] = list(self.inventory)
         self._base_item_states: Dict[str, str | StateTag] = dict(self.item_states)
         self._base_npc_states: Dict[str, str | StateTag] = dict(self.npc_states)
+        for npc_id, npc in self.npcs.items():
+            loc = npc.meet.get("location")
+            if loc and loc in self.rooms:
+                room = self.rooms[loc]
+                room.occupants.append(npc_id)
 
         for room in self.rooms.values():
             exits = room.exits
@@ -141,7 +149,11 @@ class World:
             for target, exit_cfg in cfg_exits.items():
                 names = lang_rooms.get(target, {}).get("names", [target])
                 exit_entry: Dict[str, Any] = {"names": names}
-                pre = exit_cfg.get("preconditions") if isinstance(exit_cfg, dict) else None
+                pre = (
+                    exit_cfg.get("preconditions")
+                    if isinstance(exit_cfg, dict)
+                    else None
+                )
                 if pre:
                     exit_entry["preconditions"] = pre
                 exits[target] = exit_entry
@@ -273,8 +285,7 @@ class World:
             if item_id in self.item_states:
                 val = (
                     StateTag(state)
-                    if isinstance(state, str)
-                    and state in StateTag._value2member_map_
+                    if isinstance(state, str) and state in StateTag._value2member_map_
                     else state
                 )
                 self.item_states[item_id] = val
@@ -284,8 +295,7 @@ class World:
             if npc_id in self.npc_states:
                 val = (
                     StateTag(state)
-                    if isinstance(state, str)
-                    and state in StateTag._value2member_map_
+                    if isinstance(state, str) and state in StateTag._value2member_map_
                     else state
                 )
                 self.npc_states[npc_id] = val
@@ -338,10 +348,14 @@ class World:
         if item_cond and not self._check_item_condition(item_cond):
             return False
         npc_met = pre.get("npc_met")
-        if npc_met and not self._check_npc_condition({"npc": npc_met, "state": StateTag.MET}):
+        if npc_met and not self._check_npc_condition(
+            {"npc": npc_met, "state": StateTag.MET}
+        ):
             return False
         npc_help = pre.get("npc_help")
-        if npc_help and not self._check_npc_condition({"npc": npc_help, "state": StateTag.HELPED}):
+        if npc_help and not self._check_npc_condition(
+            {"npc": npc_help, "state": StateTag.HELPED}
+        ):
             return False
         npc_cond = pre.get("npc_state")
         if npc_cond and not self._check_npc_condition(npc_cond):
@@ -412,11 +426,11 @@ class World:
             else:  # pragma: no cover - fallback ohne messages
                 desc += " You see here: " + ", ".join(item_names)
         room_npcs = []
-        for npc_id, npc in self.npcs.items():
-            meet = npc.meet
-            if meet.get("location") != self.current:
+        for npc_id in room.occupants:
+            npc = self.npcs.get(npc_id)
+            if not npc:
                 continue
-            pre = meet.get("preconditions")
+            pre = npc.meet.get("preconditions")
             if pre and not self.check_preconditions(pre):
                 continue
             room_npcs.append((npc.names or [npc_id])[0])
@@ -535,6 +549,27 @@ class World:
                 self.debug(f"room {self.current} items {room.items}")
                 return True
         return False
+
+    def add_npc_to_location(self, npc_id: str, location: str) -> None:
+        room = self.rooms.setdefault(location, Room())
+        if npc_id not in room.occupants:
+            room.occupants.append(npc_id)
+
+    def remove_npc_from_location(self, npc_id: str, location: str | None) -> None:
+        if not location:
+            return
+        room = self.rooms.get(location)
+        if room and npc_id in room.occupants:
+            room.occupants.remove(npc_id)
+
+    def move_npc(self, npc_id: str, location: str) -> None:
+        if npc_id not in self.npcs:
+            return
+        for room in self.rooms.values():
+            if npc_id in room.occupants:
+                room.occupants.remove(npc_id)
+                break
+        self.add_npc_to_location(npc_id, location)
 
     def set_item_state(self, item_id: str, state: str) -> bool:
         """Set the state for an item if the state exists.

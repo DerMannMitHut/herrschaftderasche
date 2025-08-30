@@ -38,6 +38,14 @@ def test_set_npc_state_changes_state():
     assert w.npc_state("old_man") == StateTag.HELPED
 
 
+def test_add_remove_npc_location():
+    w = make_world()
+    w.add_npc_to_location("old_man", "room1")
+    assert "old_man" in w.rooms["room1"].occupants
+    w.remove_npc_from_location("old_man", "room1")
+    assert "old_man" not in w.rooms["room1"].occupants
+
+
 def test_npc_state_saved_and_loaded(tmp_path):
     w = make_world()
     w.meet_npc("old_man")
@@ -90,7 +98,9 @@ def test_npc_event_triggered_on_start(tmp_path, monkeypatch, io_backend):
         yaml.safe_dump(en, fh)
 
     outputs = io_backend.outputs
-    monkeypatch.setattr(io_backend, "get_input", lambda prompt='> ': (_ for _ in ()).throw(EOFError()))
+    monkeypatch.setattr(
+        io_backend, "get_input", lambda prompt="> ": (_ for _ in ()).throw(EOFError())
+    )
 
     g = game.Game(str(tmp_path / "en" / "world.yaml"), "en", io_backend=io_backend)
     g.run()

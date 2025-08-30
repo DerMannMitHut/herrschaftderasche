@@ -7,10 +7,12 @@ def test_room_dataclass():
         description="Desc",
         items=["key"],
         exits={"north": {"names": ["North"]}},
+        occupants=["npc"],
     )
     assert room.names[0] == "Hall"
     assert room.items == ["key"]
     assert "north" in room.exits
+    assert room.occupants == ["npc"]
 
 
 def test_item_dataclass():
@@ -44,4 +46,3 @@ def test_action_dataclass():
     assert action.trigger == "use"
     assert action.item == "key"
     assert action.messages["success"] == "opened"
-
