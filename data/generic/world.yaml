@@ -87,11 +87,11 @@ actions:
     trigger: examine
     item: locked_chest
     precondition:
-      item_conditions:
-        - item: locked_chest
-          state: open
+      item_condition:
+        item: locked_chest
+        state: open
     effect:
-      item_conditions:
+      item_condition:
         - item: ashen_crown
           location: INVENTORY
 
