@@ -1,31 +1,32 @@
 # Herrschaft der Asche
 
-Ein einfaches Textadventure-Projekt. Dieses Repository enthält eine kleine Engine und eine Beispielwelt, die aus YAML-Daten geladen wird.
+Ein textbasiertes Adventure mit modularer Engine und einer YAML-beschriebenen Welt. Die Engine bleibt plot-frei; alle Inhalte liegen in `data/` und sind in mehreren Sprachen verfügbar (DE/EN).
 
-## Installation und Ausführung
+## Schnellstart
+- Voraussetzungen: Python 3.12, Poetry installiert
+- Setup:
+  - `poetry env use 3.12`
+  - `poetry install`
+- Starten:
+  - Entry-Point: `poetry run herrschaft-der-asche --language de`
+  - Alternativ (Modul): `poetry run python -m game.main --language de`
+  - Shell-Skript: `./hda --language de` (siehe Datei `hda`)
 
-Dieses Projekt verwaltet Abhängigkeiten mit [Poetry](https://python-poetry.org/).
-Nach dem Klonen des Repositories werden die Abhängigkeiten mit
+## Projektstruktur
+- `engine/`: Plot-agnostische Engine (Kernlogik, I/O, Parser, Integrität)
+- `game/`: CLI-Einstieg (`game/main.py`) und Startlogik
+- `data/`: Welt und Texte
+  - `data/generic/world.yaml`: Regeln, Räume, Items, Aktionen (sprachneutral)
+  - `data/de/*.yaml`, `data/en/*.yaml`: Namen, Beschreibungen, Meldungen
+- `tests/`: Pytest-Suite (End-to-End und Unit-Tests)
 
-```bash
-poetry install
-```
+## Entwicklung
+- Lint: `poetry run ruff check .` | Format: `poetry run ruff format .`
+- Typen: `poetry run pyright`
+- Tests: `poetry run pytest -q` | mit Coverage: `poetry run pytest --cov --cov-branch -q`
 
-installiert. Das Spiel wird anschließend über
+## Steuerung (Beispiele)
+- DE: `gehe Wald`, `umsehen`, `ansehen Truhe`, `nimm Schlüssel`, `rede mit Marek`, `benutze Schlüssel mit Truhe`, `hilfe`, `beenden`
+- EN: `go Forest`, `look`, `examine Chest`, `take Key`, `talk Ashram`, `use Key with Chest`, `help`, `quit`
 
-```bash
-poetry run python game/main.py
-```
-
-gestartet.
-
-Je nach Spracheingabe können Befehle wie `gehe` (Deutsch) oder `go` (Englisch) eingegeben werden. Mit `beenden` (Deutsch) bzw. `quit` oder `exit` (Englisch) wird das Spiel beendet.
-Gegenstände können mit `nimm`/`take` aufgenommen, mit `lege`/`drop` wieder abgelegt und mit `inventar`/`inventory` angezeigt werden. Mit `umsehen`/`look` lässt sich die Beschreibung des aktuellen Raums erneut ausgeben. Mit `ansehen <gegenstand>`/`examine <item>` erhält man die Beschreibung eines Gegenstands. Mit `hilfe`/`help` werden alle verfügbaren Befehle angezeigt. Mit `sprache <id>`/`language <id>` kann die Sprache gewechselt werden.
-
-Die sprachunabhängige Weltkonfiguration befindet sich in `data/generic/world.yaml`.
-Sprachspezifische Texte und Bezeichnungen liegen in den Unterverzeichnissen
-`data/de/` bzw. `data/en/`.
-Im Abschnitt `endings` der generischen Datei können Endbedingungen in einer einfachen
-Ausdruckssprache definiert werden, z. B. `inventory has crown AND at village`.
-Die zugehörigen Beschreibungen stehen in den Sprachdateien und werden beim
-Erreichen ausgegeben, bevor das Spiel endet.
+Hinweis: Der Spielstand wird automatisch gespeichert und beim nächsten Start fortgesetzt. LLM-Integration (z. B. über Ollama) ist über einen Adapter vorgesehen und kann testseitig gemockt werden.
