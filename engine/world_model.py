@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from pydantic import BaseModel, ConfigDict, Field as PydanticField
 
@@ -19,8 +19,8 @@ class StateTag(Enum):
 
 
 class Room(BaseModel):
-    names: List[str] = PydanticField(default_factory=list)
-    description: str = ""
+    names: List[str]
+    description: str
     items: List[str] = PydanticField(default_factory=list)
     exits: Dict[str, Dict[str, Any]] = PydanticField(default_factory=dict)
     occupants: List[str] = PydanticField(default_factory=list)
@@ -45,9 +45,9 @@ class Room(BaseModel):
 
 
 class Item(BaseModel):
-    names: List[str] = PydanticField(default_factory=list)
-    description: str = ""
-    state: Optional[str | StateTag] = None
+    names: List[str]
+    description: str | None = None
+    state: str | StateTag | None = None
     states: Dict[str, Dict[str, Any]] = PydanticField(default_factory=dict)
 
     model_config = ConfigDict(extra="forbid")
@@ -63,8 +63,8 @@ class Item(BaseModel):
 
 
 class Npc(BaseModel):
-    names: List[str] = PydanticField(default_factory=list)
-    state: Optional[str | StateTag] = None
+    names: List[str]
+    state: str | StateTag | None = None
     states: Dict[str, Dict[str, Any]] = PydanticField(default_factory=dict)
     meet: Dict[str, Any] = PydanticField(default_factory=dict)
 
@@ -81,12 +81,12 @@ class Npc(BaseModel):
 
 
 class Action(BaseModel):
-    trigger: Optional[str] = None
-    item: Optional[str] = None
-    target_item: Optional[str] = None
-    target_npc: Optional[str] = None
-    preconditions: Optional[Dict[str, Any]] = None
-    effect: Optional[Dict[str, Any]] = None
+    trigger: str
+    item: str
+    target_item: str | None = None
+    target_npc: str | None = None
+    preconditions: Dict[str, Any] | None = None
+    effect: Dict[str, Any] | None = None
     messages: Dict[str, str] = PydanticField(default_factory=dict)
 
     model_config = ConfigDict(extra="forbid")
