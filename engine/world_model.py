@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class LocationTag(Enum):
@@ -17,13 +18,14 @@ class StateTag(Enum):
     HELPED = "helped"
 
 
-@dataclass
-class Room:
-    names: List[str] = field(default_factory=list)
+class Room(BaseModel):
+    names: List[str] = Field(default_factory=list)
     description: str = ""
-    items: List[str] = field(default_factory=list)
-    exits: Dict[str, Dict[str, Any]] = field(default_factory=dict)
-    occupants: List[str] = field(default_factory=list)
+    items: List[str] = Field(default_factory=list)
+    exits: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
+    occupants: List[str] = Field(default_factory=list)
+
+    model_config = ConfigDict(extra="forbid")
 
     def get(self, key: str, default: Any = None) -> Any:  # pragma: no cover - compat
         return getattr(self, key, default)
@@ -42,12 +44,13 @@ class Room:
         setattr(self, key, value)
 
 
-@dataclass
-class Item:
-    names: List[str] = field(default_factory=list)
+class Item(BaseModel):
+    names: List[str] = Field(default_factory=list)
     description: str = ""
     state: Optional[str | StateTag] = None
-    states: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    states: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
+
+    model_config = ConfigDict(extra="forbid")
 
     def get(self, key: str, default: Any = None) -> Any:  # pragma: no cover - compat
         return getattr(self, key, default)
@@ -59,12 +62,13 @@ class Item:
         setattr(self, key, value)
 
 
-@dataclass
-class Npc:
-    names: List[str] = field(default_factory=list)
+class Npc(BaseModel):
+    names: List[str] = Field(default_factory=list)
     state: Optional[str | StateTag] = None
-    states: Dict[str, Dict[str, Any]] = field(default_factory=dict)
-    meet: Dict[str, Any] = field(default_factory=dict)
+    states: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
+    meet: Dict[str, Any] = Field(default_factory=dict)
+
+    model_config = ConfigDict(extra="forbid")
 
     def get(self, key: str, default: Any = None) -> Any:  # pragma: no cover - compat
         return getattr(self, key, default)
@@ -76,15 +80,16 @@ class Npc:
         setattr(self, key, value)
 
 
-@dataclass
-class Action:
+class Action(BaseModel):
     trigger: Optional[str] = None
     item: Optional[str] = None
     target_item: Optional[str] = None
     target_npc: Optional[str] = None
     preconditions: Optional[Dict[str, Any]] = None
     effect: Optional[Dict[str, Any]] = None
-    messages: Dict[str, str] = field(default_factory=dict)
+    messages: Dict[str, str] = Field(default_factory=dict)
+
+    model_config = ConfigDict(extra="forbid")
 
     def get(self, key: str, default: Any = None) -> Any:  # pragma: no cover - compat
         return getattr(self, key, default)

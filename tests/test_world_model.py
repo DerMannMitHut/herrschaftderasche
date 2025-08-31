@@ -1,3 +1,6 @@
+import pytest
+from pydantic import ValidationError
+
 from engine.world_model import Action, Item, Npc, Room
 
 
@@ -46,3 +49,8 @@ def test_action_dataclass():
     assert action.trigger == "use"
     assert action.item == "key"
     assert action.messages["success"] == "opened"
+
+
+def test_room_validation():
+    with pytest.raises(ValidationError):
+        Room(names="Hall")
