@@ -177,6 +177,22 @@ class CommandProcessor:
                 self.cmd_patterns.append((pattern, key, entry))
                 if base not in self.reverse_cmds:
                     self.reverse_cmds[base] = (key, entry)
+        # Always allow calling commands by their ID (system/default form),
+        # independent of the current language.
+        for key in self.command_keys:
+            info = self.language_manager.command_info.get(key, {})
+            args = info.get("arguments", 0)
+            if args == 2:
+                regex = rf"^{re.escape(key)}\s+(?P<a>.+?)\s+(?P<b>.+)$"
+            elif args == 1:
+                regex = rf"^{re.escape(key)}\s+(?P<a>.+)$"
+            elif info.get("optional_arguments"):
+                regex = rf"^{re.escape(key)}(?:\s+(?P<a>.+))?$"
+            else:
+                regex = rf"^{re.escape(key)}$"
+            self.cmd_patterns.append((re.compile(regex), key, key))
+            if key not in self.reverse_cmds:
+                self.reverse_cmds[key] = (key, key)
         self.cmd_patterns.sort(key=lambda x: len(x[0].pattern), reverse=True)
         self.reverse_cmds["language"] = ("language", "language")
         pattern = re.compile(r"^show_log(?:\s+(?P<a>\d+))?$")
@@ -353,7 +369,7 @@ class CommandProcessor:
     def cmd_look(self) -> None:
         header = self.world.describe_room_header(self.language_manager.messages)
         self.io.output(header)
-        visible = self.world.describe_visibility()
+        visible = self.world.describe_visibility(self.language_manager.messages)
         if visible:
             self.io.output("")
             self.io.output(visible)
@@ -369,7 +385,7 @@ class CommandProcessor:
             self.io.output(header)
             self.io.output("")
             self.check_npc_event()
-            visible = self.world.describe_visibility()
+            visible = self.world.describe_visibility(self.language_manager.messages)
             if visible:
                 self.io.output("")
                 self.io.output(visible)

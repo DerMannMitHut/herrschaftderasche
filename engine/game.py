@@ -152,7 +152,7 @@ class Game:
         self.io.output(header)
         self.io.output("")
         self._check_npc_event()
-        visible = self.world.describe_visibility()
+        visible = self.world.describe_visibility(self.language_manager.messages)
         if visible:
             self.io.output("")
             self.io.output(visible)

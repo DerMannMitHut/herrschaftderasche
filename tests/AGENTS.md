@@ -26,6 +26,11 @@ Dieses Dokument beschreibt, wie AI-Agents Testcode erstellen sollen.
 - Gemischte Tests (gleichzeitig Testdaten und echte Spieldaten) sind unzulässig; splitte die Fälle in separate Tests.
 - Vermeide Netzwerkanfragen; LLM/Adapter sind zu mocken und als Dataclasses zu modellieren.
 
+## Übersetzbarkeit von Spielmeldungen
+- Alle dem Spieler angezeigten Meldungen müssen über Übersetzungen laufen (messages.yaml/commands.yaml).
+- Keine hartcodierten englischen/deutschen Texte in der Spiel-UI; nutze `LanguageManager.messages` und `LanguageManager.commands`.
+- Falls neue Meldungen benötigt werden, füge Schlüssel in `data/en/messages.yaml` und `data/de/messages.yaml` hinzu.
+
 ## Testabdeckung (Coverage)
 - Coverage wird ausschließlich über die Unit-Tests gemessen.
 - Story-Tests werden nicht für die Abdeckungsmetriken herangezogen.

@@ -462,7 +462,7 @@ class World:
                 desc += " Exits: " + ", ".join(exit_names)
         return desc
 
-    def describe_visibility(self) -> str | None:
+    def describe_visibility(self, messages: Dict[str, str] | None = None) -> str | None:
         """Return a single consolidated 'You see here: ...' line for items and NPCs.
 
         Returns None if there is nothing visible.
@@ -487,6 +487,9 @@ class World:
         if not names:
             return None
         names.sort(key=lambda s: s.casefold())
+        if messages and "you_see_here" in messages:
+            return messages["you_see_here"].format(list=", ".join(names))
+        # Fallback (should be covered by messages in normal play)
         return "You see here: " + ", ".join(names) + "."
 
     def describe_item(self, item_name: str) -> str | None:
