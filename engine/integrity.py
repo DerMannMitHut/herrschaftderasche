@@ -105,21 +105,22 @@ def validate_world_structure(w: world.World) -> List[str]:
 
     # Actions ----------------------------------------------------------------
     for action in w.actions:
-        trigger = action.get("trigger")
-        if not trigger:
-            errors.append(f"Action '{action}' missing trigger")
-        if trigger != "use":
+        if action.trigger != "use":
             continue
         item = action.get("item")
-        if item and item not in w.items:
+        if item not in w.items:
             errors.append(f"Action '{action}' references missing item '{item}'")
         target_item = action.get("target_item")
         if target_item and target_item not in w.items:
-            errors.append(f"Action '{action}' references missing target item '{target_item}'")
+            errors.append(
+                f"Action '{action}' references missing target item '{target_item}'"
+            )
         pre = action.get("preconditions") or {}
         loc = pre.get("is_location")
         if loc and loc not in w.rooms:
-            errors.append(f"Action '{action}' precondition references missing room '{loc}'")
+            errors.append(
+                f"Action '{action}' precondition references missing room '{loc}'"
+            )
         conds = pre.get("item_conditions") or []
         for cond in conds:
             cond_item = cond.get("item")
@@ -162,7 +163,9 @@ def validate_world_structure(w: world.World) -> List[str]:
         for cond in conds:
             eff_item = cond.get("item")
             if eff_item and eff_item not in w.items:
-                errors.append(f"Action '{action}' effect references missing item '{eff_item}'")
+                errors.append(
+                    f"Action '{action}' effect references missing item '{eff_item}'"
+                )
             eff_state = cond.get("state")
             if (
                 eff_item
@@ -190,7 +193,9 @@ def validate_world_structure(w: world.World) -> List[str]:
         for cond in npc_conds:
             cond_npc = cond.get("npc")
             if cond_npc and cond_npc not in w.npcs:
-                errors.append(f"Action '{action}' effect references missing NPC '{cond_npc}'")
+                errors.append(
+                    f"Action '{action}' effect references missing NPC '{cond_npc}'"
+                )
             cond_state = cond.get("state")
             if cond_npc and cond_state:
                 state_key = (
@@ -229,7 +234,9 @@ def validate_world_structure(w: world.World) -> List[str]:
             pre = cfg.get("preconditions")
             if pre is not None:
                 if isinstance(pre, list):
-                    errors.append("Action '{action}' effect exit precondition must be a mapping")
+                    errors.append(
+                        "Action '{action}' effect exit precondition must be a mapping"
+                    )
                     pre = None
                 if pre:
                     loc = pre.get("is_location")

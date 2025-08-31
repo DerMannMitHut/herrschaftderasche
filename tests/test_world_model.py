@@ -53,4 +53,4 @@ def test_action_dataclass():
 
 def test_room_validation():
     with pytest.raises(ValidationError):
-        Room(names="Hall")
+        Room(names="Hall", description="")  # type: ignore[arg-type]

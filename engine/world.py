@@ -381,7 +381,7 @@ class World:
                 self.debug(f"inventory {self.inventory}")
             else:
                 room_id = location
-                room = self.rooms.setdefault(room_id, Room())
+                room = self.rooms.setdefault(room_id, Room(names=[], description=""))
                 room.items.append(item_id)
                 self.debug(f"room {room_id} items {room.items}")
 
@@ -515,7 +515,7 @@ class World:
     def add_exit(
         self, room_id: str, target: str, pre: dict[str, Any] | None = None
     ) -> None:
-        room = self.rooms.setdefault(room_id, Room())
+        room = self.rooms.setdefault(room_id, Room(names=[], description=""))
         exits = room.exits
         target_room = self.rooms.get(target)
         names = target_room.names if target_room else [target]
@@ -532,7 +532,7 @@ class World:
         items = room.items
         item_name_cf = item_name.casefold()
         for item_id in list(items):
-            names = self.items.get(item_id, Item()).names
+            names = self.items.get(item_id, Item(names=[], description="")).names
             if any(name.casefold() == item_name_cf for name in names):
                 items.remove(item_id)
                 self.inventory.append(item_id)
@@ -546,7 +546,7 @@ class World:
     def drop(self, item_name: str) -> bool:
         item_name_cf = item_name.casefold()
         for item_id in list(self.inventory):
-            names = self.items.get(item_id, Item()).names
+            names = self.items.get(item_id, Item(names=[], description="")).names
             if any(name.casefold() == item_name_cf for name in names):
                 self.inventory.remove(item_id)
                 room = self.rooms[self.current]
@@ -557,7 +557,7 @@ class World:
         return False
 
     def add_npc_to_location(self, npc_id: str, location: str) -> None:
-        room = self.rooms.setdefault(location, Room())
+        room = self.rooms.setdefault(location, Room(names=[], description=""))
         if npc_id not in room.occupants:
             room.occupants.append(npc_id)
 
