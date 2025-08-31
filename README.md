@@ -9,12 +9,20 @@ Ein textbasiertes Adventure mit modularer Engine und YAML-beschriebener Welt. Di
   - `poetry install`
 - Starten:
   - Entry-Point: `poetry run herrschaft-der-asche --language de`
+  - Mit LLM (Ollama): `poetry run herrschaft-der-asche --language de --llm`
+  - LLM-Parameter:
+    - `--llm-model <name>`: überschreibt `OLLAMA_MODEL` (z. B. `mistral`, `llama3`)
+    - `--llm-base-url <url>`: überschreibt `OLLAMA_BASE_URL` (z. B. `http://localhost:11434`)
+    - `--llm-timeout <sek>`: Timeout in Sekunden (überschreibt Default 30)
   - Alternativ (Modul): `poetry run python -m game.main --language de`
   - Shell-Skript: `./hda --language de` (siehe Datei `hda`)
+  - Shell-Skript (mit LLM): `./hda --language de --llm` (optionale Flags wie oben)
   - Debug-Traces: Flag `--debug` aktivieren (Ausgaben inkl. `datei.py:zeile -- ...`)
 
 ## Projektstruktur
 - `engine/`: Plot-agnostische Engine (Kernlogik, I/O, Parser, Integrität)
+  - `engine/llm.py`: LLM-Backends (`NoOpLLM`, `OllamaLLM`)
+  - `engine/interfaces.py`: Protokolle (`IOBackend`, `LLMBackend`)
 - `game/`: CLI-Einstieg (`game/main.py`) und Startlogik
 - `data/`: Welt und Texte
   - `data/generic/world.yaml`: Regeln, Räume, Items, Aktionen (sprachneutral)
@@ -43,7 +51,60 @@ Ein textbasiertes Adventure mit modularer Engine und YAML-beschriebener Welt. Di
 - DE: `gehe Wald`, `umsehen`, `ansehen Truhe`, `nimm Schlüssel`, `rede mit Marek`, `benutze Schlüssel mit Truhe`, `hilfe`, `beenden`
 - EN: `go Forest`, `look`, `examine Chest`, `take Key`, `talk Ashram`, `use Key with Chest`, `help`, `quit`
 
-Hinweis: Der Spielstand wird automatisch gespeichert und beim nächsten Start fortgesetzt. LLM-Integration (z. B. über Ollama) ist über einen Adapter vorgesehen und kann testseitig gemockt werden.
+Hinweis: Der Spielstand wird automatisch gespeichert und beim nächsten Start fortgesetzt. Die LLM-Integration (z. B. über Ollama) ist optional über einen Adapter aktivierbar (CLI-Flag `--llm`) und kann testseitig gemockt werden.
+
+## LLM-Nutzung (optional)
+- Ziel: Freitext-Eingaben auf Spielbefehle mappen (z. B. „nimm den roten Schlüssel vom Tisch“ → „take key“).
+- Standard: Ohne Konfiguration läuft ein No-Op-Backend; Eingaben werden unverändert ausgewertet.
+
+### Ollama aktivieren
+- Voraussetzungen: Lokaler Ollama-Server (https://ollama.ai), Modell per `ollama pull <modell>` geladen.
+- Konfiguration über Umgebungsvariablen:
+  - `OLLAMA_BASE_URL` (Default: `http://localhost:11434`)
+  - `OLLAMA_MODEL` (Default: `mistral`)
+
+Schnell starten via CLI-Flag:
+
+```
+poetry run herrschaft-der-asche --language de --llm
+```
+
+Mit Parametern (überschreiben Env-Vars):
+
+```
+poetry run herrschaft-der-asche --language en --llm \
+  --llm-model mistral --llm-base-url http://localhost:11434 --llm-timeout 20
+```
+
+Alternativ kann das LLM-Backend programmgesteuert übergeben werden. Beispiel:
+
+```
+poetry run python - << 'PY'
+from engine.game import run
+from engine.llm import OllamaLLM
+from pathlib import Path
+
+lang = "de"
+data_path = Path("data")/lang/f"world.{lang}.yaml"
+run(str(data_path), language=lang, llm_backend=OllamaLLM(), debug=False)
+PY
+```
+
+Oder kurz für EN:
+
+```
+poetry run python -c "from engine.game import run; from engine.llm import OllamaLLM; run('data/en/world.en.yaml', language='en', llm_backend=OllamaLLM())"
+```
+
+Hinweise:
+- Das Backend erhält zur Laufzeit Kontext (Welt, Sprache, Log) und kann daraus passende Prompts bauen.
+- Netzwerkfehler oder ungültige Antworten führen zu einem sicheren Fallback: Der Originalbefehl wird genutzt.
+
+### Eigenes LLM-Backend
+- Implementiere das Protokoll `engine.interfaces.LLMBackend` mit:
+  - `interpret(command: str) -> str`
+  - `set_context(world, language, log) -> None`
+- Binde es beim Start wie oben gezeigt über `llm_backend=<DeinBackend>()` ein.
 
 ### Hilfe-Ausgabe
 - Die Hilfe ohne Argument zeigt drei Spalten (lokalisiert): System, Grundlegend, Interaktion.

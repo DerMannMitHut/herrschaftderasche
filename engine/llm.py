@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+from contextlib import suppress
 from typing import TYPE_CHECKING
 
 import requests
@@ -35,6 +36,7 @@ class OllamaLLM(LLMBackend):
         model: str | None = None,
         base_url: str | None = None,
         timeout: int = 30,
+        check_model: bool = False,
     ) -> None:
         self.model = model or os.getenv("OLLAMA_MODEL", "mistral")
         self.base_url = base_url or os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
@@ -42,6 +44,8 @@ class OllamaLLM(LLMBackend):
         self.world: World | None = None
         self.language: LanguageManager | None = None
         self.log: list[LogEntry] | None = None
+        if check_model:
+            self._check_model_exists()
 
     def set_context(
         self,
@@ -54,47 +58,76 @@ class OllamaLLM(LLMBackend):
         self.world = world
         self.language = language
         self.log = log
+        # Log initialization details once a world context is present
+        if self.world is not None:
+            with suppress(Exception):  # pragma: no cover - defensive
+                self.world.debug(f"init model={self.model} base_url={self.base_url} timeout={self.timeout}s")
 
     def interpret(self, command: str) -> str:  # pragma: no cover - network call
+        # If no context, we cannot build a meaningful prompt; pass through.
+        if not self.world or not self.language:
+            if self.world is not None:
+                with suppress(Exception):
+                    self.world.debug(f"passthrough (no context) input='{command}'")
+            return command
         try:
+            with suppress(Exception):
+                self.world.debug(f"call input='{command}'")
             messages = self._build_messages(command)
+            # Optional glimpse of the system prompt for troubleshooting
+            with suppress(Exception):  # pragma: no cover - best-effort
+                system_preview = messages[0]["content"][:160].replace("\n", " ")
+                self.world.debug(f"request system='{system_preview}…'")
             post = requests.post
             try:
                 import inspect
 
                 sig = inspect.signature(post)
                 params = sig.parameters
+                payload = {"model": self.model, "messages": messages, "stream": False}
                 if "timeout" in params or any(p.kind == p.VAR_KEYWORD for p in params.values()):
                     response = post(
                         f"{self.base_url}/api/chat",
-                        json={"model": self.model, "messages": messages},
+                        json=payload,
                         timeout=self.timeout,
                     )
                 elif len(params) >= 3:
                     response = post(
                         f"{self.base_url}/api/chat",
-                        {"model": self.model, "messages": messages},
+                        payload,
                         self.timeout,
                     )
                 else:
                     response = post(  # noqa: S113 - fallback for minimal stubs
                         f"{self.base_url}/api/chat",
-                        {"model": self.model, "messages": messages},
+                        payload,
                     )
             except Exception:  # pragma: no cover - ultra-defensive
                 response = post(
                     f"{self.base_url}/api/chat",
-                    json={"model": self.model, "messages": messages},
+                    json={"model": self.model, "messages": messages, "stream": False},
                 )
             data = response.json()
             content = data.get("message", {}).get("content", "")
+            error = data.get("error")
+            if error:
+                self.world.debug(f"response error='{error.replace('\n', ' ')}'")
+            self.world.debug(f"response content='{content[:160].replace('\n', ' ')}'")
             parsed = json.loads(content)
             verb = parsed.get("verb")
             obj = parsed.get("object")
             if verb and obj:
-                return f"{verb} {obj}".strip()
-            return verb or command
-        except Exception:
+                result = f"{verb} {obj}".strip()
+                with suppress(Exception):
+                    self.world.debug(f"mapped result='{result}'")
+                return result
+            result = verb or command
+            with suppress(Exception):
+                self.world.debug(f"mapped result='{result}'")
+            return result
+        except Exception as exc:
+            with suppress(Exception):
+                self.world.debug(f"error {type(exc).__name__}: {exc}; passthrough='{command}'")
             return command
 
     def _build_messages(self, command: str) -> list[dict[str, str]]:
@@ -120,19 +153,48 @@ class OllamaLLM(LLMBackend):
             f"Inventory: {', '.join(inventory_names) if inventory_names else 'empty'}\n"
             f"Item states: {item_states}\n"
             f"NPC states: {npc_states}\n"
-            f"Log: {recent_log}"
+            f"Log: {recent_log}\n"
         )
         system_prompt = (
-            "You map player input to game commands.\n"
+            "You map player input to game commands. A command consists of a <verb>, and optional 1 or 2 objects. "
+            "<confidence> is a value between 0 an 2: 0=unsure, 1=quite sure, 2=totally sure.\n"
             f"Allowed verbs: {', '.join(allowed_verbs)}\n"
             f"Known nouns: {', '.join(nouns)}\n"
             f"Context:\n{context}\n"
-            'Respond with JSON {"verb": "<verb>", "object": "<noun>"} and nothing else.'
+            "Respond with JSON "
+            '{"verb": "<verb>", "object": "<noun1>", "additional": "<noun2>", "confidence": <confidence>} and nothing else.\n'
         )
         return [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": command},
         ]
+
+    def _check_model_exists(self) -> None:
+        """Check if the configured model exists on the Ollama server.
+
+        On failure, exit the program with a helpful message.
+        """
+        try:
+            resp = requests.get(  # noqa: S113 - explicit timeout provided
+                f"{self.base_url}/api/tags",
+                timeout=self.timeout,
+            )
+            data = resp.json() if hasattr(resp, "json") else {}
+            models = data.get("models") or []
+            names = {str(m.get("name")) for m in models if isinstance(m, dict) and m.get("name")}
+            target = self.model
+            found = any(n == target or n.split(":", 1)[0] == target for n in names)
+            if not found:
+                msg = (
+                    f"ERROR: LLM model '{self.model}' not found at {self.base_url}.\n"
+                    f"Available: {', '.join(sorted(names)) or 'none'}\n"
+                    "Install with 'ollama pull <model>' or set OLLAMA_MODEL."
+                )
+                raise SystemExit(msg)
+        except SystemExit:
+            raise
+        except Exception as exc:  # pragma: no cover - environment-dependent
+            raise SystemExit(f"ERROR: Could not verify LLM model '{self.model}' at {self.base_url}: {exc}") from exc
 
 
 __all__ = ["NoOpLLM", "OllamaLLM"]
