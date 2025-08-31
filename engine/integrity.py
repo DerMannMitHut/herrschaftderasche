@@ -117,9 +117,6 @@ def validate_world_structure(w: world.World) -> List[str]:
         if target_item and target_item not in w.items:
             errors.append(f"Action references missing target item '{target_item}'")
         pre = action.get("preconditions") or {}
-        if isinstance(pre, list):
-            errors.append("Action preconditions must be a mapping")
-            pre = {}
         loc = pre.get("is_location")
         if loc and loc not in w.rooms:
             errors.append(f"Action precondition references missing room '{loc}'")
@@ -161,9 +158,6 @@ def validate_world_structure(w: world.World) -> List[str]:
                         f"Action precondition references missing state '{state_key}' for NPC '{cond_npc}'"
                     )
         eff = action.get("effect") or {}
-        if isinstance(eff, list):
-            errors.append("Action effect must be a mapping")
-            eff = {}
         conds = eff.get("item_conditions") or []
         for cond in conds:
             eff_item = cond.get("item")
