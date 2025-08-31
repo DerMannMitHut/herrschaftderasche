@@ -116,15 +116,6 @@ class World:
             print(f"-- {message}", file=sys.stderr)
 
     @classmethod
-    def from_file(cls, path: str | Path, debug: bool = False) -> "World":
-        with open(path, encoding="utf-8") as fh:
-            data = yaml.safe_load(fh)
-        actions = data.get("actions", {})
-        if isinstance(actions, dict):
-            data["actions"] = list(actions.values())
-        return cls(data, debug=debug)
-
-    @classmethod
     def from_files(
         cls, config_path: str | Path, language_path: str | Path, debug: bool = False
     ) -> "World":
