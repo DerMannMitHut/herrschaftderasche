@@ -102,6 +102,9 @@ class World:
         self._base_rooms: Dict[str, list[str]] = {
             room_id: list(room.items) for room_id, room in self.rooms.items()
         }
+        self._base_exits: Dict[str, set[str]] = {
+            room_id: set(room.exits.keys()) for room_id, room in self.rooms.items()
+        }
         self._base_inventory: list[str] = list(self.inventory)
         self._base_item_states: Dict[str, str | StateTag] = dict(self.item_states)
         self._base_npc_states: Dict[str, str | StateTag] = dict(self.npc_states)
@@ -246,6 +249,19 @@ class World:
                 rooms_diff[room_id] = items
         if rooms_diff:
             state["rooms"] = rooms_diff
+        # Persist added exits compared to base
+        exits_added: Dict[str, Dict[str, Any]] = {}
+        for room_id, room in self.rooms.items():
+            base_exits = self._base_exits.get(room_id, set())
+            added: Dict[str, Any] = {}
+            for target, cfg in room.exits.items():
+                if target not in base_exits:
+                    pre = cfg.get("preconditions")
+                    added[target] = {"preconditions": pre} if pre else {}
+            if added:
+                exits_added[room_id] = added
+        if exits_added:
+            state["exits"] = exits_added
         states_diff: Dict[str, str] = {}
         for item_id, cur_state in self.item_states.items():
             if self._base_item_states.get(item_id) != cur_state:
@@ -281,6 +297,12 @@ class World:
                 room.items = items
             else:
                 room.items = []
+        # Merge added exits
+        exits_added = data.get("exits", {})
+        for room_id, mapping in exits_added.items():
+            for target, cfg in (mapping or {}).items():
+                pre = cfg.get("preconditions") if isinstance(cfg, dict) else None
+                self.add_exit(room_id, target, pre)
         item_states = data.get("item_states", {})
         for item_id, state in item_states.items():
             if item_id in self.item_states:
@@ -556,6 +578,7 @@ class World:
         exits[target] = {"names": names}
         if pre:
             exits[target]["preconditions"] = pre
+        self.debug(f"add_exit {room_id}->{target}")
 
     def take(self, item_name: str) -> str | None:
         """Move an item from the current room into the inventory.

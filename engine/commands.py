@@ -105,7 +105,7 @@ class CommandProcessor:
         self.io = io
         self.command_info = language.command_info
         self.command_info["show_log"] = {"optional_arguments": True}
-        self.command_keys = [k for k in self.command_info.keys() if k != "show_log"]
+        self.command_keys = list(self.command_info.keys())
         self.log = log or []
         self.cmd_patterns: list[tuple[re.Pattern[str], str, str]] = []
         self.reverse_cmds: dict[str, tuple[str, str]] = {}
@@ -403,23 +403,27 @@ class CommandProcessor:
             # Build categorized columns: System, Basics, Interactions
             cmds = self.language_manager.commands
 
-            def base_word_for(key: str) -> str:
-                # Show the first translation's base word (first token)
+            def display_for(key: str) -> str:
+                # Show first translation phrase with simple argument hints
                 val = cmds.get(key, [])
                 entries = val if isinstance(val, list) else [val]
                 if not entries:
                     return key
-                e0 = entries[0] or ""
-                token = e0.split()[0] if e0 else key
-                return token
+                phrase = (entries[0] or "").strip()
+                phrase = phrase.replace("$a", "<>").replace("$b", "<>")
+                info = self.language_manager.command_info.get(key, {})
+                if info.get("optional_arguments") and ("<>" not in phrase):
+                    # Add an optional hint if pattern has no placeholders; use [n] for show_log
+                    phrase += " [n]" if key == "show_log" else " [<>]"
+                return phrase or key
 
             system_keys = ["quit", "help", "language", "show_log"]
             basic_keys = ["go", "look", "examine", "take", "drop", "inventory"]
             action_keys = ["talk", "use", "show", "destroy", "wear"]
 
-            sys_list = [base_word_for(k) for k in system_keys if k in cmds]
-            bas_list = [base_word_for(k) for k in basic_keys if k in cmds]
-            act_list = [base_word_for(k) for k in action_keys if k in cmds]
+            sys_list = [display_for(k) for k in system_keys if k in cmds]
+            bas_list = [display_for(k) for k in basic_keys if k in cmds]
+            act_list = [display_for(k) for k in action_keys if k in cmds]
             sys_list = sorted(set(sys_list), key=lambda s: s.casefold())
             bas_list = sorted(set(bas_list), key=lambda s: s.casefold())
             act_list = sorted(set(act_list), key=lambda s: s.casefold())
