@@ -8,15 +8,23 @@ def make_world() -> World:
     data = {
         "npcs": {
             "old_man": {
+                "names": ["Old Man"],
                 "state": "unknown",
                 "states": {"unknown": {}, "met": {}, "helped": {}},
             },
             "old_woman": {
+                "names": ["Old Woman"],
                 "state": "unknown",
                 "states": {"unknown": {}, "met": {}, "helped": {}},
             },
         },
-        "rooms": {"room1": {"description": "Room 1.", "exits": {}}},
+        "rooms": {
+            "room1": {
+                "names": ["Room 1"],
+                "description": "Room 1.",
+                "exits": {},
+            }
+        },
         "start": "room1",
     }
     return World(data)
@@ -86,6 +94,7 @@ def test_npc_event_triggered_on_start(tmp_path, monkeypatch, io_backend):
         "start": "room1",
         "npcs": {
             "old_man": {
+                "names": ["Old Man"],
                 "state": "unknown",
                 "states": {"unknown": {}, "met": {}},
                 "meet": {"location": "room1"},
