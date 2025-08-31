@@ -167,51 +167,7 @@ class CommandProcessor:
         # If a handler ran, return its parse result; otherwise parse failed
         return bool(parse_ok)
 
-    def try_execute(self, raw: str) -> bool:
-        """Try to parse and validate a command without side effects.
-
-        Returns True if parsing was successful (arguments resolvable),
-        False otherwise. No user-visible output or world changes.
-        """
-        probe_prev = self._probe_mode
-        self._probe_mode = True
-        original_output = self.io.output
-        try:
-            # suppress outputs during probe
-            def _suppress(text: str) -> None:  # noqa: D401, ARG001 - simple sink
-                return None
-
-            self.io.output = _suppress
-            for pattern, cmd_key, _ in self.cmd_patterns:
-                match = pattern.fullmatch(raw)
-                if not match:
-                    continue
-                groups = match.groupdict()
-                handler = getattr(self, f"cmd_{cmd_key}", self.cmd_unknown)
-                info = self.command_info.get(cmd_key, {})
-                arg_count = info.get("arguments", 0)
-                if arg_count == 2:
-                    a = (groups.get("a") or "").strip()
-                    b = (groups.get("b") or "").strip()
-                    res = cast(Callable[[str, str], bool], handler)(a, b)
-                elif arg_count == 1:
-                    arg = (groups.get("a") or groups.get("b") or "").strip()
-                    res = cast(Callable[[str], bool], handler)(arg)
-                elif info.get("optional_arguments"):
-                    arg = (groups.get("a") or groups.get("b") or "").strip() or None
-                    res = cast(Callable[[str | None], bool], handler)(arg)
-                else:
-                    res = cast(Callable[[], bool], handler)()
-                return bool(res)
-            # No pattern matched: not a parse success
-            return False
-        finally:
-            self._probe_mode = probe_prev
-            self.io.output = original_output
-
-    def can_execute(self, raw: str) -> bool:
-        """Return True if ``raw`` matches any known command pattern."""
-        return any(pattern.fullmatch(raw) for pattern, _cmd_key, _pattern_src in self.cmd_patterns)
+    # Removed try_execute and can_execute; execute() now returns parse success
 
     def can_execute_semantic(self, raw: str) -> bool:
         """Return True if ``raw`` matches and its arguments resolve to known entities.
