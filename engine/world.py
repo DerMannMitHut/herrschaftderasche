@@ -54,16 +54,6 @@ class World:
                 action = dict(action)
                 if "precondition" in action and "preconditions" not in action:
                     action["preconditions"] = action.pop("precondition")
-                pre = action.get("preconditions")
-                if pre is not None:
-                    if not isinstance(pre, dict):
-                        raise TypeError("preconditions must be a mapping")
-                    action["preconditions"] = pre
-                eff = action.get("effect")
-                if eff is not None:
-                    if not isinstance(eff, dict):
-                        raise TypeError("effect must be a mapping")
-                    action["effect"] = eff
             normalized.append(action)
         self.actions = [
             act if isinstance(act, Action) else Action(**act) for act in normalized
@@ -339,8 +329,6 @@ class World:
     def check_preconditions(self, pre: dict[str, Any] | None) -> bool:
         if not pre:
             return True
-        if not isinstance(pre, dict):
-            raise TypeError("preconditions must be a mapping")
         loc = pre.get("is_location")
         if loc and self.current != (loc.value if isinstance(loc, LocationTag) else loc):
             return False
@@ -413,8 +401,6 @@ class World:
     def apply_effect(self, effect: dict[str, Any] | None) -> None:
         if not effect:
             return
-        if not isinstance(effect, dict):
-            raise TypeError("effect must be a mapping")
         item_cond = effect.get("item_conditions")
         if item_cond:
             for cond in item_cond:
