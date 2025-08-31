@@ -23,6 +23,23 @@ ruff = "*"
 [tool.poetry.scripts]
 "herrschaft-der-asche" = "game.main:run_cli"
 
+[tool.ruff]
+line-length = 140
+target-version = "py312"
+src = ["engine", "game", "tests"]
+
+[tool.ruff.lint]
+select = [
+  "E", "F", "B", "I", "C4", "N", "Q", "S", "YTT", "DTZ", "UP", "SIM", "ARG"
+]
+
+[tool.pyright]
+include = ["engine", "game", "tests"]
+pythonVersion = "3.12"
+typeCheckingMode = "strict"
+reportMissingImports = true
+reportUnusedImport = true
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
