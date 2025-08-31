@@ -46,8 +46,32 @@ Ein textbasiertes Adventure mit modularer Engine und YAML-beschriebener Welt. Di
 Hinweis: Der Spielstand wird automatisch gespeichert und beim nächsten Start fortgesetzt. LLM-Integration (z. B. über Ollama) ist über einen Adapter vorgesehen und kann testseitig gemockt werden.
 
 ### Hilfe-Ausgabe
-- Die Hilfe ohne Argument zeigt drei Spalten (lokalisiert): System, Grundlagen, Interaktion.
+- Die Hilfe ohne Argument zeigt drei Spalten (lokalisiert): System, Grundlegend, Interaktion.
 - Jeweils mit erster Übersetzungs-Phrase und Argumenthinweisen, z. B. `go <>`, `use <> <>`, `show log [n]`.
+
+Beispiel (DE):
+
+```
+System   Grundlegend          Interaktion
+beenden  gehe <>              rede mit <>
+hilfe    umschau              benutze <> <>
+sprache <> untersuche <>      zeige <> <>
+zeige protokoll [n] inventar  zerstöre <>
+         nimm <>              trage <>
+         lege <> ab
+```
+
+Beispiel (EN):
+
+```
+System  Basics  Interactions
+quit    go <>   talk to <>
+help    look    use <> <>
+lang <> examine <> show <> <>
+show log [n] inventory destroy <>
+         take <>        wear <>
+         drop <>
+```
 
 ### show_log und Synonyme
 - Aufrufbar per IDs und Synonymen, z. B. `show log [n]`, `history [n]`, `log [n]` (EN), bzw. `zeige protokoll [n]`, `verlauf [n]`, `protokoll [n]` (DE).
