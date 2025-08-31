@@ -387,8 +387,18 @@ class CommandProcessor:
         if self.world.can_move(direction) and self.world.move(direction):
             header = self.world.describe_room_header(self.language_manager.messages)
             self.io.output(header)
-            self.io.output("")
-            self.check_npc_event()
+            # Capture NPC event outputs to control blank line placement
+            event_outs: list[str] = []
+            original_output = self.io.output
+            try:
+                self.io.output = lambda text: event_outs.append(text)
+                self.check_npc_event()
+            finally:
+                self.io.output = original_output
+            if event_outs:
+                self.io.output("")
+                for line in event_outs:
+                    self.io.output(line)
             visible = self.world.describe_visibility(self.language_manager.messages)
             if visible:
                 self.io.output("")
