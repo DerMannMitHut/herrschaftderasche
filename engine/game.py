@@ -41,7 +41,9 @@ class Game:
         self._show_intro = not save_data
         self._language = str(save_data.get("language", language))
         generic_path = self.data_dir / "generic" / "world.yaml"
-        lang_world_path = self.data_dir / self._language / f"world.{self._language}.yaml"
+        lang_world_path = (
+            self.data_dir / self._language / f"world.{self._language}.yaml"
+        )
 
         try:
             self.world = world.World.from_files(
@@ -90,6 +92,10 @@ class Game:
             self.io,
             log=log_data,
         )
+        if hasattr(self.llm, "set_context"):
+            getattr(self.llm, "set_context")(
+                self.world, self.language_manager, self.command_processor.log
+            )
         self.running = True
         # Trace game initialization and key state
         try:
@@ -119,7 +125,9 @@ class Game:
             self.running = False
             # Trace that an ending was reached
             try:
-                self.world.debug(f"ending_reached text '{ending[:40] + ('...' if len(ending) > 40 else '')}'")
+                self.world.debug(
+                    f"ending_reached text '{ending[:40] + ('...' if len(ending) > 40 else '')}'"
+                )
             except Exception:
                 pass
 
