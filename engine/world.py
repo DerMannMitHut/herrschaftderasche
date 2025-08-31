@@ -26,20 +26,14 @@ def _merge_conditions(parts: list[Dict[str, Any]]) -> Dict[str, Any]:
     merged: Dict[str, Any] = {}
     for part in parts:
         for key, value in part.items():
-            if key in ("item_condition", "item_conditions"):
-                lst = merged.setdefault("item_conditions", [])
-                if isinstance(value, list):
-                    lst.extend(value)
-                else:
-                    lst.append(value)
-            elif key in ("npc_condition", "npc_conditions"):
-                lst = merged.setdefault("npc_conditions", [])
-                if isinstance(value, list):
-                    lst.extend(value)
-                else:
-                    lst.append(value)
-            elif key in ("add_exit", "add_exits"):
-                lst = merged.setdefault("add_exits", [])
+            if key == "item_condition":
+                raise ValueError("use 'item_conditions' instead of 'item_condition'")
+            if key == "npc_condition":
+                raise ValueError("use 'npc_conditions' instead of 'npc_condition'")
+            if key == "add_exit":
+                raise ValueError("use 'add_exits' instead of 'add_exit'")
+            if key in ("item_conditions", "npc_conditions", "add_exits"):
+                lst = merged.setdefault(key, [])
                 if isinstance(value, list):
                     lst.extend(value)
                 else:
@@ -382,10 +376,8 @@ class World:
         loc = pre.get("is_location")
         if loc and self.current != (loc.value if isinstance(loc, LocationTag) else loc):
             return False
-        item_cond = pre.get("item_conditions") or pre.get("item_condition")
+        item_cond = pre.get("item_conditions")
         if item_cond:
-            if isinstance(item_cond, dict):
-                item_cond = [item_cond]
             for ic in item_cond:
                 if not self._check_item_condition(ic):
                     return False
@@ -402,10 +394,8 @@ class World:
         npc_state = pre.get("npc_state")
         if npc_state and not self._check_npc_condition(npc_state):
             return False
-        npc_conditions = pre.get("npc_conditions") or pre.get("npc_condition")
+        npc_conditions = pre.get("npc_conditions")
         if npc_conditions:
-            if isinstance(npc_conditions, dict):
-                npc_conditions = [npc_conditions]
             for nc in npc_conditions:
                 if not self._check_npc_condition(nc):
                     return False
@@ -459,22 +449,16 @@ class World:
             return
         if isinstance(effect, list):
             effect = _merge_conditions(effect)
-        item_cond = effect.get("item_conditions") or effect.get("item_condition")
+        item_cond = effect.get("item_conditions")
         if item_cond:
-            if isinstance(item_cond, dict):
-                item_cond = [item_cond]
             for cond in item_cond:
                 self.apply_item_condition(cond)
-        npc_cond = effect.get("npc_conditions") or effect.get("npc_condition")
+        npc_cond = effect.get("npc_conditions")
         if npc_cond:
-            if isinstance(npc_cond, dict):
-                npc_cond = [npc_cond]
             for cond in npc_cond:
                 self.apply_npc_condition(cond)
-        add_exit = effect.get("add_exits") or effect.get("add_exit")
+        add_exit = effect.get("add_exits")
         if add_exit:
-            if isinstance(add_exit, dict):
-                add_exit = [add_exit]
             for cfg in add_exit:
                 room = cfg.get("room")
                 target = cfg.get("target")

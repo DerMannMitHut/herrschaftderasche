@@ -15,20 +15,14 @@ def _merge_conditions(parts: List[Dict[str, Any]]) -> Dict[str, Any]:
     merged: Dict[str, Any] = {}
     for part in parts:
         for key, value in part.items():
-            if key in ("item_condition", "item_conditions"):
-                lst = merged.setdefault("item_conditions", [])
-                if isinstance(value, list):
-                    lst.extend(value)
-                else:
-                    lst.append(value)
-            elif key in ("npc_condition", "npc_conditions"):
-                lst = merged.setdefault("npc_conditions", [])
-                if isinstance(value, list):
-                    lst.extend(value)
-                else:
-                    lst.append(value)
-            elif key in ("add_exit", "add_exits"):
-                lst = merged.setdefault("add_exits", [])
+            if key == "item_condition":
+                raise ValueError("use 'item_conditions' instead of 'item_condition'")
+            if key == "npc_condition":
+                raise ValueError("use 'npc_conditions' instead of 'npc_condition'")
+            if key == "add_exit":
+                raise ValueError("use 'add_exits' instead of 'add_exit'")
+            if key in ("item_conditions", "npc_conditions", "add_exits"):
+                lst = merged.setdefault(key, [])
                 if isinstance(value, list):
                     lst.extend(value)
                 else:
@@ -149,9 +143,7 @@ def validate_world_structure(w: world.World) -> List[str]:
         loc = pre.get("is_location")
         if loc and loc not in w.rooms:
             errors.append(f"Action precondition references missing room '{loc}'")
-        conds = pre.get("item_conditions") or pre.get("item_condition") or []
-        if isinstance(conds, dict):
-            conds = [conds]
+        conds = pre.get("item_conditions") or []
         for cond in conds:
             cond_item = cond.get("item")
             if cond_item and cond_item not in w.items:
@@ -172,9 +164,7 @@ def validate_world_structure(w: world.World) -> List[str]:
                     errors.append(
                         f"Action precondition references missing location '{cond_loc}'"
                     )
-        npc_conds = pre.get("npc_conditions") or pre.get("npc_condition") or []
-        if isinstance(npc_conds, dict):
-            npc_conds = [npc_conds]
+        npc_conds = pre.get("npc_conditions") or []
         for cond in npc_conds:
             cond_npc = cond.get("npc")
             if cond_npc and cond_npc not in w.npcs:
@@ -193,9 +183,7 @@ def validate_world_structure(w: world.World) -> List[str]:
         eff = action.get("effect") or {}
         if isinstance(eff, list):
             eff = _merge_conditions(eff)
-        conds = eff.get("item_conditions") or eff.get("item_condition") or []
-        if isinstance(conds, dict):
-            conds = [conds]
+        conds = eff.get("item_conditions") or []
         for cond in conds:
             eff_item = cond.get("item")
             if eff_item and eff_item not in w.items:
@@ -223,9 +211,7 @@ def validate_world_structure(w: world.World) -> List[str]:
                     errors.append(
                         f"Action effect references missing location '{eff_loc}'"
                     )
-        npc_conds = eff.get("npc_conditions") or eff.get("npc_condition") or []
-        if isinstance(npc_conds, dict):
-            npc_conds = [npc_conds]
+        npc_conds = eff.get("npc_conditions") or []
         for cond in npc_conds:
             cond_npc = cond.get("npc")
             if cond_npc and cond_npc not in w.npcs:
@@ -253,19 +239,17 @@ def validate_world_structure(w: world.World) -> List[str]:
                     errors.append(
                         f"Action effect references missing location '{cond_loc}'"
                     )
-        add_exits = eff.get("add_exits") or eff.get("add_exit") or []
-        if isinstance(add_exits, dict):
-            add_exits = [add_exits]
+        add_exits = eff.get("add_exits") or []
         for cfg in add_exits:
             room = cfg.get("room")
             target = cfg.get("target")
             if room and room not in w.rooms:
                 errors.append(
-                    f"Action effect references missing room '{room}' for add_exit"
+                    f"Action effect references missing room '{room}' for add_exits"
                 )
             if target and target not in w.rooms:
                 errors.append(
-                    f"Action effect references missing target room '{target}' for add_exit"
+                    f"Action effect references missing target room '{target}' for add_exits"
                 )
             pre = cfg.get("preconditions")
             if isinstance(pre, list):
@@ -278,8 +262,6 @@ def validate_world_structure(w: world.World) -> List[str]:
                         f"'{loc}'"
                     )
                 conds = pre.get("item_conditions") or []
-                if isinstance(conds, dict):
-                    conds = [conds]
                 for cond in conds:
                     cond_item = cond.get("item")
                     if cond_item and cond_item not in w.items:
@@ -309,9 +291,7 @@ def validate_world_structure(w: world.World) -> List[str]:
             errors.append(
                 f"Ending '{end_id}' precondition references missing room '{loc}'"
             )
-        conds = pre.get("item_conditions") or pre.get("item_condition") or []
-        if isinstance(conds, dict):
-            conds = [conds]
+        conds = pre.get("item_conditions") or []
         for cond in conds:
             cond_item = cond.get("item")
             if cond_item and cond_item not in w.items:
@@ -341,9 +321,7 @@ def validate_world_structure(w: world.World) -> List[str]:
                 errors.append(
                     f"Ending '{end_id}' references missing state '{state}' for item '{cond_item}'"
                 )
-        npc_conds = pre.get("npc_conditions") or pre.get("npc_condition") or []
-        if isinstance(npc_conds, dict):
-            npc_conds = [npc_conds]
+        npc_conds = pre.get("npc_conditions") or []
         for cond in npc_conds:
             cond_npc = cond.get("npc")
             if cond_npc and cond_npc not in w.npcs:
