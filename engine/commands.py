@@ -132,6 +132,13 @@ class CommandProcessor:
                 groups = match.groupdict()
                 handler = getattr(self, f"cmd_{cmd_key}", self.cmd_unknown)
                 info = self.command_info.get(cmd_key, {})
+                # Trace the resolved command and normalized arguments
+                try:
+                    # keep trace concise; avoid dumping large structures
+                    args_preview = {k: v for k, v in groups.items() if v}
+                    self.world.debug(f"command {cmd_key} args {args_preview}")
+                except Exception:  # pragma: no cover - best-effort tracing
+                    pass
                 arg_count = info.get("arguments", 0)
                 if arg_count == 2:
                     a = groups.get("a", "").strip()
@@ -462,4 +469,3 @@ class CommandProcessor:
 
 
 __all__ = ["CommandProcessor"]
-

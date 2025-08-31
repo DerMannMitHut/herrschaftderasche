@@ -91,6 +91,14 @@ class Game:
             log=log_data,
         )
         self.running = True
+        # Trace game initialization and key state
+        try:
+            inv = list(self.world.inventory)
+            self.world.debug(
+                f"game_init language {self._language} current {self.world.current} inventory {inv}"
+            )
+        except Exception:
+            pass
 
     @property
     def language(self) -> str:
@@ -107,6 +115,11 @@ class Game:
         if ending:
             self.io.output(ending)
             self.running = False
+            # Trace that an ending was reached
+            try:
+                self.world.debug(f"ending_reached text '{ending[:40] + ('...' if len(ending) > 40 else '')}'")
+            except Exception:
+                pass
 
     def _check_npc_event(self) -> None:
         room = self.world.rooms[self.world.current]

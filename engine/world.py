@@ -3,6 +3,8 @@
 from pathlib import Path
 from typing import Any, Dict
 import sys
+import inspect
+import os
 
 import yaml
 
@@ -111,7 +113,10 @@ class World:
 
     def debug(self, message: str) -> None:
         if self._debug_enabled:
-            print(f"-- {message}", file=sys.stderr)
+            frame = inspect.stack()[1]
+            filename = os.path.basename(frame.filename)
+            lineno = frame.lineno
+            print(f"{filename}:{lineno} -- {message}", file=sys.stderr)
 
     @classmethod
     def from_files(

@@ -51,8 +51,11 @@ class LanguageManager:
         self.language = language
         self.messages = messages
         self.commands = commands
+        try:
+            new_world.debug(f"language_switched to {language}")
+        except Exception:  # pragma: no cover - best-effort tracing
+            pass
         return new_world
 
 
 __all__ = ["LanguageManager"]
-
