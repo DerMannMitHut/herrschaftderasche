@@ -11,27 +11,6 @@ from . import world
 from .world_model import LocationTag, StateTag
 
 
-def _merge_conditions(parts: List[Dict[str, Any]]) -> Dict[str, Any]:
-    merged: Dict[str, Any] = {}
-    for part in parts:
-        for key, value in part.items():
-            if key == "item_condition":
-                raise ValueError("use 'item_conditions' instead of 'item_condition'")
-            if key == "npc_condition":
-                raise ValueError("use 'npc_conditions' instead of 'npc_condition'")
-            if key == "add_exit":
-                raise ValueError("use 'add_exits' instead of 'add_exit'")
-            if key in ("item_conditions", "npc_conditions", "add_exits"):
-                lst = merged.setdefault(key, [])
-                if isinstance(value, list):
-                    lst.extend(value)
-                else:
-                    lst.append(value)
-            else:
-                merged[key] = value
-    return merged
-
-
 def check_translations(language: str, data_dir: Path) -> List[str]:
     """Check translation files for completeness and report warnings.
 
@@ -139,7 +118,8 @@ def validate_world_structure(w: world.World) -> List[str]:
             errors.append(f"Action references missing target item '{target_item}'")
         pre = action.get("preconditions") or {}
         if isinstance(pre, list):
-            pre = _merge_conditions(pre)
+            errors.append("Action preconditions must be a mapping")
+            pre = {}
         loc = pre.get("is_location")
         if loc and loc not in w.rooms:
             errors.append(f"Action precondition references missing room '{loc}'")
@@ -182,7 +162,8 @@ def validate_world_structure(w: world.World) -> List[str]:
                     )
         eff = action.get("effect") or {}
         if isinstance(eff, list):
-            eff = _merge_conditions(eff)
+            errors.append("Action effect must be a mapping")
+            eff = {}
         conds = eff.get("item_conditions") or []
         for cond in conds:
             eff_item = cond.get("item")
@@ -252,23 +233,25 @@ def validate_world_structure(w: world.World) -> List[str]:
                     f"Action effect references missing target room '{target}' for add_exits"
                 )
             pre = cfg.get("preconditions")
-            if isinstance(pre, list):
-                pre = _merge_conditions(pre)
-            if pre:
-                loc = pre.get("is_location")
-                if loc and loc not in w.rooms:
-                    errors.append(
-                        "Action effect exit precondition references missing room "
-                        f"'{loc}'"
-                    )
-                conds = pre.get("item_conditions") or []
-                for cond in conds:
-                    cond_item = cond.get("item")
-                    if cond_item and cond_item not in w.items:
+            if pre is not None:
+                if isinstance(pre, list):
+                    errors.append("Action effect exit precondition must be a mapping")
+                    pre = None
+                if pre:
+                    loc = pre.get("is_location")
+                    if loc and loc not in w.rooms:
                         errors.append(
-                            "Action effect exit precondition references missing item "
-                            f"'{cond_item}'"
+                            "Action effect exit precondition references missing room "
+                            f"'{loc}'"
                         )
+                    conds = pre.get("item_conditions") or []
+                    for cond in conds:
+                        cond_item = cond.get("item")
+                        if cond_item and cond_item not in w.items:
+                            errors.append(
+                                "Action effect exit precondition references missing item "
+                                f"'{cond_item}'"
+                            )
 
     # NPCs -------------------------------------------------------------------
     for npc_id, npc in w.npcs.items():
@@ -285,7 +268,8 @@ def validate_world_structure(w: world.World) -> List[str]:
     for end_id, ending in w.endings.items():
         pre = ending.get("preconditions") or {}
         if isinstance(pre, list):
-            pre = _merge_conditions(pre)
+            errors.append(f"Ending '{end_id}' preconditions must be a mapping")
+            pre = {}
         loc = pre.get("is_location")
         if loc and loc not in w.rooms:
             errors.append(
