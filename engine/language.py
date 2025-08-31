@@ -39,7 +39,7 @@ class LanguageManager:
             messages = i18n.load_messages(language, self.io)
             commands = i18n.load_commands(language, self.io)
             generic_path = self.data_dir / "generic" / "world.yaml"
-            world_path = self.data_dir / language / "world.yaml"
+            world_path = self.data_dir / language / f"world.{language}.yaml"
             new_world = world.World.from_files(generic_path, world_path, debug=self.debug)
         except FileNotFoundError as exc:  # pragma: no cover - defensive programming
             raise ValueError("Unknown language") from exc

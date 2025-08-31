@@ -61,7 +61,7 @@ def test_states_from_files(
     data_dir, language, item_name, dull_phrase, sharp_phrase, exit_name
 ):
     w = World.from_files(
-        data_dir / "generic/world.yaml", data_dir / f"{language}/world.yaml"
+        data_dir / "generic/world.yaml", data_dir / f"{language}/world.{language}.yaml"
     )
     assert w.item_states["gem"] == "red"
     assert w.move(exit_name)

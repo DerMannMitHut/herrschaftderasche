@@ -4,7 +4,7 @@ from engine import game, parser
 
 
 def test_save_on_eoferror(data_dir, monkeypatch, io_backend):
-    g = game.Game(str(data_dir / "en" / "world.yaml"), "en", io_backend=io_backend)
+    g = game.Game(str(data_dir / "en" / "world.en.yaml"), "en", io_backend=io_backend)
 
     def fake_input(prompt: str = "> ") -> str:  # noqa: ARG001
         raise EOFError
@@ -19,7 +19,7 @@ def test_save_on_eoferror(data_dir, monkeypatch, io_backend):
 
 
 def test_save_on_exception(data_dir, monkeypatch, io_backend):
-    g = game.Game(str(data_dir / "en" / "world.yaml"), "en", io_backend=io_backend)
+    g = game.Game(str(data_dir / "en" / "world.en.yaml"), "en", io_backend=io_backend)
     monkeypatch.setattr(io_backend, "get_input", lambda prompt="> ": "look")
 
     def boom(cmd: str) -> str:  # noqa: ARG001

@@ -23,7 +23,10 @@ def _load_yaml(path: Path, io: IOBackend) -> dict:
 def load_messages(language: str, io: IOBackend) -> Dict[str, str]:
     """Load translation messages for the given language code."""
     path = (
-        Path(__file__).resolve().parent.parent / "data" / language / "messages.yaml"
+        Path(__file__).resolve().parent.parent
+        / "data"
+        / language
+        / f"messages.{language}.yaml"
     )
     return _load_yaml(path, io)
 
@@ -31,7 +34,10 @@ def load_messages(language: str, io: IOBackend) -> Dict[str, str]:
 def load_commands(language: str, io: IOBackend) -> Dict[str, Union[str, List[str]]]:
     """Load command translations for the given language code."""
     path = (
-        Path(__file__).resolve().parent.parent / "data" / language / "commands.yaml"
+        Path(__file__).resolve().parent.parent
+        / "data"
+        / language
+        / f"commands.{language}.yaml"
     )
     return _load_yaml(path, io)
 

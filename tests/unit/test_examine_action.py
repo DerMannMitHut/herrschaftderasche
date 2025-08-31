@@ -3,7 +3,7 @@ from engine.world_model import Action, Item, LocationTag
 
 
 def test_examine_triggers_action(data_dir, io_backend):
-    g = game.Game(str(data_dir / "en" / "world.yaml"), "en", io_backend=io_backend)
+    g = game.Game(str(data_dir / "en" / "world.en.yaml"), "en", io_backend=io_backend)
 
     g.world.items["stone"] = Item(names=["Stone"], description="A stone.")
     g.world.items["coin"] = Item(names=["Coin"], description="A coin.")

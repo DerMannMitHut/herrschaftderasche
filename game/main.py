@@ -11,7 +11,12 @@ def run_cli() -> None:
     parser.add_argument("--language", default="de")
     parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()
-    data_path = Path(__file__).parent.parent / "data" / args.language / "world.yaml"
+    data_path = (
+        Path(__file__).parent.parent
+        / "data"
+        / args.language
+        / f"world.{args.language}.yaml"
+    )
     run(str(data_path), language=args.language, debug=args.debug)
 
 

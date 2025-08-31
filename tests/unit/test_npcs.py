@@ -72,7 +72,7 @@ def test_npc_state_saved_and_loaded(tmp_path):
 
 
 def test_npc_event_triggered_on_room_change(data_dir, capsys):
-    g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
+    g = game.Game(str(data_dir / "en" / "world.en.yaml"), "en")
     g.command_processor.cmd_go("Room 2")
     out = capsys.readouterr().out
     assert "The old man greets you." in out
@@ -107,7 +107,7 @@ def test_npc_event_triggered_on_start(tmp_path, monkeypatch, io_backend):
     }
     with open(tmp_path / "generic" / "world.yaml", "w", encoding="utf-8") as fh:
         yaml.safe_dump(generic, fh)
-    with open(tmp_path / "en" / "world.yaml", "w", encoding="utf-8") as fh:
+    with open(tmp_path / "en" / "world.en.yaml", "w", encoding="utf-8") as fh:
         yaml.safe_dump(en, fh)
 
     outputs = io_backend.outputs
@@ -115,7 +115,7 @@ def test_npc_event_triggered_on_start(tmp_path, monkeypatch, io_backend):
         io_backend, "get_input", lambda prompt="> ": (_ for _ in ()).throw(EOFError())
     )
 
-    g = game.Game(str(tmp_path / "en" / "world.yaml"), "en", io_backend=io_backend)
+    g = game.Game(str(tmp_path / "en" / "world.en.yaml"), "en", io_backend=io_backend)
     g.run()
 
     assert "Hello there." in outputs

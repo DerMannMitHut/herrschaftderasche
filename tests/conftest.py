@@ -163,7 +163,7 @@ def data_dir(tmp_path):
     for lang, data in {"en": en, "de": de}.items():
         lang_dir = tmp_path / lang
         lang_dir.mkdir()
-        with open(lang_dir / "world.yaml", "w", encoding="utf-8") as fh:
+        with open(lang_dir / f"world.{lang}.yaml", "w", encoding="utf-8") as fh:
             yaml.safe_dump(data, fh)
 
     return tmp_path

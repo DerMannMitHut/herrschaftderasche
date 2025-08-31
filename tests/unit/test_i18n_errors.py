@@ -21,9 +21,8 @@ def test_load_messages_corrupted(data_dir, monkeypatch, io_backend):
     _prepare_i18n(monkeypatch, data_dir)
     path = data_dir / "data" / "en"
     path.mkdir(parents=True)
-    with open(path / "messages.yaml", "w", encoding="utf-8") as fh:
+    with open(path / "messages.en.yaml", "w", encoding="utf-8") as fh:
         fh.write("- : - invalid yaml")
     with pytest.raises(SystemExit):
         i18n.load_messages("en", io_backend)
     assert any("Invalid YAML" in o for o in io_backend.outputs)
-

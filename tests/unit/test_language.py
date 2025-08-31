@@ -2,7 +2,7 @@ from engine import game
 
 
 def test_language_switch(data_dir, io_backend):
-    g = game.Game(str(data_dir / "en" / "world.yaml"), "en", io_backend=io_backend)
+    g = game.Game(str(data_dir / "en" / "world.en.yaml"), "en", io_backend=io_backend)
     g.command_processor.cmd_language("de")
     assert g.language_manager.messages["farewell"] == "Auf Wiedersehen!"
     assert g.language_manager.commands["look"][0] == "umschau"
@@ -22,7 +22,7 @@ def test_language_persistence(data_dir, io_backend):
     g = game.Game(str(data_dir / "en" / "world.yaml"), "en", io_backend=io_backend)
     g.command_processor.cmd_language("de")
     g.command_processor.cmd_quit()
-    g2 = game.Game(str(data_dir / "en" / "world.yaml"), "en", io_backend=io_backend)
+    g2 = game.Game(str(data_dir / "en" / "world.en.yaml"), "en", io_backend=io_backend)
     assert g2.language == "de"
     assert g2.language_manager.messages["farewell"] == "Auf Wiedersehen!"
     assert g2.command_processor.reverse_cmds["language"][0] == "language"
@@ -30,7 +30,7 @@ def test_language_persistence(data_dir, io_backend):
 
 
 def test_language_command_base_word(data_dir, io_backend):
-    g = game.Game(str(data_dir / "de" / "world.yaml"), "de", io_backend=io_backend)
+    g = game.Game(str(data_dir / "de" / "world.de.yaml"), "de", io_backend=io_backend)
     cmd, _ = g.command_processor.reverse_cmds["language"]
     getattr(g.command_processor, f"cmd_{cmd}")("en")
     assert g.language == "en"

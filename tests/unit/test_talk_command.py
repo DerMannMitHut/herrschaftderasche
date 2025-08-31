@@ -3,7 +3,7 @@ from engine.world_model import StateTag
 
 
 def test_talk_requires_npc_name(data_dir, capsys):
-    g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
+    g = game.Game(str(data_dir / "en" / "world.en.yaml"), "en")
     g.command_processor.cmd_go("Room 2")
     capsys.readouterr()
     g.command_processor.cmd_talk("")
@@ -12,7 +12,7 @@ def test_talk_requires_npc_name(data_dir, capsys):
 
 
 def test_talk_changes_state_and_outputs_text(data_dir, capsys):
-    g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
+    g = game.Game(str(data_dir / "en" / "world.en.yaml"), "en")
     g.command_processor.cmd_go("Room 2")
     capsys.readouterr()
     g.command_processor.cmd_talk("Old Man")

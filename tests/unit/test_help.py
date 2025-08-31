@@ -2,7 +2,7 @@ from engine import game
 
 
 def test_help_lists_commands(data_dir, io_backend):
-    g = game.Game(str(data_dir / "en" / "world.yaml"), "en", io_backend=io_backend)
+    g = game.Game(str(data_dir / "en" / "world.en.yaml"), "en", io_backend=io_backend)
     g.command_processor.cmd_help("")
     names = []
     for key in g.command_processor.command_keys:
@@ -15,7 +15,7 @@ def test_help_lists_commands(data_dir, io_backend):
 
 
 def test_help_lists_synonyms(data_dir, io_backend):
-    g = game.Game(str(data_dir / "en" / "world.yaml"), "en", io_backend=io_backend)
+    g = game.Game(str(data_dir / "en" / "world.en.yaml"), "en", io_backend=io_backend)
     g.command_processor.cmd_help("destroy")
     entries = g.language_manager.commands["destroy"]
     usages = [e.replace("$a", "<>").replace("$b", "<>") for e in entries]
@@ -28,7 +28,7 @@ def test_help_lists_synonyms(data_dir, io_backend):
 
 
 def test_help_optional_argument(data_dir, io_backend):
-    g = game.Game(str(data_dir / "en" / "world.yaml"), "en", io_backend=io_backend)
+    g = game.Game(str(data_dir / "en" / "world.en.yaml"), "en", io_backend=io_backend)
     g.command_processor.cmd_help("help")
     expected = (
         g.language_manager.messages["help_usage"].format(command="help")

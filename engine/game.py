@@ -41,7 +41,7 @@ class Game:
         self._show_intro = not save_data
         self._language = str(save_data.get("language", language))
         generic_path = self.data_dir / "generic" / "world.yaml"
-        lang_world_path = self.data_dir / self._language / "world.yaml"
+        lang_world_path = self.data_dir / self._language / f"world.{self._language}.yaml"
 
         try:
             self.world = world.World.from_files(

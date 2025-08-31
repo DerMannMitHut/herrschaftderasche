@@ -3,7 +3,7 @@ from engine.world_model import LocationTag
 
 
 def test_apply_effect_multiple_item_conditions(data_dir):
-    g = game.Game(str(data_dir / "en" / "world.yaml"), "en")
+    g = game.Game(str(data_dir / "en" / "world.en.yaml"), "en")
     assert "sword" in g.world.rooms["room3"]["items"]
     g.world.apply_effect(
         {

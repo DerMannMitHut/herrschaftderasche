@@ -13,7 +13,7 @@ def test_invalid_exit_causes_error(data_dir, capsys):
         yaml.safe_dump(world_data, fh)
 
     with pytest.raises(SystemExit):
-        game.Game(str(data_dir / "en" / "world.yaml"), "en")
+        game.Game(str(data_dir / "en" / "world.en.yaml"), "en")
     out = capsys.readouterr().out
     assert "nowhere" in out
 
@@ -24,7 +24,7 @@ def test_invalid_save_reference_leaves_file(data_dir, capsys):
         yaml.safe_dump({"current": "start", "inventory": ["unknown"], "language": "en"}, fh)
 
     with pytest.raises(SystemExit):
-        game.Game(str(data_dir / "en" / "world.yaml"), "en")
+        game.Game(str(data_dir / "en" / "world.en.yaml"), "en")
     out = capsys.readouterr().out
     assert "unknown" in out
     assert save_path.exists()
@@ -44,13 +44,13 @@ def test_invalid_npc_location_causes_error(data_dir, capsys):
 
 
 def test_missing_action_translation_warns(data_dir, io_backend):
-    en_path = data_dir / "en" / "world.yaml"
+    en_path = data_dir / "en" / "world.en.yaml"
     with open(en_path, encoding="utf-8") as fh:
         en_world = yaml.safe_load(fh)
     en_world["actions"].pop("cut_gem")
     with open(en_path, "w", encoding="utf-8") as fh:
         yaml.safe_dump(en_world, fh)
-    game.Game(str(data_dir / "en" / "world.yaml"), "en", io_backend=io_backend)
+    game.Game(str(data_dir / "en" / "world.en.yaml"), "en", io_backend=io_backend)
     assert any(
         "Missing translation for action 'cut_gem'" in o for o in io_backend.outputs
     )
@@ -58,7 +58,7 @@ def test_missing_action_translation_warns(data_dir, io_backend):
 
 def test_validate_save_finds_errors(data_dir):
     w = world.World.from_files(
-        data_dir / "generic" / "world.yaml", data_dir / "en" / "world.yaml"
+        data_dir / "generic" / "world.yaml", data_dir / "en" / "world.en.yaml"
     )
     data = {
         "current": "nowhere",
@@ -81,15 +81,15 @@ def test_check_translations_reports_warnings(data_dir):
     en_dir = data_dir / "en"
     de_dir = data_dir / "de"
     generic_dir = data_dir / "generic"
-    with open(en_dir / "messages.yaml", "w", encoding="utf-8") as fh:
+    with open(en_dir / "messages.en.yaml", "w", encoding="utf-8") as fh:
         yaml.safe_dump({"farewell": "bye", "hello": "hi"}, fh)
-    with open(de_dir / "messages.yaml", "w", encoding="utf-8") as fh:
+    with open(de_dir / "messages.de.yaml", "w", encoding="utf-8") as fh:
         yaml.safe_dump({"farewell": "tschüss", "extra": "x"}, fh)
     with open(generic_dir / "commands.yaml", "w", encoding="utf-8") as fh:
         yaml.safe_dump(["go", "quit"], fh)
-    with open(de_dir / "commands.yaml", "w", encoding="utf-8") as fh:
+    with open(de_dir / "commands.de.yaml", "w", encoding="utf-8") as fh:
         yaml.safe_dump({"go": "geh", "jump": "spring"}, fh)
-    with open(de_dir / "world.yaml", encoding="utf-8") as fh:
+    with open(de_dir / "world.de.yaml", encoding="utf-8") as fh:
         de_world = yaml.safe_load(fh)
     de_world["items"].pop("sword")
     de_world["items"]["ghost"] = {}
@@ -97,7 +97,7 @@ def test_check_translations_reports_warnings(data_dir):
     de_world["rooms"]["nowhere"] = {}
     de_world["actions"].pop("cut_gem")
     de_world["actions"]["extra"] = {}
-    with open(de_dir / "world.yaml", "w", encoding="utf-8") as fh:
+    with open(de_dir / "world.de.yaml", "w", encoding="utf-8") as fh:
         yaml.safe_dump(de_world, fh)
     warnings = integrity.check_translations("de", data_dir)
     assert "Missing translation for message 'hello'" in warnings

@@ -3,7 +3,7 @@ from engine.world_model import StateTag
 
 
 def test_debug_outputs_after_state_changes(data_dir, capsys):
-    g = game.Game(str(data_dir / "en" / "world.yaml"), "en", debug=True)
+    g = game.Game(str(data_dir / "en" / "world.en.yaml"), "en", debug=True)
     capsys.readouterr()
     g.command_processor.cmd_go("Room 2")
     err = capsys.readouterr().err

@@ -19,8 +19,8 @@ def check_translations(language: str, data_dir: Path) -> List[str]:
     warnings: List[str] = []
 
     # Messages ---------------------------------------------------------------
-    base_messages_path = data_dir / "en" / "messages.yaml"
-    lang_messages_path = data_dir / language / "messages.yaml"
+    base_messages_path = data_dir / "en" / "messages.en.yaml"
+    lang_messages_path = data_dir / language / f"messages.{language}.yaml"
     if base_messages_path.exists() and lang_messages_path.exists():
         with open(base_messages_path, encoding="utf-8") as fh:
             base_msgs = yaml.safe_load(fh) or {}
@@ -35,7 +35,7 @@ def check_translations(language: str, data_dir: Path) -> List[str]:
 
     # Commands ---------------------------------------------------------------
     base_cmds_path = data_dir / "generic" / "commands.yaml"
-    lang_cmds_path = data_dir / language / "commands.yaml"
+    lang_cmds_path = data_dir / language / f"commands.{language}.yaml"
     if base_cmds_path.exists() and lang_cmds_path.exists():
         with open(base_cmds_path, encoding="utf-8") as fh:
             base_cmd_keys = yaml.safe_load(fh) or []
@@ -50,7 +50,7 @@ def check_translations(language: str, data_dir: Path) -> List[str]:
 
     # World translations -----------------------------------------------------
     base_world_path = data_dir / "generic" / "world.yaml"
-    lang_world_path = data_dir / language / "world.yaml"
+    lang_world_path = data_dir / language / f"world.{language}.yaml"
     if base_world_path.exists() and lang_world_path.exists():
         with open(base_world_path, encoding="utf-8") as fh:
             base_world = yaml.safe_load(fh) or {}

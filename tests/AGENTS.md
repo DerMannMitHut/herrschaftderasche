@@ -14,7 +14,7 @@ Dieses Dokument beschreibt, wie AI-Agents Testcode erstellen sollen.
   - Testen ausschließlich Engine-Logik mit Testdaten/Fixtures (z. B. `data_dir`).
   - Dürfen keine Dateien aus `data/<lang>/*` oder `data/generic/*` lesen oder kopieren.
 - tests/story: Story-Tests mit echten Spieldaten
-  - Greifen auf die realen YAMLs unter `data/*/world.yaml` zu (z. B. Kopieren in ein tmp-Verzeichnis).
+  - Greifen auf die realen YAMLs unter `data/<lang>/world.<lang>.yaml` zu (z. B. Kopieren in ein tmp-Verzeichnis).
   - Validieren Story-Verhalten, Enden, Interaktionen auf Basis der gelieferten Welt.
 - Gemischte Tests sind nicht erlaubt
   - Eine Testdatei darf entweder ausschließlich Testdaten/Fixtures verwenden (Unit) oder ausschließlich mit echten Spieldaten arbeiten (Story).
@@ -27,9 +27,9 @@ Dieses Dokument beschreibt, wie AI-Agents Testcode erstellen sollen.
 - Vermeide Netzwerkanfragen; LLM/Adapter sind zu mocken und als Dataclasses zu modellieren.
 
 ## Übersetzbarkeit von Spielmeldungen
-- Alle dem Spieler angezeigten Meldungen müssen über Übersetzungen laufen (messages.yaml/commands.yaml).
+- Alle dem Spieler angezeigten Meldungen müssen über Übersetzungen laufen (`messages.<lang>.yaml`/`commands.<lang>.yaml`).
 - Keine hartcodierten englischen/deutschen Texte in der Spiel-UI; nutze `LanguageManager.messages` und `LanguageManager.commands`.
-- Falls neue Meldungen benötigt werden, füge Schlüssel in `data/en/messages.yaml` und `data/de/messages.yaml` hinzu.
+- Falls neue Meldungen benötigt werden, füge Schlüssel in `data/en/messages.en.yaml` und `data/de/messages.de.yaml` hinzu.
 
 ## Testabdeckung (Coverage)
 - Coverage wird ausschließlich über die Unit-Tests gemessen.
