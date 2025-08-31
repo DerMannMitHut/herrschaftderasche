@@ -1,6 +1,7 @@
 farewell: "Auf Wiedersehen!"
 cannot_move: "Dort kannst du nicht hin."
 unknown_command: "Das habe ich nicht verstanden."
+llm_suggest: "Versuche es mal mit: {command}"
 taken: "Du nimmst {item}."
 dropped: "Du legst {item} ab."
 destroyed: "Du zerstörst {item}."

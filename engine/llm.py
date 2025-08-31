@@ -8,6 +8,7 @@ from contextlib import suppress
 from typing import TYPE_CHECKING
 
 import requests
+import yaml
 
 from .interfaces import LLMBackend
 from .persistence import LogEntry
@@ -37,10 +38,17 @@ class OllamaLLM(LLMBackend):
         base_url: str | None = None,
         timeout: int = 30,
         check_model: bool = False,
+        min_confidence: float | None = None,
     ) -> None:
         self.model = model or os.getenv("OLLAMA_MODEL", "mistral")
         self.base_url = base_url or os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
         self.timeout = timeout
+        # Optional confidence threshold; below this we pass through the original command
+        if min_confidence is not None:
+            self.min_confidence: float | None = float(min_confidence)
+        else:
+            env = os.getenv("OLLAMA_MIN_CONF")
+            self.min_confidence = float(env) if env else None
         self.world: World | None = None
         self.language: LanguageManager | None = None
         self.log: list[LogEntry] | None = None
@@ -61,7 +69,8 @@ class OllamaLLM(LLMBackend):
         # Log initialization details once a world context is present
         if self.world is not None:
             with suppress(Exception):  # pragma: no cover - defensive
-                self.world.debug(f"init model={self.model} base_url={self.base_url} timeout={self.timeout}s")
+                thresh = f", min_conf={self.min_confidence:g}" if isinstance(self.min_confidence, int | float) else ""
+                self.world.debug(f"init model={self.model} base_url={self.base_url} timeout={self.timeout}s{thresh}")
 
     def interpret(self, command: str) -> str:  # pragma: no cover - network call
         # If no context, we cannot build a meaningful prompt; pass through.
@@ -84,7 +93,12 @@ class OllamaLLM(LLMBackend):
 
                 sig = inspect.signature(post)
                 params = sig.parameters
-                payload = {"model": self.model, "messages": messages, "stream": False}
+                payload = {
+                    "model": self.model,
+                    "messages": messages,
+                    "stream": False,
+                    "options": {"temperature": 0},
+                }
                 if "timeout" in params or any(p.kind == p.VAR_KEYWORD for p in params.values()):
                     response = post(
                         f"{self.base_url}/api/chat",
@@ -105,7 +119,12 @@ class OllamaLLM(LLMBackend):
             except Exception:  # pragma: no cover - ultra-defensive
                 response = post(
                     f"{self.base_url}/api/chat",
-                    json={"model": self.model, "messages": messages, "stream": False},
+                    json={
+                        "model": self.model,
+                        "messages": messages,
+                        "stream": False,
+                        "options": {"temperature": 0},
+                    },
                 )
             data = response.json()
             content = data.get("message", {}).get("content", "")
@@ -114,13 +133,33 @@ class OllamaLLM(LLMBackend):
                 self.world.debug(f"response error='{error.replace('\n', ' ')}'")
             self.world.debug(f"response content='{content[:160].replace('\n', ' ')}'")
             parsed = json.loads(content)
+            # Confidence handling (0=unsure, 1=quite sure, 2=sure)
+            conf_raw = parsed.get("confidence")
+            conf: int | None = None
+            if conf_raw is not None:
+                try:
+                    conf = int(conf_raw)
+                except (TypeError, ValueError):
+                    conf = None
             verb = parsed.get("verb")
             obj = parsed.get("object")
+            add = parsed.get("additional")
             if verb and obj:
-                result = f"{verb} {obj}".strip()
+                parts = [str(verb), str(obj)]
+                if isinstance(add, str) and add.strip():
+                    parts.append(add.strip())
+                result = " ".join(parts).strip()
                 with suppress(Exception):
-                    self.world.debug(f"mapped result='{result}'")
-                return result
+                    self.world.debug(f"mapped result='{result}' confidence={conf}")
+                # Only accept level 2; level 1 suggests, level 0 unknown
+                if conf == 2:
+                    return result
+                if conf == 1:
+                    return f"__SUGGEST__ {result}"
+                if conf == 0:
+                    return "__UNKNOWN__"
+                # No confidence provided -> passthrough
+                return command
             result = verb or command
             with suppress(Exception):
                 self.world.debug(f"mapped result='{result}'")
@@ -136,6 +175,7 @@ class OllamaLLM(LLMBackend):
         lm = self.language
         log = self.log or []
         allowed_verbs = sorted(lm.commands.keys())
+        lang_code = getattr(lm, "language", "en")
         nouns: list[str] = []
         for item in world.items.values():
             nouns.extend(item.names)
@@ -157,17 +197,59 @@ class OllamaLLM(LLMBackend):
         )
         system_prompt = (
             "You map player input to game commands. A command consists of a <verb>, and optional 1 or 2 objects. "
-            "<confidence> is a value between 0 an 2: 0=unsure, 1=quite sure, 2=totally sure.\n"
+            "<confidence> is a value between 0 and 2: 0=unsure, 1=quite sure, 2=totally sure.\n"
+            f"Language: {lang_code}.\n"
             f"Allowed verbs: {', '.join(allowed_verbs)}\n"
             f"Known nouns: {', '.join(nouns)}\n"
+            f"Guidance:\n{self._language_hints(lang_code)}\n"
             f"Context:\n{context}\n"
             "Respond with JSON "
-            '{"verb": "<verb>", "object": "<noun1>", "additional": "<noun2>", "confidence": <confidence>} and nothing else.\n'
+            '{"confidence": <confidence>, "verb": "<verb>", "object": "<noun1>", "additional": "<noun2>"} and nothing else.\n'
         )
         return [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": command},
         ]
+
+    def _language_hints(self, lang_code: str) -> str:
+        """Return language-specific instructions from data/<lang>/llm.<lang>.yaml.
+
+        Falls back to generic English-like guidance if the file is missing.
+        """
+        try:
+            lm = self.language
+            if lm is None or not hasattr(lm, "data_dir"):
+                raise FileNotFoundError
+            from pathlib import Path
+
+            data_dir = lm.data_dir
+            lang = lang_code or "en"
+            path = Path(data_dir) / lang / f"llm.{lang}.yaml"
+            with open(path, encoding="utf-8") as fh:
+                cfg = yaml.safe_load(fh) or {}
+            articles = cfg.get("ignore_articles") or []
+            contractions = cfg.get("ignore_contractions") or []
+            preps = cfg.get("second_object_preps") or []
+            notes = cfg.get("notes") or []
+            parts: list[str] = []
+            if articles:
+                parts.append("Ignore articles/determiners when matching nouns (" + ", ".join(articles) + ").")
+            if contractions:
+                parts.append("Ignore contractions when matching nouns (" + ", ".join(contractions) + ").")
+            if preps:
+                parts.append("Map these prepositions to the second object (additional): " + ", ".join(preps) + ".")
+            if notes:
+                parts.extend(str(n) for n in notes)
+            if parts:
+                return " ".join(parts)
+        except Exception:  # pragma: no cover - fallback path
+            with suppress(Exception):
+                if self.world is not None:
+                    self.world.debug("llm hints: fallback to generic guidance")
+        return (
+            "Ignore articles/determiners (the, a, an) and minor prepositions when matching nouns. "
+            "Choose object strings from 'Known nouns'. Treat quoted phrases as one object."
+        )
 
     def _check_model_exists(self) -> None:
         """Check if the configured model exists on the Ollama server.

@@ -163,6 +163,61 @@ class CommandProcessor:
         if before != after:
             self.log.append(LogEntry(raw, outputs))
 
+    def can_execute(self, raw: str) -> bool:
+        """Return True if ``raw`` matches any known command pattern."""
+        return any(pattern.fullmatch(raw) for pattern, _cmd_key, _pattern_src in self.cmd_patterns)
+
+    def can_execute_semantic(self, raw: str) -> bool:
+        """Return True if ``raw`` matches and its arguments resolve to known entities.
+
+        This is a lightweight pre-validation to decide whether to fall back to LLM.
+        It does not execute side effects.
+        """
+        for pattern, cmd_key, _src in self.cmd_patterns:
+            match = pattern.fullmatch(raw)
+            if not match:
+                continue
+            groups = match.groupdict()
+            info = self.command_info.get(cmd_key, {})
+            arg_count = info.get("arguments", 0)
+            # Zero-arg commands are always semantically valid
+            if arg_count == 0 and not info.get("optional_arguments"):
+                return True
+            a = (groups.get("a") or "").strip()
+            b = (groups.get("b") or "").strip()
+            # Optional-arg commands: accept here; handler validates specifics
+            if info.get("optional_arguments"):
+                return True
+            # One-arg commands
+            if arg_count == 1:
+                if cmd_key in {"take"}:
+                    return self._find_item_id(a, in_inventory=False) is not None
+                if cmd_key in {"drop", "destroy", "wear"}:
+                    return self._find_item_id(a, in_inventory=True) is not None
+                if cmd_key in {"examine"}:
+                    return (self._find_item_id(a, in_inventory=False) is not None) or (self._find_item_id(a, in_inventory=True) is not None)
+                if cmd_key in {"go"}:
+                    return self.world.can_move(a)
+                if cmd_key in {"talk"}:
+                    return self._find_npc_id(a) is not None
+                if cmd_key in {"language"}:
+                    return bool(a)
+                # Default: consider valid
+                return True
+            # Two-arg commands
+            if arg_count == 2:
+                if cmd_key in ACTION_COMMANDS:
+                    cfg = ACTION_COMMANDS[cmd_key]
+                    item_ok = self._find_item_id(a, in_inventory=cfg.item_in_inventory) is not None
+                    finder = self._find_npc_id if cfg.target_is_npc else self._find_item_id
+                    target_ok = finder(b) is not None
+                    return item_ok and target_ok
+                # Default: both non-empty
+                return bool(a and b)
+            # Default: valid
+            return True
+        return False
+
     # ------------------------------------------------------------------
     def _build_cmd_patterns(self) -> None:
         self.cmd_patterns.clear()

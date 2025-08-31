@@ -1,0 +1,30 @@
+ignore_articles:
+  - der
+  - die
+  - das
+  - den
+  - dem
+  - des
+  - ein
+  - eine
+  - einen
+  - einem
+  - eines
+ignore_contractions:
+  - im
+  - am
+  - beim
+  - vom
+  - zum
+  - zur
+  - ins
+  - aufs
+  - ans
+  - ums
+  - durchs
+second_object_preps:
+  - mit
+notes:
+  - "Wähle Objektstrings aus 'Known nouns'."
+  - "Behandle zitatmarkierte Phrasen als ein Objekt."
+  - "Groß-/Kleinschreibung ignorieren; Lemma verwenden (Schlüssel == schlüssel)."

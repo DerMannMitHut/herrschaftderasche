@@ -157,10 +157,24 @@ class Game:
         self._check_end()
         try:
             while self.running:
-                raw = self.io.get_input()
-                raw = self.llm.interpret(raw)
-                raw = parser.parse(raw)
-                self.command_processor.execute(raw)
+                user_input = self.io.get_input()
+                normalized = parser.parse(user_input)
+                # 1) Versuche klassische Kommandos (nur wenn semantisch auflösbar)
+                if self.command_processor.can_execute(normalized) and self.command_processor.can_execute_semantic(normalized):
+                    self.command_processor.execute(normalized)
+                    continue
+                # 2) Fallback: LLM befragen
+                mapped = self.llm.interpret(user_input)
+                if mapped == "__UNKNOWN__":
+                    self.io.output(self.language_manager.messages["unknown_command"])
+                    continue
+                if mapped.startswith("__SUGGEST__ "):
+                    suggestion = mapped[len("__SUGGEST__ ") :].strip()
+                    msg_tpl = self.language_manager.messages.get("llm_suggest", "Try: {command}")
+                    self.io.output(msg_tpl.format(command=suggestion))
+                    continue
+                mapped_norm = parser.parse(mapped)
+                self.command_processor.execute(mapped_norm)
         except (EOFError, KeyboardInterrupt):
             self.io.output(self.language_manager.messages["farewell"])
         finally:

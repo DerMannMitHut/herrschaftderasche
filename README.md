@@ -29,6 +29,7 @@ Ein textbasiertes Adventure mit modularer Engine und YAML-beschriebener Welt. Di
   - `data/<lang>/world.<lang>.yaml`: sprachspezifische Namen/Beschreibungen (Welt)
   - `data/<lang>/messages.<lang>.yaml`: Meldungen/Benutzertexte
   - `data/<lang>/commands.<lang>.yaml`: Befehls-Synonyme
+  - `data/<lang>/llm.<lang>.yaml`: LLM-Sprachhinweise (Artikel/Präpositionen etc.)
 - `tests/`: Pytest-Suite
   - `tests/unit`: Unit-Tests (ohne echte Spieldaten; nutzen Fixtures)
   - `tests/story`: Story-Tests (mit echten Spieldaten)
@@ -105,6 +106,28 @@ Hinweise:
   - `interpret(command: str) -> str`
   - `set_context(world, language, log) -> None`
 - Binde es beim Start wie oben gezeigt über `llm_backend=<DeinBackend>()` ein.
+
+### LLM-Sprachkonfiguration
+- Pro Sprache in `data/<lang>/llm.<lang>.yaml` konfigurierbar. Beispiel (DE):
+
+```
+ignore_articles: [der, die, das, den, dem, des, ein, eine, einen, einem, eines]
+ignore_contractions: [im, am, beim, vom, zum, zur, ins, aufs, ans, ums, durchs]
+second_object_preps: [mit]
+notes:
+  - "Wähle Objektstrings aus 'Known nouns'."
+  - "Behandle zitatmarkierte Phrasen als ein Objekt."
+```
+
+- EN (Beispiel):
+
+```
+ignore_articles: [the, a, an]
+second_object_preps: [with]
+notes:
+  - "Choose object strings from 'Known nouns'."
+  - "Treat quoted phrases as one object."
+```
 
 ### Hilfe-Ausgabe
 - Die Hilfe ohne Argument zeigt drei Spalten (lokalisiert): System, Grundlegend, Interaktion.

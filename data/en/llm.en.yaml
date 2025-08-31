@@ -1,0 +1,10 @@
+ignore_articles:
+  - the
+  - a
+  - an
+ignore_contractions: []
+second_object_preps:
+  - with
+notes:
+  - "Choose object strings from 'Known nouns'."
+  - "Treat quoted phrases as one object."

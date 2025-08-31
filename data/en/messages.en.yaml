@@ -1,6 +1,7 @@
 farewell: "Goodbye!"
 cannot_move: "You can't go that way."
 unknown_command: "I didn't understand that."
+llm_suggest: "Try: {command}"
 taken: "You take the {item}."
 dropped: "You drop the {item}."
 destroyed: "You destroy the {item}."
