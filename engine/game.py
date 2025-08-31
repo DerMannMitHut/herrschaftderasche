@@ -105,7 +105,6 @@ class Game:
     def _check_end(self) -> None:
         ending = self.world.check_endings()
         if ending:
-            # Visual separation before an ending message
             self.io.output("")
             self.io.output(ending)
             self.running = False
@@ -138,7 +137,6 @@ class Game:
             self.io.output(self.world.intro)
         header = self.world.describe_room_header(self.language_manager.messages)
         self.io.output(header)
-        # Capture NPC event outputs to control blank line placement
         event_outs: list[str] = []
         original_output = self.io.output
         try:
@@ -159,10 +157,8 @@ class Game:
             while self.running:
                 user_input = self.io.get_input()
                 normalized = parser.parse(user_input)
-                # 1) Versuche klassisches Parsen/Validieren
                 if self.command_processor.execute(normalized):
                     continue
-                # 2) Fallback: LLM befragen
                 mapped = self.llm.interpret(user_input)
                 if mapped == "__UNKNOWN__":
                     self.io.output(self.language_manager.messages["unknown_command"])
@@ -173,7 +169,8 @@ class Game:
                     self.io.output(msg_tpl.format(command=suggestion))
                     continue
                 mapped_norm = parser.parse(mapped)
-                self.command_processor.execute(mapped_norm)
+                if not self.command_processor.execute(mapped_norm):
+                    self.io.output(self.language_manager.messages["unknown_command"])
         except (EOFError, KeyboardInterrupt):
             self.io.output(self.language_manager.messages["farewell"])
         finally:

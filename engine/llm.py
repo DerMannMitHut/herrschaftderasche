@@ -43,7 +43,6 @@ class OllamaLLM(LLMBackend):
         self.model = model or os.getenv("OLLAMA_MODEL", "mistral")
         self.base_url = base_url or os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
         self.timeout = timeout
-        # Optional confidence threshold; below this we pass through the original command
         if min_confidence is not None:
             self.min_confidence: float | None = float(min_confidence)
         else:
@@ -66,14 +65,12 @@ class OllamaLLM(LLMBackend):
         self.world = world
         self.language = language
         self.log = log
-        # Log initialization details once a world context is present
         if self.world is not None:
             with suppress(Exception):  # pragma: no cover - defensive
                 thresh = f", min_conf={self.min_confidence:g}" if isinstance(self.min_confidence, int | float) else ""
                 self.world.debug(f"init model={self.model} base_url={self.base_url} timeout={self.timeout}s{thresh}")
 
     def interpret(self, command: str) -> str:  # pragma: no cover - network call
-        # If no context, we cannot build a meaningful prompt; pass through.
         if not self.world or not self.language:
             if self.world is not None:
                 with suppress(Exception):
@@ -83,7 +80,6 @@ class OllamaLLM(LLMBackend):
             with suppress(Exception):
                 self.world.debug(f"call input='{command}'")
             messages = self._build_messages(command)
-            # Optional glimpse of the system prompt for troubleshooting
             with suppress(Exception):  # pragma: no cover - best-effort
                 system_preview = messages[0]["content"][:160].replace("\n", " ")
                 self.world.debug(f"request system='{system_preview}…'")
@@ -133,7 +129,6 @@ class OllamaLLM(LLMBackend):
                 self.world.debug(f"response error='{error.replace('\n', ' ')}'")
             self.world.debug(f"response content='{content[:160].replace('\n', ' ')}'")
             parsed = json.loads(content)
-            # Confidence handling (0=unsure, 1=quite sure, 2=sure)
             conf_raw = parsed.get("confidence")
             conf: int | None = None
             if conf_raw is not None:
@@ -151,14 +146,13 @@ class OllamaLLM(LLMBackend):
                 result = " ".join(parts).strip()
                 with suppress(Exception):
                     self.world.debug(f"mapped result='{result}' confidence={conf}")
-                # Only accept level 2; level 1 suggests, level 0 unknown
                 if conf == 2:
                     return result
                 if conf == 1:
-                    return f"__SUGGEST__ {result}"
+                    suggestion = self._format_suggestion(str(verb), str(obj), str(add) if add else None)
+                    return f"__SUGGEST__ {suggestion or result}"
                 if conf == 0:
                     return "__UNKNOWN__"
-                # No confidence provided -> passthrough
                 return command
             result = verb or command
             with suppress(Exception):
@@ -210,6 +204,27 @@ class OllamaLLM(LLMBackend):
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": command},
         ]
+
+    def _format_suggestion(self, verb: str, obj: str | None, add: str | None) -> str | None:
+        """Render a localized suggestion using the first translation for ``verb``.
+
+        Replaces `$a` with ``obj`` and `$b` with ``add`` if present. Falls back
+        to a simple "verb obj [add]" string if translation is missing.
+        """
+        lm = self.language
+        if not lm:
+            return None
+        val = lm.commands.get(verb)
+        if not val:
+            return None
+        phrase = val[0] if isinstance(val, list) else val
+        if not isinstance(phrase, str) or not phrase:
+            return None
+        a = (obj or "").strip()
+        b = (add or "").strip()
+        text = phrase.replace("$a", a).replace("$b", b)
+        text = " ".join(text.split()).strip()
+        return text
 
     def _language_hints(self, lang_code: str) -> str:
         """Return language-specific instructions from data/<lang>/llm.<lang>.yaml.

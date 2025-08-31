@@ -13,6 +13,8 @@ from .interfaces import IOBackend
 from .language import LanguageManager
 from .persistence import LogEntry, SaveManager
 from .world_model import StateTag
+from pathlib import Path
+import yaml
 
 
 def require_args(n: int) -> Callable[[Callable[..., bool | None]], Callable[..., bool]]:
@@ -28,7 +30,6 @@ def require_args(n: int) -> Callable[[Callable[..., bool | None]], Callable[...,
         @wraps(func)
         def wrapper(self, *args: str) -> bool:
             if len(args) < n or len(args) > max_args or any(not arg for arg in args[:n]):
-                # Parsing failed: let caller decide (e.g., LLM fallback)
                 return False
             res = func(self, *args)
             return bool(res) if res is not None else True
@@ -110,8 +111,24 @@ class CommandProcessor:
         self.cmd_patterns: list[tuple[re.Pattern[str], str, str]] = []
         self.reverse_cmds: dict[str, tuple[str, str]] = {}
         self._build_cmd_patterns()
+        self._ignore_articles: set[str] = set()
+        self._ignore_contractions: set[str] = set()
+        try:
+            data_dir = getattr(self.language_manager, "data_dir", None)
+            lang = getattr(self.language_manager, "language", None)
+            if data_dir and lang:
+                path = Path(data_dir) / lang / f"llm.{lang}.yaml"
+                with open(path, encoding="utf-8") as fh:
+                    cfg = yaml.safe_load(fh) or {}
+                arts = cfg.get("ignore_articles") or []
+                contr = cfg.get("ignore_contractions") or []
+                self._ignore_articles = {str(a).casefold() for a in arts}
+                self._ignore_contractions = {str(c).casefold() for c in contr}
+        except Exception:
+            # Best-effort; fall back to exact matching
+            self._ignore_articles = set()
+            self._ignore_contractions = set()
 
-    # ------------------------------------------------------------------
     def execute(self, raw: str) -> bool:
         """Execute ``raw`` and return True if parsing succeeded, else False.
 
@@ -136,7 +153,6 @@ class CommandProcessor:
                 groups = match.groupdict()
                 handler = getattr(self, f"cmd_{cmd_key}", self.cmd_unknown)
                 info = self.command_info.get(cmd_key, {})
-                # Trace the resolved command and normalized arguments
                 args_preview = {k: v for k, v in groups.items() if v}
                 self.world.debug(f"command {cmd_key} args {args_preview}")
                 arg_count = info.get("arguments", 0)
@@ -164,63 +180,8 @@ class CommandProcessor:
         after = self.world.to_state()
         if before != after:
             self.log.append(LogEntry(raw, outputs))
-        # If a handler ran, return its parse result; otherwise parse failed
         return bool(parse_ok)
 
-    # Removed try_execute and can_execute; execute() now returns parse success
-
-    def can_execute_semantic(self, raw: str) -> bool:
-        """Return True if ``raw`` matches and its arguments resolve to known entities.
-
-        This is a lightweight pre-validation to decide whether to fall back to LLM.
-        It does not execute side effects.
-        """
-        for pattern, cmd_key, _src in self.cmd_patterns:
-            match = pattern.fullmatch(raw)
-            if not match:
-                continue
-            groups = match.groupdict()
-            info = self.command_info.get(cmd_key, {})
-            arg_count = info.get("arguments", 0)
-            # Zero-arg commands are always semantically valid
-            if arg_count == 0 and not info.get("optional_arguments"):
-                return True
-            a = (groups.get("a") or "").strip()
-            b = (groups.get("b") or "").strip()
-            # Optional-arg commands: accept here; handler validates specifics
-            if info.get("optional_arguments"):
-                return True
-            # One-arg commands
-            if arg_count == 1:
-                if cmd_key in {"take"}:
-                    return self._find_item_id(a, in_inventory=False) is not None
-                if cmd_key in {"drop", "destroy", "wear"}:
-                    return self._find_item_id(a, in_inventory=True) is not None
-                if cmd_key in {"examine"}:
-                    return (self._find_item_id(a, in_inventory=False) is not None) or (self._find_item_id(a, in_inventory=True) is not None)
-                if cmd_key in {"go"}:
-                    return self.world.can_move(a)
-                if cmd_key in {"talk"}:
-                    return self._find_npc_id(a) is not None
-                if cmd_key in {"language"}:
-                    return bool(a)
-                # Default: consider valid
-                return True
-            # Two-arg commands
-            if arg_count == 2:
-                if cmd_key in ACTION_COMMANDS:
-                    cfg = ACTION_COMMANDS[cmd_key]
-                    item_ok = self._find_item_id(a, in_inventory=cfg.item_in_inventory) is not None
-                    finder = self._find_npc_id if cfg.target_is_npc else self._find_item_id
-                    target_ok = finder(b) is not None
-                    return item_ok and target_ok
-                # Default: both non-empty
-                return bool(a and b)
-            # Default: valid
-            return True
-        return False
-
-    # ------------------------------------------------------------------
     def _build_cmd_patterns(self) -> None:
         self.cmd_patterns.clear()
         self.reverse_cmds.clear()
@@ -233,8 +194,7 @@ class CommandProcessor:
                 self.cmd_patterns.append((pattern, key, entry))
                 if base not in self.reverse_cmds:
                     self.reverse_cmds[base] = (key, entry)
-        # Always allow calling commands by their ID (system/default form),
-        # independent of the current language.
+        
         for key in self.command_keys:
             info = self.language_manager.command_info.get(key, {})
             args = info.get("arguments", 0)
@@ -277,15 +237,21 @@ class CommandProcessor:
         regex += r"$"
         return re.compile(regex), base or pattern
 
-    # ------------------------------------------------------------------
     def _strip_suffix(self, arg: str, suffix: str) -> str:
         if suffix and arg.endswith(f" {suffix}"):
             return arg[: -len(suffix) - 1].strip()
         return arg
 
+    def _strip_leading_tokens(self, text: str) -> str:
+        parts = text.strip().split()
+        while parts and parts[0].casefold() in (self._ignore_articles | self._ignore_contractions):
+            parts.pop(0)
+        return " ".join(parts)
+
     def _find_item_id(self, name: str, *, in_inventory: bool = False) -> str | None:
         if not name:
             return None
+        name = self._strip_leading_tokens(name)
         name_cf = name.casefold()
         if not in_inventory:
             room = self.world.rooms[self.world.current]
@@ -302,6 +268,7 @@ class CommandProcessor:
     def _find_npc_id(self, name: str) -> str | None:
         if not name:
             return None
+        name = self._strip_leading_tokens(name)
         name_cf = name.casefold()
         for npc_id, npc in self.world.npcs.items():
             names = npc.get("names", [])
@@ -381,8 +348,7 @@ class CommandProcessor:
         self._execute_action("examine", item_id)
         self.check_end()
 
-    # ------------------------------------------------------------------
-    # Command handlers
+    
     @require_args(0)
     def cmd_quit(self) -> bool:
         self.save_manager.save(self.world, self.language_manager.language, self.log)
@@ -397,7 +363,6 @@ class CommandProcessor:
 
     @require_args(1)
     def cmd_take(self, item_name: str) -> bool:
-        # Parse successful if the name can be resolved to any known item
         if self._match_any_item_id(item_name) is None:
             return False
         taken = self.world.take(item_name)
@@ -452,10 +417,13 @@ class CommandProcessor:
 
     @require_args(1)
     def cmd_go(self, direction: str) -> bool:
+        if not self._matches_exit_name(direction):
+            self.io.output(self.language_manager.messages["cannot_move"])
+            self.check_end()
+            return True
         if self.world.can_move(direction) and self.world.move(direction):
             header = self.world.describe_room_header(self.language_manager.messages)
             self.io.output(header)
-            # Capture NPC event outputs to control blank line placement
             event_outs: list[str] = []
             original_output = self.io.output
             try:
@@ -479,11 +447,10 @@ class CommandProcessor:
     @require_args(0)
     def cmd_help(self, arg: str | None = None) -> bool:
         if not arg:
-            # Build categorized columns: System, Basics, Interactions
+            
             cmds = self.language_manager.commands
 
             def display_for(key: str) -> str:
-                # Show first translation phrase with simple argument hints
                 val = cmds.get(key, [])
                 entries = val if isinstance(val, list) else [val]
                 if not entries:
@@ -492,7 +459,6 @@ class CommandProcessor:
                 phrase = phrase.replace("$a", "<>").replace("$b", "<>")
                 info = self.language_manager.command_info.get(key, {})
                 if info.get("optional_arguments") and ("<>" not in phrase):
-                    # Add an optional hint if pattern has no placeholders; use [n] for show_log
                     phrase += " [n]" if key == "show_log" else " [<>]"
                 return phrase or key
 
@@ -507,7 +473,6 @@ class CommandProcessor:
             bas_list = sorted(set(bas_list), key=lambda s: s.casefold())
             act_list = sorted(set(act_list), key=lambda s: s.casefold())
 
-            # Headings (optional, localized if provided)
             msgs = self.language_manager.messages
             h_sys = msgs.get("help_section_system", "System")
             h_bas = msgs.get("help_section_basics", "Basics")
@@ -610,13 +575,12 @@ class CommandProcessor:
         return True
 
     def cmd_unknown(self, _arg: str | None = None) -> bool:
-        # Unknown at this stage is treated as parse failure; caller may handle messaging.
         return False
 
-    # ------------------------- Matching helpers -------------------------------
     def _match_any_item_id(self, name: str) -> str | None:
         if not name:
             return None
+        name = self._strip_leading_tokens(name)
         name_cf = name.casefold()
         for item_id, item in self.world.items.items():
             names = getattr(item, "names", [])
@@ -627,12 +591,25 @@ class CommandProcessor:
     def _match_any_npc_id(self, name: str) -> str | None:
         if not name:
             return None
+        name = self._strip_leading_tokens(name)
         name_cf = name.casefold()
         for npc_id, npc in self.world.npcs.items():
             names = getattr(npc, "names", [])
             if any(n.casefold() == name_cf for n in names):
                 return npc_id
         return None
+
+    def _matches_exit_name(self, name: str) -> bool:
+        if not name:
+            return False
+        name = self._strip_leading_tokens(name)
+        name_cf = name.casefold()
+        room = self.world.rooms[self.world.current]
+        for cfg in room.exits.values():
+            names = cfg.get("names", [])
+            if any(n.casefold() == name_cf for n in names):
+                return True
+        return False
 
 
 __all__ = ["CommandProcessor"]

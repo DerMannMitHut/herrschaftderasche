@@ -5,11 +5,9 @@ def test_help_lists_commands(data_dir, io_backend):
     g = game.Game(str(data_dir / "en" / "world.en.yaml"), "en", io_backend=io_backend)
     g.command_processor.cmd_help("")
     out = io_backend.outputs[-1]
-    # Expect column headings and some representative commands
     assert "System" in out
     assert "Basics" in out
     assert "Interactions" in out
-    # Representative commands present somewhere in the table
     for token in ("quit", "go", "talk"):
         assert token in out
 

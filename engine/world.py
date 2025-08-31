@@ -149,7 +149,6 @@ class World:
             if desc is not None:
                 room["description"] = desc
             rooms[room_id] = room
-        # Ensure items and rooms have at least default translations
         for item_id, item_cfg in items.items():
             item_cfg.setdefault("names", [item_id])
             if "description" not in item_cfg:
@@ -227,7 +226,6 @@ class World:
                 rooms_diff[room_id] = items
         if rooms_diff:
             state["rooms"] = rooms_diff
-        # Persist added exits compared to base
         exits_added: dict[str, dict[str, Any]] = {}
         for room_id, room in self.rooms.items():
             base_exits = self._base_exits.get(room_id, set())
@@ -264,7 +262,6 @@ class World:
         with open(path, encoding="utf-8") as fh:
             data = yaml.safe_load(fh) or {}
         self.current = data.get("current", self.current)
-        # Only override inventory if it was stored; otherwise keep base inventory.
         self.inventory = data.get("inventory", self.inventory)
         room_items = data.get("rooms", {})
         for room_id, room in self.rooms.items():
@@ -275,7 +272,6 @@ class World:
                 room.items = items
             else:
                 room.items = []
-        # Merge added exits
         exits_added = data.get("exits", {})
         for room_id, mapping in exits_added.items():
             for target, cfg in (mapping or {}).items():
@@ -293,8 +289,6 @@ class World:
                 val = StateTag(state) if isinstance(state, str) and state in StateTag._value2member_map_ else state
                 self.npc_states[npc_id] = val
                 self.npcs[npc_id].state = val
-
-    # Condition / effect handling -------------------------------------------------
 
     def _check_item_condition(self, cond: dict[str, Any]) -> bool:
         item_id = cond.get("item")
@@ -422,8 +416,6 @@ class World:
                     self.add_exit(room, target, pre)
 
     def describe_current(self, messages: dict[str, str] | None = None) -> str:
-        # Backwards-compatible full description (room + contents + exits).
-        # Note: New structured helpers below are used by callers to control ordering.
         header = self.describe_room_header(messages)
         visible = self.describe_visibility()
         return header if not visible else f"{header} {visible}"
@@ -456,12 +448,10 @@ class World:
         """
         room = self.rooms[self.current]
         names: list[str] = []
-        # Items in room
         for item_id in room.items:
             item = self.items.get(item_id)
             if item and item.names:
                 names.append(item.names[0])
-        # NPCs visible in room (respecting preconditions)
         for npc_id in room.occupants:
             npc = self.npcs.get(npc_id)
             if not npc:
@@ -476,7 +466,6 @@ class World:
         names.sort(key=lambda s: s.casefold())
         if messages and "you_see_here" in messages:
             return messages["you_see_here"].format(list=", ".join(names))
-        # Fallback (should be covered by messages in normal play)
         return "You see here: " + ", ".join(names) + "."
 
     def describe_item(self, item_name: str) -> str | None:

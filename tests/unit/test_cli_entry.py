@@ -7,7 +7,6 @@ from pathlib import Path
 
 def _project_root(file: str) -> Path:
     p = Path(file).resolve()
-    # If file is in tests/<subdir>/..., parents[1] is tests; go one level higher
     return p.parents[2] if p.parents[1].name == "tests" else p.parents[1]
 
 

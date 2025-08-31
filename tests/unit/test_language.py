@@ -6,7 +6,6 @@ def test_language_switch(data_dir, io_backend):
     g.command_processor.cmd_language("de")
     assert g.language_manager.messages["farewell"] == "Auf Wiedersehen!"
     assert g.language_manager.commands["look"][0] == "umschau"
-    # Accept any synonym ordering; ensure an expected synonym exists
     assert "ansehen $a" in g.language_manager.commands["examine"]
     assert g.language_manager.commands["talk"][0] == "rede mit $a"
     assert g.command_processor.reverse_cmds["hilfe"][0] == "help"

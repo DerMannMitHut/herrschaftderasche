@@ -18,7 +18,6 @@ def check_translations(language: str, data_dir: Path) -> list[str]:
 
     warnings: list[str] = []
 
-    # Messages ---------------------------------------------------------------
     base_messages_path = data_dir / "en" / "messages.en.yaml"
     lang_messages_path = data_dir / language / f"messages.{language}.yaml"
     if base_messages_path.exists() and lang_messages_path.exists():
@@ -33,7 +32,6 @@ def check_translations(language: str, data_dir: Path) -> list[str]:
             if key not in base_msgs:
                 warnings.append(f"Unused message translation '{key}' ignored")
 
-    # Commands ---------------------------------------------------------------
     base_cmds_path = data_dir / "generic" / "commands.yaml"
     lang_cmds_path = data_dir / language / f"commands.{language}.yaml"
     if base_cmds_path.exists() and lang_cmds_path.exists():
@@ -48,7 +46,6 @@ def check_translations(language: str, data_dir: Path) -> list[str]:
             if key not in base_cmd_keys:
                 warnings.append(f"Unused command translation '{key}' ignored")
 
-    # World translations -----------------------------------------------------
     base_world_path = data_dir / "generic" / "world.yaml"
     lang_world_path = data_dir / language / f"world.{language}.yaml"
     if base_world_path.exists() and lang_world_path.exists():
@@ -89,7 +86,6 @@ def validate_world_structure(w: world.World) -> list[str]:
 
     errors: list[str] = []
 
-    # Rooms, exits and items -------------------------------------------------
     for room_id, room in w.rooms.items():
         exits = room.get("exits", {})
         for target in exits:
@@ -99,11 +95,9 @@ def validate_world_structure(w: world.World) -> list[str]:
             if item not in w.items:
                 errors.append(f"Room '{room_id}' contains missing item '{item}'")
 
-    # Start room -------------------------------------------------------------
     if w.current not in w.rooms:
         errors.append(f"Start room '{w.current}' does not exist")
 
-    # Actions ----------------------------------------------------------------
     for action in w.actions:
         if action.trigger != "use":
             continue
@@ -195,7 +189,6 @@ def validate_world_structure(w: world.World) -> list[str]:
                         if cond_item and cond_item not in w.items:
                             errors.append(f"Action '{{action}}' effect exit precondition references missing item '{cond_item}'")
 
-    # NPCs -------------------------------------------------------------------
     for npc_id, npc in w.npcs.items():
         meet = npc.get("meet", {})
         loc = meet.get("location")
@@ -206,7 +199,6 @@ def validate_world_structure(w: world.World) -> list[str]:
         if state_key and state_key not in npc.get("states", {}):
             errors.append(f"NPC '{npc_id}' has undefined state '{state_key}'")
 
-    # Endings ----------------------------------------------------------------
     for end_id, ending in w.endings.items():
         pre = ending.get("preconditions") or {}
         if isinstance(pre, list):
