@@ -22,6 +22,31 @@ def _convert_tags(obj: Any) -> Any:
     return obj
 
 
+def _normalize_room_config(room: Dict[str, Any]) -> Dict[str, Any]:
+    """Normalize room configuration for pydantic validation."""
+    exits = room.get("exits")
+    if not exits:
+        return room
+    if isinstance(exits, list):
+        room["exits"] = {e: {"names": [e]} for e in exits}
+        return room
+    new_exits: Dict[str, Dict[str, Any]] = {}
+    for target, cfg in exits.items():
+        if isinstance(cfg, list):
+            new_exits[target] = {"names": list(cfg)}
+        elif isinstance(cfg, dict):
+            names = cfg.get("names", [])
+            pre = cfg.get("preconditions")
+            entry = {"names": list(names)}
+            if pre:
+                entry["preconditions"] = pre
+            new_exits[target] = entry
+        else:  # pragma: no cover - legacy single-string syntax
+            new_exits[target] = {"names": [cfg]}
+    room["exits"] = new_exits
+    return room
+
+
 class World:
     def __init__(self, data: Dict[str, Any], debug: bool = False):
         data = _convert_tags(data)
@@ -29,10 +54,14 @@ class World:
         raw_rooms = data.get("rooms", {})
         raw_items = data.get("items", {})
         raw_npcs = data.get("npcs", {})
-        self.rooms = {
-            room_id: room if isinstance(room, Room) else Room(**room)
-            for room_id, room in raw_rooms.items()
-        }
+        processed_rooms: Dict[str, Room] = {}
+        for room_id, room in raw_rooms.items():
+            if isinstance(room, Room):
+                processed_rooms[room_id] = room
+            else:
+                cfg = _normalize_room_config(dict(room))
+                processed_rooms[room_id] = Room(**cfg)
+        self.rooms = processed_rooms
         self.items = {
             item_id: item if isinstance(item, Item) else Item(**item)
             for item_id, item in raw_items.items()
@@ -79,27 +108,6 @@ class World:
             if loc and loc in self.rooms:
                 room = self.rooms[loc]
                 room.occupants.append(npc_id)
-
-        for room in self.rooms.values():
-            exits = room.exits
-            if not exits:
-                continue
-            if isinstance(exits, list):
-                room.exits = {e: {"names": [e]} for e in exits}
-                continue
-            new_exits: Dict[str, Dict[str, Any]] = {}
-            for target, cfg in exits.items():
-                if isinstance(cfg, list):
-                    new_exits[target] = {"names": list(cfg)}
-                elif isinstance(cfg, dict):
-                    names = cfg.get("names", [])
-                    pre = cfg.get("preconditions")
-                    new_exits[target] = {"names": list(names)}
-                    if pre:
-                        new_exits[target]["preconditions"] = pre
-                else:  # pragma: no cover - legacy single-string syntax
-                    new_exits[target] = {"names": [cfg]}
-            room.exits = new_exits
 
     def debug(self, message: str) -> None:
         if self._debug_enabled:
