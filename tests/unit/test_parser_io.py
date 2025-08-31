@@ -10,7 +10,7 @@ def test_parse_normalizes():
 
 def test_get_input(monkeypatch):
     console = ConsoleIO()
-    monkeypatch.setattr(builtins, "input", lambda prompt="": "value")
+    monkeypatch.setattr(builtins, "input", lambda _prompt="": "value")
     assert console.get_input("?") == "value"
 
 
@@ -18,4 +18,3 @@ def test_output(capsys):
     console = ConsoleIO()
     console.output("text")
     assert capsys.readouterr().out.strip() == "text"
-

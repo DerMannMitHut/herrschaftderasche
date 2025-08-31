@@ -3,12 +3,10 @@
 from __future__ import annotations
 
 import requests
-
 from engine import world
 from engine.language import LanguageManager
 from engine.llm import OllamaLLM
 from engine.persistence import LogEntry
-
 from tests.conftest import DummyIO
 
 
@@ -31,7 +29,7 @@ def test_ollama_llm_builds_context(monkeypatch, data_dir):
 
     captured: dict = {}
 
-    def fake_post(url, json, timeout):  # noqa: D401 - simple stub
+    def fake_post(_url, json, _timeout):  # noqa: D401 - simple stub
         captured["json"] = json
 
         class Resp:
@@ -57,7 +55,7 @@ def test_ollama_llm_fallback(monkeypatch, data_dir):
     llm = OllamaLLM()
     llm.set_context(w, lm, [])
 
-    def fake_post(*args, **kwargs):  # pragma: no cover - simple stub
+    def fake_post(*_args, **_kwargs):  # pragma: no cover - simple stub
         raise OSError
 
     monkeypatch.setattr(requests, "post", fake_post)

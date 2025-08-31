@@ -6,14 +6,15 @@ from pathlib import Path
 
 import yaml
 
-from engine import parser, world, integrity
-from .world_model import StateTag
+from engine import integrity, parser, world
+
+from .commands import CommandProcessor
 from .interfaces import IOBackend, LLMBackend
 from .io import ConsoleIO
-from .llm import NoOpLLM
-from .commands import CommandProcessor
 from .language import LanguageManager
+from .llm import NoOpLLM
 from .persistence import SaveManager
+from .world_model import StateTag
 
 
 class Game:
@@ -41,14 +42,10 @@ class Game:
         self._show_intro = not save_data
         self._language = str(save_data.get("language", language))
         generic_path = self.data_dir / "generic" / "world.yaml"
-        lang_world_path = (
-            self.data_dir / self._language / f"world.{self._language}.yaml"
-        )
+        lang_world_path = self.data_dir / self._language / f"world.{self._language}.yaml"
 
         try:
-            self.world = world.World.from_files(
-                generic_path, lang_world_path, debug=debug
-            )
+            self.world = world.World.from_files(generic_path, lang_world_path, debug=debug)
         except FileNotFoundError as exc:
             self.io.output(f"ERROR: Missing world file: {exc}")
             raise SystemExit from exc
@@ -78,9 +75,7 @@ class Game:
             self.world.load_state(self.save_manager.save_path)
             self.save_manager.cleanup()
 
-        self.language_manager = LanguageManager(
-            self.data_dir, self._language, self.io, debug=debug
-        )
+        self.language_manager = LanguageManager(self.data_dir, self._language, self.io, debug=debug)
         self.command_processor = CommandProcessor(
             self.world,
             self.language_manager,
@@ -92,19 +87,10 @@ class Game:
             self.io,
             log=log_data,
         )
-        if hasattr(self.llm, "set_context"):
-            getattr(self.llm, "set_context")(
-                self.world, self.language_manager, self.command_processor.log
-            )
+        self.llm.set_context(self.world, self.language_manager, self.command_processor.log)
         self.running = True
-        # Trace game initialization and key state
-        try:
-            inv = list(self.world.inventory)
-            self.world.debug(
-                f"game_init language {self._language} current {self.world.current} inventory {inv}"
-            )
-        except Exception:
-            pass
+        inv = list(self.world.inventory)
+        self.world.debug(f"game_init language {self._language} current {self.world.current} inventory {inv}")
 
     @property
     def language(self) -> str:
@@ -123,13 +109,7 @@ class Game:
             self.io.output("")
             self.io.output(ending)
             self.running = False
-            # Trace that an ending was reached
-            try:
-                self.world.debug(
-                    f"ending_reached text '{ending[:40] + ('...' if len(ending) > 40 else '')}'"
-                )
-            except Exception:
-                pass
+            self.world.debug(f"ending_reached text '{ending[:40] + ('...' if len(ending) > 40 else '')}'")
 
     def _check_npc_event(self) -> None:
         room = self.world.rooms[self.world.current]

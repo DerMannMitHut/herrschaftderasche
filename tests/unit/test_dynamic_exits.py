@@ -3,9 +3,7 @@ from engine.world import World
 
 def test_dynamic_exit_save_and_load(data_dir, tmp_path):
     # Load base world from files (fixtures provide generic + en)
-    w = World.from_files(
-        data_dir / "generic/world.yaml", data_dir / "en/world.en.yaml"
-    )
+    w = World.from_files(data_dir / "generic/world.yaml", data_dir / "en/world.en.yaml")
 
     # New exit target that does not exist in the base configuration
     target_id = "room4"
@@ -26,10 +24,7 @@ def test_dynamic_exit_save_and_load(data_dir, tmp_path):
     save_path = tmp_path / "save.yaml"
     w.save(save_path)
 
-    new = World.from_files(
-        data_dir / "generic/world.yaml", data_dir / "en/world.en.yaml"
-    )
+    new = World.from_files(data_dir / "generic/world.yaml", data_dir / "en/world.en.yaml")
     assert not new.can_move(target_id)
     new.load_state(save_path)
     assert new.can_move(target_id)
-

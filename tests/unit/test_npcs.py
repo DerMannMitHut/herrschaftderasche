@@ -1,6 +1,6 @@
 import yaml
-from engine.world import World
 from engine import game
+from engine.world import World
 from engine.world_model import StateTag
 
 
@@ -111,9 +111,7 @@ def test_npc_event_triggered_on_start(tmp_path, monkeypatch, io_backend):
         yaml.safe_dump(en, fh)
 
     outputs = io_backend.outputs
-    monkeypatch.setattr(
-        io_backend, "get_input", lambda prompt="> ": (_ for _ in ()).throw(EOFError())
-    )
+    monkeypatch.setattr(io_backend, "get_input", lambda _prompt="> ": (_ for _ in ()).throw(EOFError()))
 
     g = game.Game(str(tmp_path / "en" / "world.en.yaml"), "en", io_backend=io_backend)
     g.run()

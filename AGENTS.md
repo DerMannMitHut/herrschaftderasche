@@ -29,10 +29,10 @@
 - Strukturiere Rückgaben mit `@dataclass` statt anonymer `dict`
 
 ## Test-Richtlinien
-- Framework: pytest; Dateinamen: `tests/test_*.py`
 - Schreibe gezielte Unit-Tests für neue/änderte Logik; mocke I/O und LLM-Aufrufe
 - Bevorzugt hohe Abdeckung; nutze `--cov --cov-branch` für Regressionsschutz
 - Beispiel: Engine-APIs gegen Fixtures testen; Plot-Validierung gegen `data/generic/world.yaml`
+- nutze "make all", um alle Tests und Lintings auszuführen, und die poetry.lock zu aktualisieren
 
 ## Commits & Pull Requests
 - Commits: Conventional Commits (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`); Imperativ, kurz, präzise

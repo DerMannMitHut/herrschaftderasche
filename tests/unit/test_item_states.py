@@ -1,6 +1,6 @@
-from engine.world import World
-import yaml
 import pytest
+import yaml
+from engine.world import World
 
 
 def make_world() -> World:
@@ -57,12 +57,8 @@ def test_item_state_saved_and_loaded(tmp_path):
         ("de", "Juwel", "ein rotes juwel.", "ein grünes juwel.", "Raum 2"),
     ],
 )
-def test_states_from_files(
-    data_dir, language, item_name, dull_phrase, sharp_phrase, exit_name
-):
-    w = World.from_files(
-        data_dir / "generic/world.yaml", data_dir / f"{language}/world.{language}.yaml"
-    )
+def test_states_from_files(data_dir, language, item_name, dull_phrase, sharp_phrase, exit_name):
+    w = World.from_files(data_dir / "generic/world.yaml", data_dir / f"{language}/world.{language}.yaml")
     assert w.item_states["gem"] == "red"
     assert w.move(exit_name)
     desc = w.describe_item(item_name)

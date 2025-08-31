@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import contextlib
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Dict, List, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import yaml
 
@@ -15,7 +16,7 @@ if TYPE_CHECKING:  # pragma: no cover - used for type checking only
 @dataclass
 class LogEntry:
     command: str
-    output: List[str]
+    output: list[str]
 
 
 class SaveManager:
@@ -31,7 +32,7 @@ class SaveManager:
         self.data_dir = data_dir
         self.save_path = self.data_dir / "save.yaml"
 
-    def load(self) -> Dict[str, Any]:
+    def load(self) -> dict[str, Any]:
         """Return previously saved data if available."""
 
         if not self.save_path.exists():
@@ -42,7 +43,7 @@ class SaveManager:
         data["log"] = [LogEntry(**entry) for entry in log_data]
         return data
 
-    def save(self, world: "World", language: str, log: List[LogEntry] | None = None) -> None:
+    def save(self, world: World, language: str, log: list[LogEntry] | None = None) -> None:
         """Persist the current world state, language and log."""
 
         data = world.to_state()
@@ -56,11 +57,8 @@ class SaveManager:
         """Remove the save file if it exists."""
 
         if self.save_path.exists():
-            try:
+            with contextlib.suppress(OSError):
                 self.save_path.unlink()
-            except OSError:
-                pass
 
 
 __all__ = ["SaveManager", "LogEntry"]
-

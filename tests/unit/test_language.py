@@ -12,10 +12,7 @@ def test_language_switch(data_dir, io_backend):
     assert g.command_processor.reverse_cmds["hilfe"][0] == "help"
     assert g.command_processor.reverse_cmds["language"][0] == "language"
     assert g.command_processor.reverse_cmds["sprache"][0] == "language"
-    assert (
-        io_backend.outputs[-1]
-        == g.language_manager.messages["language_set"].format(language="de")
-    )
+    assert io_backend.outputs[-1] == g.language_manager.messages["language_set"].format(language="de")
     assert g.world.items["sword"]["names"][0] == "Schwert"
 
 
@@ -35,7 +32,4 @@ def test_language_command_base_word(data_dir, io_backend):
     cmd, _ = g.command_processor.reverse_cmds["language"]
     getattr(g.command_processor, f"cmd_{cmd}")("en")
     assert g.language == "en"
-    assert (
-        io_backend.outputs[-1]
-        == g.language_manager.messages["language_set"].format(language="en")
-    )
+    assert io_backend.outputs[-1] == g.language_manager.messages["language_set"].format(language="en")

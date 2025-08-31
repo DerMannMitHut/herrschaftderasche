@@ -1,5 +1,5 @@
-from engine.world import World
 import yaml
+from engine.world import World
 
 
 def make_world() -> World:

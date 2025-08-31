@@ -16,7 +16,7 @@ class DummyIO(IOBackend):
         self.inputs = inputs or []
         self.outputs: list[str] = []
 
-    def get_input(self, prompt: str = "> ") -> str:
+    def get_input(self, prompt: str = "> ") -> str:  # noqa: ARG002 - test stub
         return self.inputs.pop(0) if self.inputs else ""
 
     def output(self, text: str) -> None:
@@ -24,8 +24,11 @@ class DummyIO(IOBackend):
 
 
 class DummyLLM(LLMBackend):
-    def interpret(self, command: str) -> str:
+    def interpret(self, command: str) -> str:  # noqa: D401 - simple stub
         return command
+
+    def set_context(self, world, language, log) -> None:  # noqa: ARG002 - test stub
+        return None
 
 
 @pytest.fixture
@@ -67,13 +70,7 @@ def data_dir(tmp_path):
             }
         },
         "start": "start",
-        "endings": {
-            "green_gem": {
-                "preconditions": {
-                    "item_conditions": [{"item": "gem", "state": "green"}]
-                }
-            }
-        },
+        "endings": {"green_gem": {"preconditions": {"item_conditions": [{"item": "gem", "state": "green"}]}}},
     }
 
     en = {
@@ -150,9 +147,7 @@ def data_dir(tmp_path):
                 },
             }
         },
-        "actions": {
-            "cut_gem": {"messages": {"success": "Das Juwel leuchtet jetzt grün."}}
-        },
+        "actions": {"cut_gem": {"messages": {"success": "Das Juwel leuchtet jetzt grün."}}},
         "endings": {"green_gem": "Das Juwel ist grün."},
     }
 

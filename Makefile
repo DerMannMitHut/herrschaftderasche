@@ -23,8 +23,9 @@ deps: .deps-stamp
 all: deps
 	$(MAKE) lint-fix
 	$(MAKE) typecheck
-	$(MAKE) unit
-	$(MAKE) story
+	$(MAKE) test
+
+test: unit story
 
 unit: deps
 	poetry run pytest --cov --cov-branch -q tests/unit
@@ -37,6 +38,7 @@ lint:
 
 lint-fix:
 	poetry run ruff check . --fix
+	poetry run ruff format .
 
 typecheck:
 	poetry run pyright

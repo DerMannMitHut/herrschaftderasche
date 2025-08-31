@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -19,11 +19,11 @@ class StateTag(Enum):
 
 
 class Room(BaseModel):
-    names: List[str]
+    names: list[str]
     description: str
-    items: List[str] = Field(default_factory=list) # noqa
-    exits: Dict[str, Dict[str, Any]] = Field(default_factory=dict) # noqa
-    occupants: List[str] = Field(default_factory=list) # noqa
+    items: list[str] = Field(default_factory=list)  # noqa
+    exits: dict[str, dict[str, Any]] = Field(default_factory=dict)  # noqa
+    occupants: list[str] = Field(default_factory=list)  # noqa
 
     model_config = ConfigDict(extra="forbid")
 
@@ -45,10 +45,10 @@ class Room(BaseModel):
 
 
 class Item(BaseModel):
-    names: List[str]
+    names: list[str]
     description: str | None = None
     state: str | StateTag | None = None
-    states: Dict[str, Dict[str, Any]] = Field(default_factory=dict) # noqa
+    states: dict[str, dict[str, Any]] = Field(default_factory=dict)  # noqa
 
     model_config = ConfigDict(extra="forbid")
 
@@ -63,10 +63,10 @@ class Item(BaseModel):
 
 
 class Npc(BaseModel):
-    names: List[str]
+    names: list[str]
     state: str | StateTag | None = None
-    states: Dict[str, Dict[str, Any]] = Field(default_factory=dict) # noqa
-    meet: Dict[str, Any] = Field(default_factory=dict) # noqa
+    states: dict[str, dict[str, Any]] = Field(default_factory=dict)  # noqa
+    meet: dict[str, Any] = Field(default_factory=dict)  # noqa
 
     model_config = ConfigDict(extra="forbid")
 
@@ -85,9 +85,9 @@ class Action(BaseModel):
     item: str
     target_item: str | None = None
     target_npc: str | None = None
-    preconditions: Dict[str, Any] | None = None
-    effect: Dict[str, Any] | None = None
-    messages: Dict[str, str] = Field(default_factory=dict) # noqa
+    preconditions: dict[str, Any] | None = None
+    effect: dict[str, Any] | None = None
+    messages: dict[str, str] = Field(default_factory=dict)  # noqa
 
     model_config = ConfigDict(extra="forbid")
 

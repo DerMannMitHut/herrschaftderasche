@@ -1,7 +1,7 @@
 import shutil
 from pathlib import Path
-import yaml
 
+import yaml
 from engine import game
 
 
@@ -12,12 +12,8 @@ def _project_root(file: str) -> Path:
 
 def copy_story_world(data_dir) -> None:
     root = _project_root(__file__)
-    shutil.copy(
-        root / "data" / "generic" / "world.yaml", data_dir / "generic" / "world.yaml"
-    )
-    shutil.copy(
-        root / "data" / "en" / "world.en.yaml", data_dir / "en" / "world.en.yaml"
-    )
+    shutil.copy(root / "data" / "generic" / "world.yaml", data_dir / "generic" / "world.yaml")
+    shutil.copy(root / "data" / "en" / "world.en.yaml", data_dir / "en" / "world.en.yaml")
 
 
 def test_ruins_inaccessible_without_map(data_dir, io_backend):

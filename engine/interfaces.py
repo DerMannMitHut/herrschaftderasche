@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
+
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from .language import LanguageManager
+    from .persistence import LogEntry
+    from .world import World
 
 
 @runtime_checkable
@@ -26,6 +31,14 @@ class LLMBackend(Protocol):
         """Return a normalized version of ``command``."""
         ...
 
+    def set_context(
+        self,
+        world: World,
+        language: LanguageManager,
+        log: list[LogEntry],
+    ) -> None:  # pragma: no cover - interface
+        """Provide world, language manager and log for context-aware interpretation."""
+        ...
+
 
 __all__ = ["IOBackend", "LLMBackend"]
-

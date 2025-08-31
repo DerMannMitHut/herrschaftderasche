@@ -3,15 +3,16 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from functools import wraps
-from typing import Callable, cast
+from typing import cast
 
 from . import world
+from .interfaces import IOBackend
 from .language import LanguageManager
 from .persistence import LogEntry, SaveManager
 from .world_model import StateTag
-from .interfaces import IOBackend
 
 
 def require_args(n: int) -> Callable[[Callable[..., None]], Callable[..., None]]:
@@ -37,6 +38,7 @@ def require_args(n: int) -> Callable[[Callable[..., None]], Callable[..., None]]
         return wrapper
 
     return decorator
+
 
 @dataclass
 class StateChange:
@@ -133,12 +135,8 @@ class CommandProcessor:
                 handler = getattr(self, f"cmd_{cmd_key}", self.cmd_unknown)
                 info = self.command_info.get(cmd_key, {})
                 # Trace the resolved command and normalized arguments
-                try:
-                    # keep trace concise; avoid dumping large structures
-                    args_preview = {k: v for k, v in groups.items() if v}
-                    self.world.debug(f"command {cmd_key} args {args_preview}")
-                except Exception:  # pragma: no cover - best-effort tracing
-                    pass
+                args_preview = {k: v for k, v in groups.items() if v}
+                self.world.debug(f"command {cmd_key} args {args_preview}")
                 arg_count = info.get("arguments", 0)
                 if arg_count == 2:
                     a = groups.get("a", "").strip()
@@ -273,9 +271,7 @@ class CommandProcessor:
         self.io.output(self.language_manager.messages[cfg.message_key].format(item=item_name))
         self.check_end()
 
-    def _action_command(
-        self, cmd: str, item_name: str, target_name: str
-    ) -> None:
+    def _action_command(self, cmd: str, item_name: str, target_name: str) -> None:
         cfg = ACTION_COMMANDS[cmd]
         item_id = self._find_item_id(item_name, in_inventory=cfg.item_in_inventory)
         if not item_id:
@@ -294,9 +290,7 @@ class CommandProcessor:
         self.io.output(self.language_manager.messages[cfg.failure_key])
         self.check_end()
 
-    def _execute_action(
-        self, trigger: str, item_id: str, target_id: str | None = None
-    ) -> bool:
+    def _execute_action(self, trigger: str, item_id: str, target_id: str | None = None) -> bool:
         for action in self.world.actions:
             if action.trigger != trigger:
                 continue
@@ -334,9 +328,7 @@ class CommandProcessor:
     # Command handlers
     @require_args(0)
     def cmd_quit(self) -> None:
-        self.save_manager.save(
-            self.world, self.language_manager.language, self.log
-        )
+        self.save_manager.save(self.world, self.language_manager.language, self.log)
         self.io.output(self.language_manager.messages["farewell"])
         self.stop()
 
@@ -467,15 +459,11 @@ class CommandProcessor:
         entries = entries if isinstance(entries, list) else [entries]
         usages: list[str] = []
         for entry in entries:
-            if self.language_manager.command_info.get(key, {}).get(
-                "optional_arguments"
-            ) and "$" not in entry:
+            if self.language_manager.command_info.get(key, {}).get("optional_arguments") and "$" not in entry:
                 continue
             usage = entry.replace("$a", "<>").replace("$b", "<>")
             usages.append(usage)
-        header = self.language_manager.messages.get(
-            "help_usage", "Usage of \"{command}\" and synonyms:"
-        )
+        header = self.language_manager.messages.get("help_usage", 'Usage of "{command}" and synonyms:')
         self.io.output(header.format(command=key) + "\n" + "\n".join(usages))
 
     @require_args(0)
@@ -498,22 +486,14 @@ class CommandProcessor:
     def cmd_language(self, language: str) -> None:
         language = language.strip()
         try:
-            new_world = self.language_manager.switch(
-                language, self.world, self.save_manager, self.log
-            )
+            new_world = self.language_manager.switch(language, self.world, self.save_manager, self.log)
         except ValueError:
-            self.io.output(
-                self.language_manager.messages.get(
-                    "language_unknown", "Unknown language"
-                )
-            )
+            self.io.output(self.language_manager.messages.get("language_unknown", "Unknown language"))
             return
         self.world = new_world
         self._update_world(new_world)
         self._build_cmd_patterns()
-        self.io.output(
-            self.language_manager.messages["language_set"].format(language=language)
-        )
+        self.io.output(self.language_manager.messages["language_set"].format(language=language))
 
     @require_args(2)
     def cmd_show(self, item_name: str, npc_name: str) -> None:
@@ -541,7 +521,7 @@ class CommandProcessor:
     def cmd_use(self, item_name: str, target_name: str) -> None:
         self._action_command("use", item_name, target_name)
 
-    def cmd_unknown(self, arg: str | None = None) -> None:
+    def cmd_unknown(self, _arg: str | None = None) -> None:
         self.io.output(self.language_manager.messages["unknown_command"])
 
 

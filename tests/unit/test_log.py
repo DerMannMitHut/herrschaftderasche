@@ -17,9 +17,7 @@ def test_log_records_state_changes_and_show_log(data_dir, io_backend):
 def test_log_persisted_in_savegame(data_dir, io_backend):
     g = game.Game(str(data_dir / "en" / "world.en.yaml"), "en", io_backend=io_backend)
     g.command_processor.execute("go room 2")
-    g.save_manager.save(
-        g.world, g.language_manager.language, g.command_processor.log
-    )
+    g.save_manager.save(g.world, g.language_manager.language, g.command_processor.log)
     io2 = io_backend.__class__()
     g2 = game.Game(str(data_dir / "en" / "world.en.yaml"), "en", io_backend=io2)
     assert [e.command for e in g2.command_processor.log] == ["go room 2"]

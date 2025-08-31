@@ -1,7 +1,6 @@
 import pytest
-from pydantic import ValidationError
-
 from engine.world import World
+from pydantic import ValidationError
 
 
 def make_world(action: dict):

@@ -20,7 +20,7 @@ def test_cli_module_entry(data_dir, tmp_path):
     shutil.copytree(data_dir, tmp_path / "data")
     env = os.environ.copy()
     env["PYTHONPATH"] = str(_project_root(__file__))
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603
         [sys.executable, "-m", "game.main", "--language", "en"],
         input="",
         text=True,

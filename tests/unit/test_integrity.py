@@ -1,6 +1,5 @@
 import pytest
 import yaml
-
 from engine import game, integrity, world
 
 
@@ -51,15 +50,11 @@ def test_missing_action_translation_warns(data_dir, io_backend):
     with open(en_path, "w", encoding="utf-8") as fh:
         yaml.safe_dump(en_world, fh)
     game.Game(str(data_dir / "en" / "world.en.yaml"), "en", io_backend=io_backend)
-    assert any(
-        "Missing translation for action 'cut_gem'" in o for o in io_backend.outputs
-    )
+    assert any("Missing translation for action 'cut_gem'" in o for o in io_backend.outputs)
 
 
 def test_validate_save_finds_errors(data_dir):
-    w = world.World.from_files(
-        data_dir / "generic" / "world.yaml", data_dir / "en" / "world.en.yaml"
-    )
+    w = world.World.from_files(data_dir / "generic" / "world.yaml", data_dir / "en" / "world.en.yaml")
     data = {
         "current": "nowhere",
         "inventory": ["ghost"],

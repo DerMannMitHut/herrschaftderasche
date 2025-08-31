@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from . import world
-from .persistence import LogEntry, SaveManager
+from . import i18n, world
 from .interfaces import IOBackend
-from . import i18n
+from .persistence import LogEntry, SaveManager
 
 
 class LanguageManager:
@@ -51,10 +50,7 @@ class LanguageManager:
         self.language = language
         self.messages = messages
         self.commands = commands
-        try:
-            new_world.debug(f"language_switched to {language}")
-        except Exception:  # pragma: no cover - best-effort tracing
-            pass
+        new_world.debug(f"language_switched to {language}")
         return new_world
 
 
