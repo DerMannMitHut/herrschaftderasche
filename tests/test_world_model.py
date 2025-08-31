@@ -40,7 +40,7 @@ def test_action_dataclass():
         item="key",
         target_item="door",
         preconditions={"is_location": "hall"},
-        effect={"item_condition": {"item": "door", "state": "open"}},
+        effect={"item_conditions": [{"item": "door", "state": "open"}]},
         messages={"success": "opened"},
     )
     assert action.trigger == "use"

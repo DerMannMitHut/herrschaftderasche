@@ -12,7 +12,11 @@ def test_examine_triggers_action(data_dir, io_backend):
         Action(
             trigger="examine",
             item="stone",
-            effect={"item_condition": {"item": "coin", "location": LocationTag.CURRENT_ROOM}},
+            effect={
+                "item_conditions": [
+                    {"item": "coin", "location": LocationTag.CURRENT_ROOM}
+                ]
+            },
             messages={"success": "You find a coin."},
         )
     )

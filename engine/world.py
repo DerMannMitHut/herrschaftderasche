@@ -22,6 +22,27 @@ def _convert_tags(obj: Any) -> Any:
     return obj
 
 
+def _merge_conditions(parts: list[Dict[str, Any]]) -> Dict[str, Any]:
+    merged: Dict[str, Any] = {}
+    for part in parts:
+        for key, value in part.items():
+            if key == "item_condition":
+                raise ValueError("use 'item_conditions' instead of 'item_condition'")
+            if key == "npc_condition":
+                raise ValueError("use 'npc_conditions' instead of 'npc_condition'")
+            if key == "add_exit":
+                raise ValueError("use 'add_exits' instead of 'add_exit'")
+            if key in ("item_conditions", "npc_conditions", "add_exits"):
+                lst = merged.setdefault(key, [])
+                if isinstance(value, list):
+                    lst.extend(value)
+                else:
+                    lst.append(value)
+            else:
+                merged[key] = value
+    return merged
+
+
 class World:
     def __init__(self, data: Dict[str, Any], debug: bool = False):
         data = _convert_tags(data)
@@ -50,13 +71,20 @@ class World:
             actions = list(actions.values())
         normalized: list[Any] = []
         for action in actions:
-            if (
-                isinstance(action, dict)
-                and "precondition" in action
-                and "preconditions" not in action
-            ):
+            if isinstance(action, dict):
                 action = dict(action)
-                action["preconditions"] = action.pop("precondition")
+                if "precondition" in action and "preconditions" not in action:
+                    action["preconditions"] = action.pop("precondition")
+                pre = action.get("preconditions")
+                if isinstance(pre, list):
+                    action["preconditions"] = _merge_conditions(pre)
+                elif isinstance(pre, dict):
+                    action["preconditions"] = _merge_conditions([pre])
+                eff = action.get("effect")
+                if isinstance(eff, list):
+                    action["effect"] = _merge_conditions(eff)
+                elif isinstance(eff, dict):
+                    action["effect"] = _merge_conditions([eff])
             normalized.append(action)
         self.actions = [
             act if isinstance(act, Action) else Action(**act) for act in normalized
@@ -338,15 +366,21 @@ class World:
             return False
         return self.npc_state(npc_id) == state
 
-    def check_preconditions(self, pre: Dict[str, Any] | None) -> bool:
+    def check_preconditions(
+        self, pre: dict[str, Any] | list[dict[str, Any]] | None
+    ) -> bool:
         if not pre:
             return True
+        if isinstance(pre, list):
+            pre = _merge_conditions(pre)
         loc = pre.get("is_location")
         if loc and self.current != (loc.value if isinstance(loc, LocationTag) else loc):
             return False
-        item_cond = pre.get("item_condition")
-        if item_cond and not self._check_item_condition(item_cond):
-            return False
+        item_cond = pre.get("item_conditions")
+        if item_cond:
+            for ic in item_cond:
+                if not self._check_item_condition(ic):
+                    return False
         npc_met = pre.get("npc_met")
         if npc_met and not self._check_npc_condition(
             {"npc": npc_met, "state": StateTag.MET}
@@ -357,15 +391,13 @@ class World:
             {"npc": npc_help, "state": StateTag.HELPED}
         ):
             return False
-        npc_cond = pre.get("npc_state")
-        if npc_cond and not self._check_npc_condition(npc_cond):
+        npc_state = pre.get("npc_state")
+        if npc_state and not self._check_npc_condition(npc_state):
             return False
-        npc_conditions = pre.get("npc_condition")
+        npc_conditions = pre.get("npc_conditions")
         if npc_conditions:
-            if isinstance(npc_conditions, dict):
-                npc_conditions = [npc_conditions]
-            for cond in npc_conditions:
-                if not self._check_npc_condition(cond):
+            for nc in npc_conditions:
+                if not self._check_npc_condition(nc):
                     return False
         return True
 
@@ -397,21 +429,42 @@ class World:
                 room.items.append(item_id)
                 self.debug(f"room {room_id} items {room.items}")
 
-    def apply_effect(self, effect: Dict[str, Any]) -> None:
-        item_cond = effect.get("item_condition") or effect.get("item_conditions")
+    def apply_npc_condition(self, cond: Dict[str, Any]) -> None:
+        npc_id = cond.get("npc")
+        if not npc_id:
+            return
+        state = cond.get("state")
+        if state is not None:
+            self.set_npc_state(npc_id, state)
+        location = cond.get("location")
+        if location:
+            if location is LocationTag.CURRENT_ROOM:
+                location = self.current
+            self.move_npc(npc_id, location)
+
+    def apply_effect(
+        self, effect: dict[str, Any] | list[dict[str, Any]] | None
+    ) -> None:
+        if not effect:
+            return
+        if isinstance(effect, list):
+            effect = _merge_conditions(effect)
+        item_cond = effect.get("item_conditions")
         if item_cond:
-            if isinstance(item_cond, dict):
-                item_cond = [item_cond]
             for cond in item_cond:
                 self.apply_item_condition(cond)
-        add_exit = effect.get("add_exit")
+        npc_cond = effect.get("npc_conditions")
+        if npc_cond:
+            for cond in npc_cond:
+                self.apply_npc_condition(cond)
+        add_exit = effect.get("add_exits")
         if add_exit:
-            if isinstance(add_exit, dict):
-                add_exit = [add_exit]
             for cfg in add_exit:
                 room = cfg.get("room")
                 target = cfg.get("target")
                 pre = cfg.get("preconditions")
+                if isinstance(pre, list):
+                    pre = _merge_conditions(pre)
                 if room and target:
                     self.add_exit(room, target, pre)
 
@@ -507,7 +560,7 @@ class World:
         return False
 
     def add_exit(
-        self, room_id: str, target: str, pre: Dict[str, Any] | None = None
+        self, room_id: str, target: str, pre: dict[str, Any] | None = None
     ) -> None:
         room = self.rooms.setdefault(room_id, Room())
         exits = room.exits
