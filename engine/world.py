@@ -435,29 +435,19 @@ class World:
                     self.add_exit(room, target, pre)
 
     def describe_current(self, messages: Dict[str, str] | None = None) -> str:
+        # Backwards-compatible full description (room + contents + exits).
+        # Note: New structured helpers below are used by callers to control ordering.
+        header = self.describe_room_header(messages)
+        visible = self.describe_visibility()
+        return header if not visible else f"{header} {visible}"
+
+    def describe_room_header(self, messages: Dict[str, str] | None = None) -> str:
+        """Return only the room description and exits, with sorted exits.
+
+        Does not include items/NPCs to allow callers to control output order.
+        """
         room = self.rooms[self.current]
         desc = room.description
-        room_items = room.items
-        if room_items:
-            item_names = [self.items[i].names[0] for i in room_items]
-            if messages:
-                desc += " " + messages["items_here"].format(items=", ".join(item_names))
-            else:  # pragma: no cover - fallback ohne messages
-                desc += " You see here: " + ", ".join(item_names)
-        room_npcs = []
-        for npc_id in room.occupants:
-            npc = self.npcs.get(npc_id)
-            if not npc:
-                continue
-            pre = npc.meet.get("preconditions")
-            if pre and not self.check_preconditions(pre):
-                continue
-            room_npcs.append((npc.names or [npc_id])[0])
-        if room_npcs:
-            if messages:
-                desc += " " + messages["npcs_here"].format(npcs=", ".join(room_npcs))
-            else:  # pragma: no cover - fallback ohne messages
-                desc += " You see here: " + ", ".join(room_npcs)
         exits = room.exits
         if exits:
             exit_names = []
@@ -465,11 +455,39 @@ class World:
                 names = cfg.get("names", [])
                 if names:
                     exit_names.append(names[0])
+            exit_names.sort(key=lambda s: s.casefold())
             if messages:
                 desc += " " + messages["exits"].format(exits=", ".join(exit_names))
             else:  # pragma: no cover - fallback ohne messages
                 desc += " Exits: " + ", ".join(exit_names)
         return desc
+
+    def describe_visibility(self) -> str | None:
+        """Return a single consolidated 'You see here: ...' line for items and NPCs.
+
+        Returns None if there is nothing visible.
+        """
+        room = self.rooms[self.current]
+        names: list[str] = []
+        # Items in room
+        for item_id in room.items:
+            item = self.items.get(item_id)
+            if item and item.names:
+                names.append(item.names[0])
+        # NPCs visible in room (respecting preconditions)
+        for npc_id in room.occupants:
+            npc = self.npcs.get(npc_id)
+            if not npc:
+                continue
+            pre = npc.meet.get("preconditions")
+            if pre and not self.check_preconditions(pre):
+                continue
+            if npc.names:
+                names.append(npc.names[0])
+        if not names:
+            return None
+        names.sort(key=lambda s: s.casefold())
+        return "You see here: " + ", ".join(names) + "."
 
     def describe_item(self, item_name: str) -> str | None:
         item_name_cf = item_name.casefold()

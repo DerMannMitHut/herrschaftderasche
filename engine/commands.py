@@ -351,7 +351,12 @@ class CommandProcessor:
 
     @require_args(0)
     def cmd_look(self) -> None:
-        self.io.output(self.world.describe_current(self.language_manager.messages))
+        header = self.world.describe_room_header(self.language_manager.messages)
+        self.io.output(header)
+        visible = self.world.describe_visibility()
+        if visible:
+            self.io.output("")
+            self.io.output(visible)
 
     @require_args(1)
     def cmd_examine(self, item_name: str) -> None:
@@ -360,8 +365,14 @@ class CommandProcessor:
     @require_args(1)
     def cmd_go(self, direction: str) -> None:
         if self.world.can_move(direction) and self.world.move(direction):
-            self.io.output(self.world.describe_current(self.language_manager.messages))
+            header = self.world.describe_room_header(self.language_manager.messages)
+            self.io.output(header)
+            self.io.output("")
             self.check_npc_event()
+            visible = self.world.describe_visibility()
+            if visible:
+                self.io.output("")
+                self.io.output(visible)
         else:
             self.io.output(self.language_manager.messages["cannot_move"])
         self.check_end()

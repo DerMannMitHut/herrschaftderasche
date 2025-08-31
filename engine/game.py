@@ -113,6 +113,8 @@ class Game:
     def _check_end(self) -> None:
         ending = self.world.check_endings()
         if ending:
+            # Visual separation before an ending message
+            self.io.output("")
             self.io.output(ending)
             self.running = False
             # Trace that an ending was reached
@@ -146,8 +148,14 @@ class Game:
     def run(self) -> None:
         if self._show_intro and self.world.intro:
             self.io.output(self.world.intro)
-        self.io.output(self.world.describe_current(self.language_manager.messages))
+        header = self.world.describe_room_header(self.language_manager.messages)
+        self.io.output(header)
+        self.io.output("")
         self._check_npc_event()
+        visible = self.world.describe_visibility()
+        if visible:
+            self.io.output("")
+            self.io.output(visible)
         self._check_end()
         try:
             while self.running:
