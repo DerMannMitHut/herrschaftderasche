@@ -15,10 +15,10 @@ from .persistence import LogEntry, SaveManager
 from .world_model import StateTag
 
 
-def require_args(n: int) -> Callable[[Callable[..., None]], Callable[..., None]]:
+def require_args(n: int) -> Callable[[Callable[..., bool | None]], Callable[..., bool]]:
     """Ensure that ``n`` positional arguments are provided and non-empty."""
 
-    def decorator(func: Callable[..., None]) -> Callable[..., None]:
+    def decorator(func: Callable[..., bool | None]) -> Callable[..., bool]:
         from inspect import signature
 
         sig = signature(func)
@@ -26,14 +26,15 @@ def require_args(n: int) -> Callable[[Callable[..., None]], Callable[..., None]]
         max_args = len(params)
 
         @wraps(func)
-        def wrapper(self, *args: str) -> None:
-            if len(args) < n or len(args) > max_args:
+        def wrapper(self, *args: str) -> bool:
+            probe = getattr(self, "_probe_mode", False)
+            if len(args) < n or len(args) > max_args or any(not arg for arg in args[:n]):
+                if probe:
+                    return False
                 self.cmd_unknown(args[0] if args else "")
-                return
-            if any(not arg for arg in args[:n]):
-                self.cmd_unknown(args[0] if args else "")
-                return
-            func(self, *args)
+                return True
+            res = func(self, *args)
+            return bool(res) if res is not None else True
 
         return wrapper
 
@@ -111,6 +112,7 @@ class CommandProcessor:
         self.log = log or []
         self.cmd_patterns: list[tuple[re.Pattern[str], str, str]] = []
         self.reverse_cmds: dict[str, tuple[str, str]] = {}
+        self._probe_mode: bool = False
         self._build_cmd_patterns()
 
     # ------------------------------------------------------------------
@@ -141,18 +143,18 @@ class CommandProcessor:
                 if arg_count == 2:
                     a = groups.get("a", "").strip()
                     b = groups.get("b", "").strip()
-                    two_handler = cast(Callable[[str, str], None], handler)
+                    two_handler = cast(Callable[[str, str], bool], handler)
                     two_handler(a, b)
                 elif arg_count == 1:
                     arg = groups.get("a", "") or groups.get("b", "") or ""
-                    one_handler = cast(Callable[[str], None], handler)
+                    one_handler = cast(Callable[[str], bool], handler)
                     one_handler(arg.strip())
                 elif info.get("optional_arguments"):
                     arg = groups.get("a", "") or groups.get("b", "") or ""
-                    opt_handler = cast(Callable[[str | None], None], handler)
+                    opt_handler = cast(Callable[[str | None], bool], handler)
                     opt_handler(arg.strip() or None)
                 else:
-                    zero_handler = cast(Callable[[], None], handler)
+                    zero_handler = cast(Callable[[], bool], handler)
                     zero_handler()
                 break
             else:
@@ -162,6 +164,48 @@ class CommandProcessor:
         after = self.world.to_state()
         if before != after:
             self.log.append(LogEntry(raw, outputs))
+
+    def try_execute(self, raw: str) -> bool:
+        """Try to parse and validate a command without side effects.
+
+        Returns True if parsing was successful (arguments resolvable),
+        False otherwise. No user-visible output or world changes.
+        """
+        probe_prev = self._probe_mode
+        self._probe_mode = True
+        original_output = self.io.output
+        try:
+            # suppress outputs during probe
+            def _suppress(text: str) -> None:  # noqa: D401, ARG001 - simple sink
+                return None
+
+            self.io.output = _suppress
+            for pattern, cmd_key, _ in self.cmd_patterns:
+                match = pattern.fullmatch(raw)
+                if not match:
+                    continue
+                groups = match.groupdict()
+                handler = getattr(self, f"cmd_{cmd_key}", self.cmd_unknown)
+                info = self.command_info.get(cmd_key, {})
+                arg_count = info.get("arguments", 0)
+                if arg_count == 2:
+                    a = (groups.get("a") or "").strip()
+                    b = (groups.get("b") or "").strip()
+                    res = cast(Callable[[str, str], bool], handler)(a, b)
+                elif arg_count == 1:
+                    arg = (groups.get("a") or groups.get("b") or "").strip()
+                    res = cast(Callable[[str], bool], handler)(arg)
+                elif info.get("optional_arguments"):
+                    arg = (groups.get("a") or groups.get("b") or "").strip() or None
+                    res = cast(Callable[[str | None], bool], handler)(arg)
+                else:
+                    res = cast(Callable[[], bool], handler)()
+                return bool(res)
+            # No pattern matched: not a parse success
+            return False
+        finally:
+            self._probe_mode = probe_prev
+            self.io.output = original_output
 
     def can_execute(self, raw: str) -> bool:
         """Return True if ``raw`` matches any known command pattern."""
@@ -382,55 +426,78 @@ class CommandProcessor:
     # ------------------------------------------------------------------
     # Command handlers
     @require_args(0)
-    def cmd_quit(self) -> None:
+    def cmd_quit(self) -> bool:
         self.save_manager.save(self.world, self.language_manager.language, self.log)
         self.io.output(self.language_manager.messages["farewell"])
         self.stop()
+        return True
 
     @require_args(0)
-    def cmd_inventory(self) -> None:
+    def cmd_inventory(self) -> bool:
         self.io.output(self.world.describe_inventory(self.language_manager.messages))
+        return True
 
     @require_args(1)
-    def cmd_take(self, item_name: str) -> None:
+    def cmd_take(self, item_name: str) -> bool:
+        if self._probe_mode:
+            return self._find_item_id(item_name, in_inventory=False) is not None
         taken = self.world.take(item_name)
         if taken:
             self.io.output(self.language_manager.messages["taken"].format(item=taken))
         else:
             self.io.output(self.language_manager.messages["item_not_present"])
         self.check_end()
+        return True
 
     @require_args(1)
-    def cmd_drop(self, item: str) -> None:
+    def cmd_drop(self, item: str) -> bool:
+        if self._probe_mode:
+            return self._find_item_id(item, in_inventory=True) is not None
         if self.world.drop(item):
             self.io.output(self.language_manager.messages["dropped"].format(item=item))
         else:
             self.io.output(self.language_manager.messages["not_carrying"])
         self.check_end()
+        return True
 
     @require_args(1)
-    def cmd_destroy(self, item_name: str) -> None:
+    def cmd_destroy(self, item_name: str) -> bool:
+        if self._probe_mode:
+            return self._find_item_id(item_name, in_inventory=True) is not None
         self._state_command("destroy", item_name)
+        return True
 
     @require_args(1)
-    def cmd_wear(self, item_name: str) -> None:
+    def cmd_wear(self, item_name: str) -> bool:
+        if self._probe_mode:
+            return self._find_item_id(item_name, in_inventory=True) is not None
         self._state_command("wear", item_name)
+        return True
 
     @require_args(0)
-    def cmd_look(self) -> None:
+    def cmd_look(self) -> bool:
         header = self.world.describe_room_header(self.language_manager.messages)
         self.io.output(header)
         visible = self.world.describe_visibility(self.language_manager.messages)
         if visible:
             self.io.output("")
             self.io.output(visible)
+        return True
 
     @require_args(1)
-    def cmd_examine(self, item_name: str) -> None:
+    def cmd_examine(self, item_name: str) -> bool:
+        if self._probe_mode:
+            return (
+                self._find_item_id(item_name, in_inventory=False) is not None
+                or self._find_item_id(item_name, in_inventory=True) is not None
+            )
         self.describe_item(item_name)
+        return True
 
     @require_args(1)
-    def cmd_go(self, direction: str) -> None:
+    def cmd_go(self, direction: str) -> bool:
+        if self._probe_mode:
+            return self.world.can_move(direction)
         if self.world.can_move(direction) and self.world.move(direction):
             header = self.world.describe_room_header(self.language_manager.messages)
             self.io.output(header)
@@ -453,9 +520,10 @@ class CommandProcessor:
         else:
             self.io.output(self.language_manager.messages["cannot_move"])
         self.check_end()
+        return True
 
     @require_args(0)
-    def cmd_help(self, arg: str | None = None) -> None:
+    def cmd_help(self, arg: str | None = None) -> bool:
         if not arg:
             # Build categorized columns: System, Basics, Interactions
             cmds = self.language_manager.commands
@@ -504,11 +572,11 @@ class CommandProcessor:
                 c = act_list[i] if i < len(act_list) else ""
                 lines.append(f"{a.ljust(w1)}  {b.ljust(w2)}  {c.ljust(w3)}")
             self.io.output("\n".join(lines))
-            return
+            return True
         cmd_info = self.reverse_cmds.get(arg)
         if not cmd_info:
             self.cmd_unknown(arg)
-            return
+            return True
         key, _ = cmd_info
         entries = self.language_manager.commands.get(key, [])
         entries = entries if isinstance(entries, list) else [entries]
@@ -520,14 +588,14 @@ class CommandProcessor:
             usages.append(usage)
         header = self.language_manager.messages.get("help_usage", 'Usage of "{command}" and synonyms:')
         self.io.output(header.format(command=key) + "\n" + "\n".join(usages))
+        return True
 
     @require_args(0)
-    def cmd_show_log(self, count: str | None = None) -> None:
+    def cmd_show_log(self, count: str | None = None) -> bool:
         n = None
         if count:
             if not count.isdigit():
-                self.cmd_unknown("show_log")
-                return
+                return False if self._probe_mode else (self.cmd_unknown("show_log") or True)
             n = int(count)
         entries = self.log[-n:] if n else self.log
         lines: list[str] = []
@@ -536,30 +604,40 @@ class CommandProcessor:
             lines.extend(f"| {o}" for o in entry.output)
         if lines:
             self.io.output("\n".join(lines))
+        return True
 
     @require_args(1)
-    def cmd_language(self, language: str) -> None:
+    def cmd_language(self, language: str) -> bool:
         language = language.strip()
         try:
             new_world = self.language_manager.switch(language, self.world, self.save_manager, self.log)
         except ValueError:
             self.io.output(self.language_manager.messages.get("language_unknown", "Unknown language"))
-            return
+            return True
         self.world = new_world
         self._update_world(new_world)
         self._build_cmd_patterns()
         self.io.output(self.language_manager.messages["language_set"].format(language=language))
+        return True
 
     @require_args(2)
-    def cmd_show(self, item_name: str, npc_name: str) -> None:
+    def cmd_show(self, item_name: str, npc_name: str) -> bool:
+        if self._probe_mode:
+            cfg = ACTION_COMMANDS["show"]
+            item_ok = self._find_item_id(item_name, in_inventory=cfg.item_in_inventory) is not None
+            target_ok = self._find_npc_id(npc_name) is not None
+            return item_ok and target_ok
         self._action_command("show", item_name, npc_name)
+        return True
 
     @require_args(1)
-    def cmd_talk(self, npc_name: str) -> None:
+    def cmd_talk(self, npc_name: str) -> bool:
+        if self._probe_mode:
+            return self._find_npc_id(npc_name) is not None
         npc_id = self._find_npc_id(npc_name)
         if not npc_id:
             self.io.output(self.language_manager.messages["no_npc"])
-            return
+            return True
         npc = self.world.npcs[npc_id]
         state = self.world.npc_state(npc_id)
         state_key = state.value if isinstance(state, StateTag) else state
@@ -571,13 +649,23 @@ class CommandProcessor:
             self.io.output(self.language_manager.messages["no_npc"])
         if state != StateTag.HELPED:
             self.world.set_npc_state(npc_id, StateTag.HELPED)
+        return True
 
     @require_args(2)
-    def cmd_use(self, item_name: str, target_name: str) -> None:
+    def cmd_use(self, item_name: str, target_name: str) -> bool:
+        if self._probe_mode:
+            cfg = ACTION_COMMANDS["use"]
+            item_ok = self._find_item_id(item_name, in_inventory=cfg.item_in_inventory) is not None
+            target_ok = self._find_item_id(target_name, in_inventory=False) is not None
+            return item_ok and target_ok
         self._action_command("use", item_name, target_name)
+        return True
 
-    def cmd_unknown(self, _arg: str | None = None) -> None:
+    def cmd_unknown(self, _arg: str | None = None) -> bool:
+        if getattr(self, "_probe_mode", False):
+            return False
         self.io.output(self.language_manager.messages["unknown_command"])
+        return True
 
 
 __all__ = ["CommandProcessor"]

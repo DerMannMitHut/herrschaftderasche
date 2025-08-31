@@ -159,8 +159,8 @@ class Game:
             while self.running:
                 user_input = self.io.get_input()
                 normalized = parser.parse(user_input)
-                # 1) Versuche klassische Kommandos (nur wenn semantisch auflösbar)
-                if self.command_processor.can_execute(normalized) and self.command_processor.can_execute_semantic(normalized):
+                # 1) Versuche klassisches Parsen/Validieren (ohne Effekte)
+                if self.command_processor.try_execute(normalized):
                     self.command_processor.execute(normalized)
                     continue
                 # 2) Fallback: LLM befragen
