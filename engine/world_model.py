@@ -5,7 +5,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field as PydanticField
 
 
 class LocationTag(Enum):
@@ -19,11 +19,11 @@ class StateTag(Enum):
 
 
 class Room(BaseModel):
-    names: List[str] = Field(default_factory=list)
+    names: List[str] = PydanticField(default_factory=list)
     description: str = ""
-    items: List[str] = Field(default_factory=list)
-    exits: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
-    occupants: List[str] = Field(default_factory=list)
+    items: List[str] = PydanticField(default_factory=list)
+    exits: Dict[str, Dict[str, Any]] = PydanticField(default_factory=dict)
+    occupants: List[str] = PydanticField(default_factory=list)
 
     model_config = ConfigDict(extra="forbid")
 
@@ -45,10 +45,10 @@ class Room(BaseModel):
 
 
 class Item(BaseModel):
-    names: List[str] = Field(default_factory=list)
+    names: List[str] = PydanticField(default_factory=list)
     description: str = ""
     state: Optional[str | StateTag] = None
-    states: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
+    states: Dict[str, Dict[str, Any]] = PydanticField(default_factory=dict)
 
     model_config = ConfigDict(extra="forbid")
 
@@ -63,10 +63,10 @@ class Item(BaseModel):
 
 
 class Npc(BaseModel):
-    names: List[str] = Field(default_factory=list)
+    names: List[str] = PydanticField(default_factory=list)
     state: Optional[str | StateTag] = None
-    states: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
-    meet: Dict[str, Any] = Field(default_factory=dict)
+    states: Dict[str, Dict[str, Any]] = PydanticField(default_factory=dict)
+    meet: Dict[str, Any] = PydanticField(default_factory=dict)
 
     model_config = ConfigDict(extra="forbid")
 
@@ -87,7 +87,7 @@ class Action(BaseModel):
     target_npc: Optional[str] = None
     preconditions: Optional[Dict[str, Any]] = None
     effect: Optional[Dict[str, Any]] = None
-    messages: Dict[str, str] = Field(default_factory=dict)
+    messages: Dict[str, str] = PydanticField(default_factory=dict)
 
     model_config = ConfigDict(extra="forbid")
 
