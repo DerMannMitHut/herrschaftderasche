@@ -6,9 +6,8 @@ def test_talk_requires_npc_name(data_dir, capsys):
     g = game.Game(str(data_dir / "en" / "world.en.yaml"), "en")
     g.command_processor.cmd_go("Room 2")
     capsys.readouterr()
-    g.command_processor.cmd_talk("")
-    out = capsys.readouterr().out
-    assert "I didn't understand that." in out
+    ok = g.command_processor.cmd_talk("")
+    assert ok is False
 
 
 def test_talk_changes_state_and_outputs_text(data_dir, capsys):

@@ -22,11 +22,11 @@ class MappingLLM(LLMBackend):
     def set_context(self, world, language, log) -> None:  # noqa: D401, ARG002
         return None
 
-    def interpret(self, command: str) -> str:  # noqa: D401
+    def interpret(self, command: str) -> str:  # noqa: D401, ARG002
         return self.mapped
 
 
-def test_llm_fallback_on_unresolvable_argument_triggers_mapping(tmp_path):
+def test_llm_fallback_on_unresolvable_argument_triggers_mapping():
     # Use real DE data that includes the small key in the hut.
     data_path = Path("data/de/world.de.yaml").resolve()
     io = DummyIO(inputs=["nimm den Schlüssel", "inventar", "beenden"])  # de commands
@@ -40,4 +40,3 @@ def test_llm_fallback_on_unresolvable_argument_triggers_mapping(tmp_path):
     assert "small_key" in g.world.inventory
     # And the output should show the inventory line with the German item name.
     assert any("Du trägst:" in line and "Kleiner Schlüssel" in line for line in io.outputs)
-

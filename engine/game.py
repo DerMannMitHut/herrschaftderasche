@@ -159,9 +159,8 @@ class Game:
             while self.running:
                 user_input = self.io.get_input()
                 normalized = parser.parse(user_input)
-                # 1) Versuche klassisches Parsen/Validieren (ohne Effekte)
-                if self.command_processor.try_execute(normalized):
-                    self.command_processor.execute(normalized)
+                # 1) Versuche klassisches Parsen/Validieren
+                if self.command_processor.execute(normalized):
                     continue
                 # 2) Fallback: LLM befragen
                 mapped = self.llm.interpret(user_input)
