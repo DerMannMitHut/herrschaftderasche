@@ -22,27 +22,6 @@ def _convert_tags(obj: Any) -> Any:
     return obj
 
 
-def _merge_conditions(parts: list[Dict[str, Any]]) -> Dict[str, Any]:
-    merged: Dict[str, Any] = {}
-    for part in parts:
-        for key, value in part.items():
-            if key == "item_condition":
-                raise ValueError("use 'item_conditions' instead of 'item_condition'")
-            if key == "npc_condition":
-                raise ValueError("use 'npc_conditions' instead of 'npc_condition'")
-            if key == "add_exit":
-                raise ValueError("use 'add_exits' instead of 'add_exit'")
-            if key in ("item_conditions", "npc_conditions", "add_exits"):
-                lst = merged.setdefault(key, [])
-                if isinstance(value, list):
-                    lst.extend(value)
-                else:
-                    lst.append(value)
-            else:
-                merged[key] = value
-    return merged
-
-
 class World:
     def __init__(self, data: Dict[str, Any], debug: bool = False):
         data = _convert_tags(data)
@@ -76,15 +55,15 @@ class World:
                 if "precondition" in action and "preconditions" not in action:
                     action["preconditions"] = action.pop("precondition")
                 pre = action.get("preconditions")
-                if isinstance(pre, list):
-                    action["preconditions"] = _merge_conditions(pre)
-                elif isinstance(pre, dict):
-                    action["preconditions"] = _merge_conditions([pre])
+                if pre is not None:
+                    if not isinstance(pre, dict):
+                        raise TypeError("preconditions must be a mapping")
+                    action["preconditions"] = pre
                 eff = action.get("effect")
-                if isinstance(eff, list):
-                    action["effect"] = _merge_conditions(eff)
-                elif isinstance(eff, dict):
-                    action["effect"] = _merge_conditions([eff])
+                if eff is not None:
+                    if not isinstance(eff, dict):
+                        raise TypeError("effect must be a mapping")
+                    action["effect"] = eff
             normalized.append(action)
         self.actions = [
             act if isinstance(act, Action) else Action(**act) for act in normalized
@@ -366,13 +345,11 @@ class World:
             return False
         return self.npc_state(npc_id) == state
 
-    def check_preconditions(
-        self, pre: dict[str, Any] | list[dict[str, Any]] | None
-    ) -> bool:
+    def check_preconditions(self, pre: dict[str, Any] | None) -> bool:
         if not pre:
             return True
-        if isinstance(pre, list):
-            pre = _merge_conditions(pre)
+        if not isinstance(pre, dict):
+            raise TypeError("preconditions must be a mapping")
         loc = pre.get("is_location")
         if loc and self.current != (loc.value if isinstance(loc, LocationTag) else loc):
             return False
@@ -442,13 +419,11 @@ class World:
                 location = self.current
             self.move_npc(npc_id, location)
 
-    def apply_effect(
-        self, effect: dict[str, Any] | list[dict[str, Any]] | None
-    ) -> None:
+    def apply_effect(self, effect: dict[str, Any] | None) -> None:
         if not effect:
             return
-        if isinstance(effect, list):
-            effect = _merge_conditions(effect)
+        if not isinstance(effect, dict):
+            raise TypeError("effect must be a mapping")
         item_cond = effect.get("item_conditions")
         if item_cond:
             for cond in item_cond:
@@ -463,8 +438,9 @@ class World:
                 room = cfg.get("room")
                 target = cfg.get("target")
                 pre = cfg.get("preconditions")
-                if isinstance(pre, list):
-                    pre = _merge_conditions(pre)
+                if pre is not None:
+                    if not isinstance(pre, dict):
+                        raise TypeError("preconditions must be a mapping")
                 if room and target:
                     self.add_exit(room, target, pre)
 
