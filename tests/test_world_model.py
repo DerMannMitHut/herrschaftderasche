@@ -1,5 +1,3 @@
-import pytest
-from pydantic import ValidationError
 
 from engine.world_model import Action, Item, Npc, Room
 
