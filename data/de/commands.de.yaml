@@ -54,11 +54,11 @@ talk:
 show:
   - 'zeige $a $b'
 show_log:
-  - 'show_log'
-  - 'show_log $a'
   - 'zeige protokoll'
   - 'zeige protokoll $a'
   - 'protokoll'
   - 'protokoll $a'
   - 'verlauf'
   - 'verlauf $a'
+  - 'show_log'
+  - 'show_log $a'

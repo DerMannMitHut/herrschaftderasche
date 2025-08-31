@@ -57,11 +57,11 @@ show:
   - 'show $a to $b'
   - 'present $a to $b'
 show_log:
-  - 'show_log'
-  - 'show_log $a'
   - 'show log'
   - 'show log $a'
   - 'log'
   - 'log $a'
   - 'history'
   - 'history $a'
+  - 'show_log'
+  - 'show_log $a'

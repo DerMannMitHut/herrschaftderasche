@@ -173,7 +173,8 @@ class CommandProcessor:
             val = self.language_manager.commands.get(key, [])
             entries = val if isinstance(val, list) else [val]
             for entry in entries:
-                pattern, base = self._compile_command(entry)
+                info = self.language_manager.command_info.get(key, {})
+                pattern, base = self._compile_command(entry, bool(info.get("optional_arguments")))
                 self.cmd_patterns.append((pattern, key, entry))
                 if base not in self.reverse_cmds:
                     self.reverse_cmds[base] = (key, entry)
@@ -199,7 +200,7 @@ class CommandProcessor:
         self.cmd_patterns.append((pattern, "show_log", "show_log"))
         self.reverse_cmds["show_log"] = ("show_log", "show_log")
 
-    def _compile_command(self, pattern: str) -> tuple[re.Pattern[str], str]:
+    def _compile_command(self, pattern: str, optional: bool) -> tuple[re.Pattern[str], str]:
         tokens = pattern.split()
         placeholder_positions = [i for i, t in enumerate(tokens) if t in ("$a", "$b")]
         last_placeholder = placeholder_positions[-1] if placeholder_positions else -1
@@ -215,7 +216,10 @@ class CommandProcessor:
                     base = token
                 part = re.escape(token)
             parts.append(part)
-        regex = r"^" + r"\s+".join(parts) + r"$"
+        regex = r"^" + r"\s+".join(parts)
+        if optional and not placeholder_positions:
+            regex += r"(?:\s+(?P<a>\d+))?"
+        regex += r"$"
         return re.compile(regex), base or pattern
 
     # ------------------------------------------------------------------
@@ -400,8 +404,14 @@ class CommandProcessor:
             cmds = self.language_manager.commands
 
             def base_word_for(key: str) -> str:
-                # Prefer the command ID for stability across languages
-                return key
+                # Show the first translation's base word (first token)
+                val = cmds.get(key, [])
+                entries = val if isinstance(val, list) else [val]
+                if not entries:
+                    return key
+                e0 = entries[0] or ""
+                token = e0.split()[0] if e0 else key
+                return token
 
             system_keys = ["quit", "help", "language", "show_log"]
             basic_keys = ["go", "look", "examine", "take", "drop", "inventory"]
