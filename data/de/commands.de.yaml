@@ -26,10 +26,10 @@ look:
   - 'schau dich um'
   - 'sieh dich um'
 examine:
+  - 'untersuche $a'
   - 'ansehen $a'
   - 'schau $a an'
   - 'betrachte $a'
-  - 'untersuche $a'
 help:
   - 'hilfe'
   - 'h'

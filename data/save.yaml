@@ -1,0 +1,28 @@
+current: ash_village
+inventory:
+- small_key
+language: de
+log:
+- command: "nimm schl\xFCssel"
+  output:
+  - "Du nimmst Kleiner Schl\xFCssel."
+- command: gehe wald
+  output:
+  - "Ein lichter Wald, dessen Nadeln und Bl\xE4tter einen grauen Flaum tragen. Jeder\
+    \ Schritt wirbelt einen flachen Atem von Staub auf. Fern ruft eine Kr\xE4he, und\
+    \ die Sonne h\xE4ngt blass wie eine M\xFCnze zwischen den Zweigen. Ausg\xE4nge:\
+    \ H\xFCtte, Aschendorf."
+- command: gehe dorf
+  output:
+  - "Ein Dorf, geduckt unter der weichen Last der Asche. D\xE4cher biegen sich, T\xFC\
+    ren stehen einen Spalt offen, als lauschten sie. Im Brunnen liegt das Wasser dunkel\
+    \ und unbewegt. Alte Wimpel h\xE4ngen in F\xE4den; der Geruch von Ru\xDF und getrockneten\
+    \ Kr\xE4utern liegt dar\xFCber. Du siehst hier: Kartenfragment. Du siehst hier:\
+    \ Marek. Ausg\xE4nge: Wald."
+  - Aus einem Schleier herabrieselnder Asche tritt ein Mann hervor. Seine Augen glimmen
+    wie verkohlte Funken, die nicht ganz erloschen sind. 'Marek', stellt er sich mit
+    rauer Stimme vor.
+npc_states:
+  villager: met
+rooms:
+  hut: []

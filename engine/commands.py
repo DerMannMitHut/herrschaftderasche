@@ -396,17 +396,43 @@ class CommandProcessor:
     @require_args(0)
     def cmd_help(self, arg: str | None = None) -> None:
         if not arg:
-            names: list[str] = []
-            for key in self.command_keys:
-                val = self.language_manager.commands.get(key, [])
-                entries = val if isinstance(val, list) else [val]
-                if not entries:
-                    continue
-                first = entries[0]
-                names.append(first.split()[0])
-            self.io.output(
-                self.language_manager.messages["help"].format(commands=", ".join(names))
-            )
+            # Build categorized columns: System, Basics, Interactions
+            cmds = self.language_manager.commands
+
+            def base_word_for(key: str) -> str:
+                # Prefer the command ID for stability across languages
+                return key
+
+            system_keys = ["quit", "help", "language", "show_log"]
+            basic_keys = ["go", "look", "examine", "take", "drop", "inventory"]
+            action_keys = ["talk", "use", "show", "destroy", "wear"]
+
+            sys_list = [base_word_for(k) for k in system_keys if k in cmds]
+            bas_list = [base_word_for(k) for k in basic_keys if k in cmds]
+            act_list = [base_word_for(k) for k in action_keys if k in cmds]
+            sys_list = sorted(set(sys_list), key=lambda s: s.casefold())
+            bas_list = sorted(set(bas_list), key=lambda s: s.casefold())
+            act_list = sorted(set(act_list), key=lambda s: s.casefold())
+
+            # Headings (optional, localized if provided)
+            msgs = self.language_manager.messages
+            h_sys = msgs.get("help_section_system", "System")
+            h_bas = msgs.get("help_section_basics", "Basics")
+            h_act = msgs.get("help_section_actions", "Interactions")
+
+            w1 = max([len(h_sys)] + [len(x) for x in sys_list]) if sys_list else len(h_sys)
+            w2 = max([len(h_bas)] + [len(x) for x in bas_list]) if bas_list else len(h_bas)
+            w3 = max([len(h_act)] + [len(x) for x in act_list]) if act_list else len(h_act)
+
+            lines: list[str] = []
+            lines.append(f"{h_sys.ljust(w1)}  {h_bas.ljust(w2)}  {h_act.ljust(w3)}")
+            rows = max(len(sys_list), len(bas_list), len(act_list))
+            for i in range(rows):
+                a = sys_list[i] if i < len(sys_list) else ""
+                b = bas_list[i] if i < len(bas_list) else ""
+                c = act_list[i] if i < len(act_list) else ""
+                lines.append(f"{a.ljust(w1)}  {b.ljust(w2)}  {c.ljust(w3)}")
+            self.io.output("\n".join(lines))
             return
         cmd_info = self.reverse_cmds.get(arg)
         if not cmd_info:
