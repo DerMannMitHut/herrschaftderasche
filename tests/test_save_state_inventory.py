@@ -12,19 +12,28 @@ def make_world() -> World:
             "room1": {
                 "names": ["Room 1"],
                 "description": "Room 1.",
-                "exits": {"room2": ["Room 2"], "room3": ["Room 3"]},
+                "exits": {
+                    "room2": {"names": ["Room 2"]},
+                    "room3": {"names": ["Room 3"]},
+                },
             },
             "room2": {
                 "names": ["Room 2"],
                 "description": "Room 2.",
                 "items": ["sword"],
-                "exits": {"room1": ["Room 1"], "room3": ["Room 3"]},
+                "exits": {
+                    "room1": {"names": ["Room 1"]},
+                    "room3": {"names": ["Room 3"]},
+                },
             },
             "room3": {
                 "names": ["Room 3"],
                 "description": "Room 3.",
                 "items": ["crown"],
-                "exits": {"room1": ["Room 1"], "room2": ["Room 2"]},
+                "exits": {
+                    "room1": {"names": ["Room 1"]},
+                    "room2": {"names": ["Room 2"]},
+                },
             },
         },
         "start": "room1",

@@ -21,9 +21,9 @@ class StateTag(Enum):
 class Room(BaseModel):
     names: List[str]
     description: str
-    items: List[str] = PydanticField(default_factory=list)
+    items: List[str] = Field(default_factory=list)
     exits: Dict[str, Dict[str, Any]] = PydanticField(default_factory=dict)
-    occupants: List[str] = PydanticField(default_factory=list)
+    occupants: List[str] = Field(default_factory=list)
 
     model_config = ConfigDict(extra="forbid")
 
