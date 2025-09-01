@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import yaml
 
@@ -165,8 +165,9 @@ class Game:
                     try:
                         sys.stderr.write(f"> {user_input}\n")
                         sys.stderr.flush()
-                    except Exception:
-                        pass
+                    except (OSError, ValueError) as exc:
+                        # Avoid crashing on broken/closed stderr; record in debug log instead
+                        self.world.debug(f"stderr_write_failed error '{exc}'")
                 normalized = parser.parse(user_input)
                 if self.command_processor.execute(normalized):
                     continue

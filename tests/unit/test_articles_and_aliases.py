@@ -32,9 +32,11 @@ def test_llm_maps_look_object_to_examine(monkeypatch, data_dir):
 
     class _IO:
         def get_input(self, prompt: str = "> ") -> str:  # noqa: D401 - simple stub
+            _ = prompt
             return ""
 
         def output(self, text: str) -> None:  # noqa: D401 - simple stub
+            _ = text
             return None
 
     io = _IO()
