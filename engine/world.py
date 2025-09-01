@@ -3,6 +3,7 @@
 import inspect
 import os
 import sys
+from contextlib import suppress
 from pathlib import Path
 from typing import Any
 
@@ -42,8 +43,10 @@ def _normalize_room_config(room: dict[str, Any]) -> dict[str, Any]:
             entry = {"names": list(names)}
             if pre:
                 entry["preconditions"] = pre
-            if cfg.get("duration") is not None:
-                entry["duration"] = int(cfg.get("duration"))
+            raw_dur = cfg.get("duration")
+            if raw_dur is not None:
+                with suppress(Exception):  # pragma: no cover - non-int durations ignored
+                    entry["duration"] = int(raw_dur)  # type: ignore[arg-type]
             new_exits[target] = entry
         else:  # pragma: no cover - legacy single-string syntax
             new_exits[target] = {"names": [cfg]}
@@ -161,8 +164,11 @@ class World:
                 pre = exit_cfg.get("preconditions") if isinstance(exit_cfg, dict) else None
                 if pre:
                     exit_entry["preconditions"] = pre
-                if isinstance(exit_cfg, dict) and exit_cfg.get("duration") is not None:
-                    exit_entry["duration"] = int(exit_cfg.get("duration"))
+                if isinstance(exit_cfg, dict):
+                    raw_dur2 = exit_cfg.get("duration")
+                    if raw_dur2 is not None:
+                        with suppress(Exception):  # pragma: no cover - non-int durations ignored
+                            exit_entry["duration"] = int(raw_dur2)  # type: ignore[arg-type]
                 exits[target] = exit_entry
             if exits:
                 room["exits"] = exits
@@ -339,8 +345,9 @@ class World:
                 self.npc_states[npc_id] = val
                 self.npcs[npc_id].state = val
         # time restore
-        if isinstance(data.get("time"), int):
-            self.time = int(data.get("time"))
+        time_val = data.get("time")
+        if isinstance(time_val, int):
+            self.time = int(time_val)
 
     def _check_item_condition(self, cond: dict[str, Any]) -> bool:
         item_id = cond.get("item")
@@ -766,7 +773,7 @@ class World:
                 item_names.append(names[0])
             else:
                 item = self.items.get(i)
-                item_names.append((item.names[0] if item and item.names else i))
+                item_names.append(item.names[0] if item and item.names else i)
         return messages["inventory_items"].format(items=", ".join(item_names))
 
     def check_endings(self) -> str | None:

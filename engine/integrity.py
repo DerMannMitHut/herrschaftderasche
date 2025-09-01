@@ -110,9 +110,7 @@ def validate_world_structure(w: world.World) -> list[str]:
             if isinstance(cfg, dict):
                 dur = cfg.get("duration")
                 if dur is not None and (not isinstance(dur, int) or dur < 1):
-                    errors.append(
-                        f"Room '{room_id}' exit to '{target}' has invalid duration '{dur}' (must be positive integer)"
-                    )
+                    errors.append(f"Room '{room_id}' exit to '{target}' has invalid duration '{dur}' (must be positive integer)")
         for item in room.get("items", []):
             if item not in w.items:
                 errors.append(f"Room '{room_id}' contains missing item '{item}'")

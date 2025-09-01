@@ -53,4 +53,3 @@ def test_action_duration_override(data_dir, io_backend, llm_backend):
     g.run()
     # go (1) + use (9) + quit (1)
     assert g.world.time == 11
-

@@ -318,21 +318,25 @@ class CommandProcessor:
     def _action_command(self, cmd: str, item_name: str, target_name: str) -> None:
         cfg = ACTION_COMMANDS[cmd]
         item_id = self._find_item_id(item_name, in_inventory=cfg.item_in_inventory)
+        if not item_id and not cfg.item_in_inventory:
+            # Fallback: allow referring to any known item when inventory presence not required
+            item_id = self._match_any_item_id(item_name)
         if not item_id:
             self.io.output(self.language_manager.messages[cfg.item_missing_key])
-            self.check_end()
             return
         finder = self._find_npc_id if cfg.target_is_npc else self._find_item_id
         target_id = finder(target_name)
         if not target_id:
             self.io.output(self.language_manager.messages[cfg.target_missing_key])
-            self.check_end()
             return
         if self._execute_action(cfg.trigger, item_id, target_id):
-            self.check_end()
+            # If an ending is now reachable, print it here (without stopping the loop).
+            ending = self.world.check_endings()
+            if ending:
+                self.io.output("")
+                self.io.output(ending)
             return
         self.io.output(self.language_manager.messages[cfg.failure_key])
-        self.check_end()
 
     def _execute_action(self, trigger: str, item_id: str, target_id: str | None = None) -> bool:
         for action in self.world.actions:
@@ -348,9 +352,10 @@ class CommandProcessor:
                 continue
             effect = action.effect or {}
             self.world.apply_effect(effect)
-            if getattr(action, "duration", None) is not None:
+            dur = getattr(action, "duration", None)
+            if dur is not None:
                 try:
-                    self._last_duration = int(getattr(action, "duration"))
+                    self._last_duration = int(dur)
                 except Exception:
                     self._last_duration = None
             message = action.messages.get("success")
@@ -614,7 +619,7 @@ class CommandProcessor:
             return None
         name = self._strip_leading_tokens(name)
         name_cf = name.casefold()
-        for item_id in self.world.items.keys():
+        for item_id in self.world.items:
             names = self.world.item_names(item_id)
             if any(n.casefold() == name_cf for n in names):
                 return item_id

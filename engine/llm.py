@@ -167,7 +167,6 @@ class OllamaLLM(LLMBackend):
         assert self.world and self.language
         world = self.world
         lm = self.language
-        log = self.log or []
         allowed_verbs = sorted(lm.commands.keys())
         lang_code = getattr(lm, "language", "en")
         nouns: list[str] = []
@@ -180,7 +179,6 @@ class OllamaLLM(LLMBackend):
         inventory_names = [world.items[item_id].names[0] for item_id in world.inventory if item_id in world.items]
         item_states = {world.items[item_id].names[0]: str(state) for item_id, state in world.item_states.items() if item_id in world.items}
         npc_states = {world.npcs[npc_id].names[0]: str(state) for npc_id, state in world.npc_states.items() if npc_id in world.npcs}
-        recent_log = [entry.command for entry in log]
         context = (
             f"Description of the current location:\n"
             f"{room} {visible}\n"
