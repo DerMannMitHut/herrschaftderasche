@@ -100,6 +100,9 @@ actions:
   interpret_map:
     messages:
       success: "Ashram brushes the dust away, murmuring old place-names. Slowly a path rises, like a scar finding the light again."
+  read_map:
+    messages:
+      success: "The cleaned map reveals a path from the hut to the ruins."
   find_crown:
     messages:
       success: "In the powder of perished velvet rests a crown, dim and grave. When you take it up, it stains your hands—marks that linger."

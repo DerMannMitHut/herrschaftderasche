@@ -100,6 +100,9 @@ actions:
   interpret_map:
     messages:
       success: "Ashram wischt den Staub mit der flachen Hand fort, murmelt alte Ortsnamen. Nach und nach hebt sich ein Weg ab, wie eine Narbe, die das Licht wiederfindet."
+  read_map:
+    messages:
+      success: "Die gereinigte Karte zeigt einen Pfad von der Hütte zu den Ruinen."
   find_crown:
     messages:
       success: "Im Pulver des zerfallenen Samts liegt eine Krone, stumpf und würdevoll. Als du sie an dich nimmst, hinterlässt sie dunkle Spuren auf deinen Händen – als Zeichen, das bleibt."
