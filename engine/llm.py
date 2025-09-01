@@ -68,7 +68,9 @@ class OllamaLLM(LLMBackend):
         if self.world is not None:
             with suppress(Exception):  # pragma: no cover - defensive
                 thresh = f", min_conf={self.min_confidence:g}" if isinstance(self.min_confidence, int | float) else ""
-                self.world.debug(f"init model={self.model} base_url={self.base_url} timeout={self.timeout}s{thresh}")
+                # Only append 's' for seconds when timeout is numeric; otherwise print raw value
+                timeout_str = f"{self.timeout}s" if isinstance(self.timeout, int | float) else str(self.timeout)
+                self.world.debug(f"init model={self.model} base_url={self.base_url} timeout={timeout_str}{thresh}")
 
     def interpret(self, command: str) -> str:  # pragma: no cover - network call
         if not self.world or not self.language:
@@ -139,6 +141,11 @@ class OllamaLLM(LLMBackend):
             verb = parsed.get("verb")
             obj = parsed.get("object")
             add = parsed.get("additional")
+            # Normalize common alias: 'look <obj>' -> 'examine <obj>'
+            # This helps when the LLM chooses 'look' with an object in languages
+            # where 'look' is reserved for room overview.
+            if isinstance(verb, str) and isinstance(obj, str) and verb.strip().casefold() == "look" and obj.strip():
+                verb = "examine"
             if verb and obj:
                 parts = [str(verb), str(obj)]
                 if isinstance(add, str) and add.strip():

@@ -130,6 +130,27 @@ class CommandProcessor:
             # Best-effort; fall back to exact matching
             self._ignore_articles = set()
             self._ignore_contractions = set()
+        # Provide sensible defaults if language hints are absent
+        lang_code = getattr(self.language_manager, "language", "").casefold()
+        if not self._ignore_articles:
+            if lang_code == "de":
+                self._ignore_articles = {
+                    "der",
+                    "die",
+                    "das",
+                    "den",
+                    "dem",
+                    "des",
+                    "ein",
+                    "eine",
+                    "einen",
+                    "einem",
+                    "eines",
+                }
+            elif lang_code == "en":
+                self._ignore_articles = {"the", "a", "an"}
+        if not self._ignore_contractions and lang_code == "de":
+            self._ignore_contractions = {"im", "am", "beim", "vom", "zum", "zur", "ins", "aufs", "ans", "ums", "durchs"}
 
     def execute(self, raw: str) -> bool:
         """Execute ``raw`` and return True if parsing succeeded, else False.
@@ -394,7 +415,18 @@ class CommandProcessor:
     def cmd_take(self, item_name: str) -> bool:
         if self._match_any_item_id(item_name) is None:
             return False
-        taken = self.world.take(item_name)
+        # Prefer a canonical item name from the current room to avoid issues
+        # with articles or inflections present in user input.
+        preferred = item_name
+        room = self.world.rooms[self.world.current]
+        item_id = None
+        # Try to find the item in the room, ignoring leading articles/contractions
+        item_id = self._find_item_id(item_name, in_inventory=False)
+        if item_id and item_id in room.items:
+            names = self.world.item_names(item_id)
+            if names:
+                preferred = names[0]
+        taken = self.world.take(preferred)
         if taken:
             self.io.output(self.language_manager.messages["taken"].format(item=taken))
         else:
@@ -406,7 +438,14 @@ class CommandProcessor:
     def cmd_drop(self, item: str) -> bool:
         if self._match_any_item_id(item) is None:
             return False
-        if self.world.drop(item):
+        # Normalize to canonical inventory name to handle leading articles
+        preferred = item
+        inv_id = self._find_item_id(item, in_inventory=True)
+        if inv_id and inv_id in self.world.inventory:
+            names = self.world.item_names(inv_id)
+            if names:
+                preferred = names[0]
+        if self.world.drop(preferred):
             self.io.output(self.language_manager.messages["dropped"].format(item=item))
         else:
             self.io.output(self.language_manager.messages["not_carrying"])

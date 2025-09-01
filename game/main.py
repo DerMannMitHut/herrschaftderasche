@@ -16,9 +16,7 @@ def run_cli() -> None:
         nargs="?",
         const=True,
         metavar="FILE",
-        help=(
-            "Enable debug mode; optionally provide FILE to tee STDOUT to it and redirect STDERR only to it"
-        ),
+        help=("Enable debug mode; optionally provide FILE to tee STDOUT to it and redirect STDERR only to it"),
     )
     parser.add_argument(
         "--llm",
