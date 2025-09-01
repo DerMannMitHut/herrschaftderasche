@@ -80,8 +80,8 @@ actions:
     trigger: examine
     item: map_fragment
     preconditions:
-      item_condition:
-        - item: map
+      item_conditions:
+        - item: map_fragment
           state: readable
     effect:
       add_exits:
