@@ -62,9 +62,11 @@ npcs:
     states:
       met:
         text: "Marek wartet, den Blick immer wieder zum Horizont gerichtet, wo der Wind die Asche in Wellen treibt."
+        examine: "Mareks Mantel ist mit einem feinen Staub aus Asche überzogen; feine Narben ziehen sich über seine Knöchel. Unter dem Ruß glimmt sein Blick wie eine beharrliche Glut. Er steht mit der Geduld eines Mannes, der viele Winter abgewartet hat."
         talk: "'Bring die Aschenkrone ins Dorf', sagt Marek leise, als wolle er die Asche nicht wecken. 'Im Wald lebt der Einsiedler Ashram – er liest Spuren, wo andere nur Staub sehen. Er wird dir helfen.'"
       helped:
         text: "Marek begrüßt dich mit einem echten Lächeln, das in dieser grauen Welt selten ist."
+        examine: "Erleichterung liegt auf Mareks Schultern wie ein abgelegter Mantel. In seinem Haar zeigt die Asche silberne Fäden, und seine Hände sind ruhig – nicht mehr um alte Sorgen gekrampft."
         talk: "Marek nickt. 'Vergiss die Krone nicht. Jeder Schritt mit ihr lässt die Asche ein wenig leichter fallen.'"
   ashram:
     names:
@@ -74,9 +76,11 @@ npcs:
     states:
       met:
         text: "Ashram mustert dich, als lese er das Wetter in deinem Gesicht."
+        examine: "Seine Gewänder duften nach Thymian und Rauch. Kreidestaub schimmert an seinen Fingerspitzen, und feine Zeichen säumen den Schaft seines Stabes. Seine Ruhe trägt die Schwere alter Karten."
         talk: "Er hört dir zu, ohne zu unterbrechen, und seine fingerlangen Kreidespuren verraten einen, der Zeichen zu lesen weiß. 'Bringe mir, was du nicht entziffern kannst', sagt er. 'Die Asche schreibt in feinen Linien.'"
       helped:
         text: "Ashram nickt, in seinen Augen glimmt es, als hätte jemand eine Glut geschürt."
+        examine: "Die Falten in seinen Augenwinkeln glätten sich, als hätte sich eine lange Sorge gelöst. Am Stab ist eine neue Kerbe: eine leise Zählmarke für einen beglichenen Dienst."
         talk: "'Zeig mir, was der Staub verschluckt hat', sagt er. 'Gemeinsam holen wir die Schrift wieder an die Oberfläche.'"
 
 actions:

@@ -499,6 +499,35 @@ class World:
                 return item.description
         return None
 
+    def describe_npc(self, npc_name: str) -> str | None:
+        """Return a description for an NPC in the current room.
+
+        Preference order:
+        - state-specific "examine" text if available
+        - state-specific "text" fallback
+        - None if NPC not present or no description
+        """
+        npc_name_cf = npc_name.casefold()
+        room = self.rooms[self.current]
+        for npc_id in room.occupants:
+            npc = self.npcs.get(npc_id)
+            if not npc:
+                continue
+            # respect meet preconditions (visibility)
+            pre = npc.meet.get("preconditions")
+            if pre and not self.check_preconditions(pre):
+                continue
+            names = npc.names or []
+            if not any(name.casefold() == npc_name_cf for name in names):
+                continue
+            state = self.npc_state(npc_id)
+            state_key = state.value if isinstance(state, StateTag) else state
+            cfg = (npc.states or {}).get(state_key or "", {})
+            # Prefer explicit examine description, fallback to generic text
+            desc = cfg.get("examine") or cfg.get("text")
+            return desc
+        return None
+
     def move(self, exit_name: str) -> bool:
         room = self.rooms[self.current]
         exits = room.exits

@@ -271,13 +271,18 @@ class CommandProcessor:
             return None
         name = self._strip_leading_tokens(name)
         name_cf = name.casefold()
-        for npc_id, npc in self.world.npcs.items():
-            names = npc.get("names", [])
-            if not any(n.casefold() == name_cf for n in names):
+        room = self.world.rooms[self.world.current]
+        for npc_id in room.occupants:
+            npc = self.world.npcs.get(npc_id)
+            if not npc:
                 continue
-            if npc.get("meet", {}).get("location") != self.world.current:
-                return None
-            return npc_id
+            # respect visibility preconditions
+            pre = npc.get("meet", {}).get("preconditions")
+            if pre and not self.world.check_preconditions(pre):
+                continue
+            names = npc.get("names", [])
+            if any(n.casefold() == name_cf for n in names):
+                return npc_id
         return None
 
     def _state_command(self, cmd: str, item_name: str) -> None:
@@ -410,10 +415,14 @@ class CommandProcessor:
 
     @require_args(1)
     def cmd_examine(self, item_name: str) -> bool:
-        if self._match_any_item_id(item_name) is None:
-            return False
-        self.describe_item(item_name)
-        return True
+        # Prefer items, but allow NPCs at the same location
+        if self._match_any_item_id(item_name):
+            self.describe_item(item_name)
+            return True
+        if self._match_any_npc_id(item_name):
+            self.describe_npc(item_name)
+            return True
+        return False
 
     @require_args(1)
     def cmd_go(self, direction: str) -> bool:
@@ -594,6 +603,20 @@ class CommandProcessor:
             if any(n.casefold() == name_cf for n in names):
                 return npc_id
         return None
+
+    def describe_npc(self, npc_name: str) -> None:
+        """Describe an NPC if present and visible; otherwise output no_npc."""
+        if not npc_name:
+            self.cmd_unknown(npc_name)
+            return
+        npc_id = self._find_npc_id(npc_name)
+        if not npc_id:
+            self.io.output(self.language_manager.messages["no_npc"])
+            return
+        desc = self.world.describe_npc(npc_name)
+        if desc:
+            self.io.output(desc)
+        self.check_end()
 
 
 __all__ = ["CommandProcessor"]

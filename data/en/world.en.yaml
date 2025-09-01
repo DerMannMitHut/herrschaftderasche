@@ -62,9 +62,11 @@ npcs:
     states:
       met:
         text: "Marek waits, his gaze straying to the horizon where the wind combs ash into waves."
+        examine: "Marek's coat is salted with ash; scars web his knuckles. Under the soot his eyes hold a steady ember. He stands with the patience of someone who has waited through many winters."
         talk: "'Bring the Ashen Crown to the village,' Marek says softly, as if not to wake the dust. 'In the forest lives Ashram the hermit—he reads signs where others see only soot. He will help you.'"
       helped:
         text: "Marek greets you with a rare, unguarded smile."
+        examine: "Relief sits on Marek's shoulders like a cloak set down. The ash in his hair shows silver threads, and his hands are steady now, no longer clenched around old fears."
         talk: "Marek nods. 'Don't forget the crown. Each step with it makes the ash fall a little lighter.'"
   ashram:
     names:
@@ -74,9 +76,11 @@ npcs:
     states:
       met:
         text: "Ashram studies you as if reading the weather from your face."
+        examine: "Ashram's robes smell of thyme and smoke. Chalk dust marks his fingertips, and faint sigils line the haft of his walking stick. His calm carries the weight of old maps."
         talk: "He listens without interruption; chalk-dusted fingers betray a reader of signs. 'Bring me what you cannot decipher,' he says. 'Ash writes in fine lines.'"
       helped:
         text: "Ashram nods; a spark glows in his eyes as if a coal were stirred."
+        examine: "The lines at the corners of Ashram's eyes ease, as if a long-held concern has softened. His staff bears a new notch, a small tally in a quiet ledger of favors repaid."
         talk: "'Show me what the dust has swallowed,' he says. 'Together we'll draw the words back to the surface.'"
 
 actions:
