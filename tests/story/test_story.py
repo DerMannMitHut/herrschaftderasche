@@ -32,6 +32,8 @@ def test_ruins_inaccessible_without_map(data_dir, io_backend):
     g.command_processor.cmd_go("Forest")
     g.command_processor.cmd_talk("Ashram")
     g.command_processor.cmd_show("Map Fragment", "Ashram")
+    # Optionally examine the map after interpretation (align with current story flow)
+    g.command_processor.cmd_examine("Map Fragment")
     g.command_processor.cmd_go("Hut")
     g.command_processor.cmd_go("Ruins")
     assert g.world.current == "ruins"
@@ -90,6 +92,8 @@ def test_game_reaches_ending(data_dir, io_backend):
         lambda: cp.cmd_go("Forest"),
         lambda: cp.cmd_talk("Ashram"),
         lambda: cp.cmd_show("Map Fragment", "Ashram"),
+        # Optionally examine the map after interpretation
+        lambda: cp.cmd_examine("Map Fragment"),
         lambda: cp.cmd_go("Hut"),
         lambda: cp.cmd_go("Ruins"),
         lambda: cp.cmd_use("Small Key", "Locked Chest"),
