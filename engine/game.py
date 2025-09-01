@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import sys
 
 import yaml
 
@@ -160,6 +161,12 @@ class Game:
         try:
             while self.running:
                 user_input = self.io.get_input()
+                if self.debug:
+                    try:
+                        sys.stderr.write(f"> {user_input}\n")
+                        sys.stderr.flush()
+                    except Exception:
+                        pass
                 normalized = parser.parse(user_input)
                 if self.command_processor.execute(normalized):
                     continue
