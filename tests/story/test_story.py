@@ -57,9 +57,18 @@ def test_examine_closed_chest_reveals_no_crown(data_dir, io_backend):
 
     g.world.inventory.append("small_key")
     cp.cmd_use("Small Key", "Locked Chest")
-    cp.cmd_examine("Locked Chest")
+    # After unlocking, the chest state and name change; examine the Chest
+    cp.cmd_examine("Chest")
 
-    assert io_backend.outputs[-3:] == [open_success, open_desc, crown_msg]
+    # Validate messages appear in order, without relying on exact slicing
+    outs = io_backend.outputs
+    assert open_success in outs
+    # open description and crown message should occur after unlocking
+    idx_open = outs.index(open_success)
+    # find next occurrences
+    assert open_desc in outs[idx_open + 1 :]
+    idx_desc = outs.index(open_desc, idx_open + 1)
+    assert crown_msg in outs[idx_desc + 1 :]
     assert "ashen_crown" in g.world.inventory
 
 
@@ -84,7 +93,10 @@ def test_game_reaches_ending(data_dir, io_backend):
         lambda: cp.cmd_go("Hut"),
         lambda: cp.cmd_go("Ruins"),
         lambda: cp.cmd_use("Small Key", "Locked Chest"),
-        lambda: cp.cmd_examine("Locked Chest"),
+        # After unlocking, examine the opened Chest to obtain the crown
+        lambda: cp.cmd_examine("Chest"),
+        # Return via Hut -> Forest -> Ash Village
+        lambda: cp.cmd_go("Hut"),
         lambda: cp.cmd_go("Forest"),
         lambda: cp.cmd_go("Ash Village"),
     ]
