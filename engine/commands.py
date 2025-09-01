@@ -6,15 +6,16 @@ import re
 from collections.abc import Callable
 from dataclasses import dataclass
 from functools import wraps
+from pathlib import Path
 from typing import cast
+
+import yaml
 
 from . import world
 from .interfaces import IOBackend
 from .language import LanguageManager
 from .persistence import LogEntry, SaveManager
-from .world_model import StateTag
-from pathlib import Path
-import yaml
+from .world_model import StateTag, CommandCategory
 
 
 def require_args(n: int) -> Callable[[Callable[..., bool | None]], Callable[..., bool]]:
@@ -417,10 +418,9 @@ class CommandProcessor:
 
     @require_args(1)
     def cmd_go(self, direction: str) -> bool:
-        if not self._matches_exit_name(direction):
-            self.io.output(self.language_manager.messages["cannot_move"])
-            self.check_end()
-            return True
+        direction = self._strip_leading_tokens(direction)
+        if not self.world.has_room(direction):
+            return False
         if self.world.can_move(direction) and self.world.move(direction):
             header = self.world.describe_room_header(self.language_manager.messages)
             self.io.output(header)
@@ -447,7 +447,6 @@ class CommandProcessor:
     @require_args(0)
     def cmd_help(self, arg: str | None = None) -> bool:
         if not arg:
-            
             cmds = self.language_manager.commands
 
             def display_for(key: str) -> str:
@@ -462,16 +461,14 @@ class CommandProcessor:
                     phrase += " [n]" if key == "show_log" else " [<>]"
                 return phrase or key
 
-            system_keys = ["quit", "help", "language", "show_log"]
-            basic_keys = ["go", "look", "examine", "take", "drop", "inventory"]
-            action_keys = ["talk", "use", "show", "destroy", "wear"]
+            info_map = self.language_manager.command_info
+            sys_keys = [k for k, inf in info_map.items() if (inf or {}).get("category") == CommandCategory.SYSTEM.value]
+            bas_keys = [k for k, inf in info_map.items() if (inf or {}).get("category") == CommandCategory.BASICS.value]
+            act_keys = [k for k, inf in info_map.items() if (inf or {}).get("category") == CommandCategory.ACTIONS.value]
 
-            sys_list = [display_for(k) for k in system_keys if k in cmds]
-            bas_list = [display_for(k) for k in basic_keys if k in cmds]
-            act_list = [display_for(k) for k in action_keys if k in cmds]
-            sys_list = sorted(set(sys_list), key=lambda s: s.casefold())
-            bas_list = sorted(set(bas_list), key=lambda s: s.casefold())
-            act_list = sorted(set(act_list), key=lambda s: s.casefold())
+            sys_list = sorted({display_for(k) for k in sys_keys if k in cmds}, key=lambda s: s.casefold())
+            bas_list = sorted({display_for(k) for k in bas_keys if k in cmds}, key=lambda s: s.casefold())
+            act_list = sorted({display_for(k) for k in act_keys if k in cmds}, key=lambda s: s.casefold())
 
             msgs = self.language_manager.messages
             h_sys = msgs.get("help_section_system", "System")
@@ -598,18 +595,5 @@ class CommandProcessor:
             if any(n.casefold() == name_cf for n in names):
                 return npc_id
         return None
-
-    def _matches_exit_name(self, name: str) -> bool:
-        if not name:
-            return False
-        name = self._strip_leading_tokens(name)
-        name_cf = name.casefold()
-        room = self.world.rooms[self.world.current]
-        for cfg in room.exits.values():
-            names = cfg.get("names", [])
-            if any(n.casefold() == name_cf for n in names):
-                return True
-        return False
-
 
 __all__ = ["CommandProcessor"]

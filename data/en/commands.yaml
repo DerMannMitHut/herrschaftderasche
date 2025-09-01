@@ -1,0 +1,62 @@
+go:
+  - 'go $a'
+  - 'move $a'
+  - 'walk $a'
+quit:
+  - 'quit'
+  - 'exit'
+  - 'leave'
+take:
+  - 'take $a'
+  - 'grab $a'
+  - 'pick up $a'
+drop:
+  - 'drop $a'
+  - 'discard $a'
+  - 'leave $a'
+  - 'put down $a'
+inventory:
+  - 'inventory'
+  - 'inv'
+look:
+  - 'look'
+  - 'look around'
+  - 'l'
+  - 'scan'
+examine:
+  - 'examine $a'
+  - 'look at $a'
+  - 'inspect $a'
+  - 'check $a'
+help:
+  - 'help'
+  - 'h'
+  - 'help $a'
+  - 'h $a'
+language:
+  - 'language $a'
+  - 'lang $a'
+destroy:
+  - 'destroy $a'
+  - 'break $a'
+  - 'smash $a'
+wear:
+  - 'wear $a'
+  - 'equip $a'
+  - 'put on $a'
+use:
+  - 'use $a on $b'
+  - 'use $a with $b'
+  - 'apply $a to $b'
+talk:
+  - 'talk to $a'
+  - 'talk with $a'
+  - 'speak to $a'
+  - 'speak with $a'
+show:
+  - 'show $a to $b'
+  - 'present $a to $b'
+show_log:
+  - 'show_log'
+  - 'show_log $a'
+

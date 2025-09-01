@@ -8,7 +8,7 @@ from typing import Any
 import yaml
 
 from . import world
-from .world_model import LocationTag, StateTag
+from .world_model import LocationTag, StateTag, CommandCategory
 
 
 def check_translations(language: str, data_dir: Path) -> list[str]:
@@ -45,6 +45,21 @@ def check_translations(language: str, data_dir: Path) -> list[str]:
         for key in lang_cmds:
             if key not in base_cmd_keys:
                 warnings.append(f"Unused command translation '{key}' ignored")
+
+        # Validate command categories (must exist and be one of the enum values)
+        try:
+            allowed = {c.value for c in CommandCategory}
+        except Exception:
+            allowed = {"system", "basics", "actions"}
+        for key, cfg in (base_cmd_keys.items() if isinstance(base_cmd_keys, dict) else []):
+            if not isinstance(cfg, dict):
+                warnings.append(f"Command '{key}' definition must be a mapping")
+                continue
+            category = cfg.get("category")
+            if not category:
+                warnings.append(f"Command '{key}' missing category")
+            elif category not in allowed:
+                warnings.append(f"Command '{key}' has invalid category '{category}' (allowed: {', '.join(sorted(allowed))})")
 
     base_world_path = data_dir / "generic" / "world.yaml"
     lang_world_path = data_dir / language / f"world.{language}.yaml"

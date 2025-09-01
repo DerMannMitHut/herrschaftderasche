@@ -18,6 +18,12 @@ class StateTag(Enum):
     HELPED = "helped"
 
 
+class CommandCategory(Enum):
+    SYSTEM = "system"
+    BASICS = "basics"
+    ACTIONS = "actions"
+
+
 class Room(BaseModel):
     names: list[str]
     description: str
@@ -104,6 +110,7 @@ class Action(BaseModel):
 __all__ = [
     "LocationTag",
     "StateTag",
+    "CommandCategory",
     "Room",
     "Item",
     "Npc",

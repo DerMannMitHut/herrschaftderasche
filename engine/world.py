@@ -511,6 +511,16 @@ class World:
                 return True
         return False
 
+    def has_room(self, name: str) -> bool:
+        if not name:
+            return False
+        name_cf = name.casefold()
+        for room in self.rooms.values():
+            room_names_cf = (n.casefold() for n in room.names)
+            if name_cf in room_names_cf:
+                return True
+        return False
+
     def can_move(self, exit_name: str) -> bool:
         room = self.rooms[self.current]
         exits = room.exits

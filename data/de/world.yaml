@@ -1,0 +1,94 @@
+intro: "Du erwachst im fahlen Grau eines Morgens, an dem selbst die Stille wie Staub wirkt. Feine Asche rieselt in träge Wirbeln durch Ritzen im Holz, malt milchige Schlieren in das Licht und legt sich wie Erinnerung auf alles, was einmal war. Der Geruch von kaltem Rauch hängt in der Luft. Etwas in dir weiß: Heute wird sich ein altes Versprechen regen, und irgendwo unter all dem Grau wartet eine Krone darauf, die Welt wieder atmen zu lassen."
+items:
+  small_key:
+    names:
+      - Kleiner Schlüssel
+      - Schlüssel
+    description: "Ein kleiner Messingschlüssel, dessen Schaft stumpf vom Anlaufen ist. Seine Zähnung wirkt unauffällig, doch in der Wärme des Metalls liegt der Abdruck vieler Hände. Wenn du ihn zwischen den Fingern drehst, bleibt ein Hauch von Harz und altem Holz in der Luft."
+  map_fragment:
+    names:
+      - Kartenfragment
+      - Fragment
+      - Karte
+    states:
+      unreadable:
+        description: "Ein zerknittertes, von Nässe welliges Fragment, überzogen mit Ruß und Asche. Wo einst Tinte Linien zog, stehen nur verwaschene Schatten, als hätte jemand Tränen über die Karte vergossen. Jede Berührung hebt grauen Staub."
+      readable:
+        description: "Unter dem Schmutz tritt eine dünne, in roter Kohle gezogene Linie hervor: ein Pfad von der Hütte zu den Ruinen. Kleine Randnotizen flüstern von Umwegen und Zeichen. Am Rand ist eingeritzt: 'Folge der Asche, wo der Wind ruht.'"
+  ashen_crown:
+    names:
+      - Aschenkrone
+      - Krone
+    description: "Eine Krone, von Asche geschwärzt, in deren filigranen Ranken das Grau wie ein Schleier hängt. Sie ist schwerer, als Metall allein es sein dürfte, und in der Kälte ihres Glanzes liegt ein fernes Raunen, als trüge sie die Erinnerung an Stimmen."
+  locked_chest:
+    names:
+      - Verschlossene Truhe
+      - Truhe
+    states:
+      closed:
+        description: "Eine niedrige Truhe aus dunkel verfärbtem Holz, mit einem einfachen Eisenband gefasst. Feine Asche sammelt sich in der Spalte des Deckels, und irgendwo darin haftet der Geruch von Harz und Regen. Das Schloss wirkt schlicht, aber unbeugsam."
+      open:
+        description: "Der Deckel gibt mit einem müden Seufzen nach. Alte Luft entweicht, staubig und süßlich. Innen ist der Samt zu Pulver zerfallen; in der Asche ruht etwas, das wie Schlaf wirkt: eine Krone, stumpf schimmernd."
+
+rooms:
+  hut:
+    names:
+      - Hütte
+      - Häuschen
+    description: "Eine schlichte Hütte, deren Dach in jedem Windstoß leise klagt. Das Licht fällt durch schmale Fugen, tanzt in feinen Staubfahnen. Der Boden ist rau, unter deinen Stiefeln knirscht Asche. Eine kalte Feuerstelle riecht nach längst verglühter Glut."
+  forest:
+    names:
+      - Wald
+      - Forst
+    description: "Ein lichter Wald, dessen Nadeln und Blätter einen grauen Flaum tragen. Jeder Schritt wirbelt einen flachen Atem von Staub auf. Fern ruft eine Krähe, und die Sonne hängt blass wie eine Münze zwischen den Zweigen."
+  ruins:
+    names:
+      - Ruinen
+      - Ruinenstätte
+    description: "Zerfallene Bögen und geborstene Stufen, über denen der Wind wie durch Flötenlöcher pfeift. In Ecken türmt sich Asche zu stillen Dünen; unter der grauen Haut blitzt hier und da ein Mosaik auf. Die Steine tragen Brandmale aus einer Zeit, die niemand mehr exakt benennen kann."
+  ash_village:
+    names:
+      - Aschendorf
+      - Dorf
+    description: "Ein Dorf, geduckt unter der weichen Last der Asche. Dächer biegen sich, Türen stehen einen Spalt offen, als lauschten sie. Im Brunnen liegt das Wasser dunkel und unbewegt. Alte Wimpel hängen in Fäden; der Geruch von Ruß und getrockneten Kräutern liegt darüber."
+
+npcs:
+  villager:
+    names:
+      - Marek
+      - Dorfbewohner
+    meet:
+      text: "Aus einem Schleier herabrieselnder Asche tritt ein Mann hervor. Seine Augen glimmen wie verkohlte Funken, die nicht ganz erloschen sind. 'Marek', stellt er sich mit rauer Stimme vor."
+    states:
+      met:
+        text: "Marek wartet, den Blick immer wieder zum Horizont gerichtet, wo der Wind die Asche in Wellen treibt."
+        talk: "'Bring die Aschenkrone ins Dorf', sagt Marek leise, als wolle er die Asche nicht wecken. 'Im Wald lebt der Einsiedler Ashram – er liest Spuren, wo andere nur Staub sehen. Er wird dir helfen.'"
+      helped:
+        text: "Marek begrüßt dich mit einem echten Lächeln, das in dieser grauen Welt selten ist."
+        talk: "Marek nickt. 'Vergiss die Krone nicht. Jeder Schritt mit ihr lässt die Asche ein wenig leichter fallen.'"
+  ashram:
+    names:
+      - Ashram
+    meet:
+      text: "Zwischen knorrigen Stämmen löst sich eine Gestalt aus dem Schatten. Ein Hauch von Kräutern liegt um ihn, und sein Blick ist ruhig wie stilles Wasser. 'Ashram', sagt er. 'Wenn du Antworten suchst, zeig mir, was die Asche verbirgt.'"
+    states:
+      met:
+        text: "Ashram mustert dich, als lese er das Wetter in deinem Gesicht."
+        talk: "Er hört dir zu, ohne zu unterbrechen, und seine fingerlangen Kreidespuren verraten einen, der Zeichen zu lesen weiß. 'Bringe mir, was du nicht entziffern kannst', sagt er. 'Die Asche schreibt in feinen Linien.'"
+      helped:
+        text: "Ashram nickt, in seinen Augen glimmt es, als hätte jemand eine Glut geschürt."
+        talk: "'Zeig mir, was der Staub verschluckt hat', sagt er. 'Gemeinsam holen wir die Schrift wieder an die Oberfläche.'"
+
+actions:
+  open_chest:
+    messages:
+      success: "Der Schlüssel beißt in das Schloss, ein müdes Klicken, dann gibt das Eisen nach. Der Deckel antwortet mit einem langen, hölzernen Stöhnen."
+  interpret_map:
+    messages:
+      success: "Ashram wischt den Staub mit der flachen Hand fort, murmelt alte Ortsnamen. Nach und nach hebt sich ein Weg ab, wie eine Narbe, die das Licht wiederfindet."
+  find_crown:
+    messages:
+      success: "Im Pulver des zerfallenen Samts liegt eine Krone, stumpf und würdevoll. Als du sie an dich nimmst, hinterlässt sie dunkle Spuren auf deinen Händen – als Zeichen, das bleibt."
+
+endings:
+  crown_returned: "Mit der Aschenkrone kehrst du ins Dorf zurück. Die Menschen treten aus den Türrahmen, und die Asche fällt plötzlich wie langsamer Schnee. In deinen Schritten wird der Weg klarer, als bliese ein unsichtbarer Wind die Welt frei. Man nennt deinen Namen, und zum ersten Mal seit langem klingt er nicht wie ein Echo im Staub."

@@ -1,15 +1,15 @@
-go: {arguments: 1}
-quit: {}
-take: {arguments: 1}
-drop: {arguments: 1}
-inventory: {}
-look: {}
-examine: {arguments: 1}
-help: {optional_arguments: 1}
-language: {arguments: 1}
-destroy: {arguments: 1}
-wear: {arguments: 1}
-use: {arguments: 2}
-talk: {arguments: 1}
-show: {arguments: 2}
-show_log: {optional_arguments: 1}
+go: {arguments: 1, category: basics}
+quit: {category: system}
+take: {arguments: 1, category: basics}
+drop: {arguments: 1, category: basics}
+inventory: {category: basics}
+look: {category: basics}
+examine: {arguments: 1, category: basics}
+help: {optional_arguments: 1, category: system}
+language: {arguments: 1, category: system}
+destroy: {arguments: 1, category: actions}
+wear: {arguments: 1, category: actions}
+use: {arguments: 2, category: actions}
+talk: {arguments: 1, category: actions}
+show: {arguments: 2, category: actions}
+show_log: {optional_arguments: 1, category: system}
