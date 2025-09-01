@@ -20,15 +20,25 @@ items:
       - Ashen Crown
       - Crown
     description: "A crown blackened by ash, its filigree heavy with grey. It weighs more than metal should, and in its cold sheen there is the faintest murmur, as if it remembered voices."
-  locked_chest:
+  chest:
     names:
-      - Locked Chest
       - Chest
     states:
       closed:
+        names:
+          - Locked Chest
+          - Chest
         description: "A low chest of darkened wood banded with plain iron. Fine ash gathers along the lid's seam, and somewhere within clings the scent of resin and rain. The lock is simple, yet stubborn."
       open:
+        names:
+          - Opened Chest
+          - Chest
         description: "The lid yields with a tired sigh. Stale air spills out, dusty and sweet. Inside, the velvet has powdered away; in the ash something rests as if asleep: a crown, dimly gleaming."
+      empty:
+        names:
+          - Empty Chest
+          - Chest
+        description: "The chest stands open and empty. Only a dust-print remains where something weighty once lay; ash traces the curve of a circlet." 
 
 rooms:
   hut:

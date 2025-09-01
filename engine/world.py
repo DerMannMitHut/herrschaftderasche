@@ -42,6 +42,8 @@ def _normalize_room_config(room: dict[str, Any]) -> dict[str, Any]:
             entry = {"names": list(names)}
             if pre:
                 entry["preconditions"] = pre
+            if cfg.get("duration") is not None:
+                entry["duration"] = int(cfg.get("duration"))
             new_exits[target] = entry
         else:  # pragma: no cover - legacy single-string syntax
             new_exits[target] = {"names": [cfg]}
@@ -81,6 +83,8 @@ class World:
                     action["preconditions"] = action.pop("precondition")
             normalized.append(action)
         self.actions = [act if isinstance(act, Action) else Action(**act) for act in normalized]
+        # Time management: TU (time units); default start at 0
+        self.time: int = int(data.get("time", 0) or 0)
         self.item_states: dict[str, str | StateTag] = {
             item_id: item_data.state for item_id, item_data in self.items.items() if item_data.state is not None
         }
@@ -97,6 +101,25 @@ class World:
             if loc and loc in self.rooms:
                 room = self.rooms[loc]
                 room.occupants.append(npc_id)
+
+    # --- item naming helpers (state-aware) ---
+    def item_names(self, item_id: str) -> list[str]:
+        item = self.items.get(item_id)
+        if not item:
+            return []
+        base = list(item.names or [])
+        st = item.state
+        if isinstance(st, StateTag):
+            st = st.value
+        if st:
+            st_cfg = (item.states or {}).get(st, {})
+            st_names = st_cfg.get("names") if isinstance(st_cfg, dict) else None
+            if st_names:
+                try:
+                    return list(st_names)
+                except Exception:
+                    return base
+        return base
 
     def debug(self, message: str) -> None:
         if self._debug_enabled:
@@ -138,6 +161,8 @@ class World:
                 pre = exit_cfg.get("preconditions") if isinstance(exit_cfg, dict) else None
                 if pre:
                     exit_entry["preconditions"] = pre
+                if isinstance(exit_cfg, dict) and exit_cfg.get("duration") is not None:
+                    exit_entry["duration"] = int(exit_cfg.get("duration"))
                 exits[target] = exit_entry
             if exits:
                 room["exits"] = exits
@@ -202,6 +227,18 @@ class World:
         actions = [_convert_tags(a) for a in actions]
         npcs = _convert_tags(npcs)
 
+        # Parse optional start_time from base world config ("HH:MM" or minutes)
+        start_time = base.get("start_time")
+        start_time_minutes: int | None = None
+        if isinstance(start_time, int):
+            start_time_minutes = start_time
+        elif isinstance(start_time, str) and ":" in start_time:
+            try:
+                hh, mm = start_time.split(":", 1)
+                start_time_minutes = (int(hh) % 24) * 60 + (int(mm) % 60)
+            except Exception:
+                start_time_minutes = None
+
         data = {
             "items": {item_id: Item(**cfg) for item_id, cfg in items.items()},
             "rooms": {room_id: Room(**cfg) for room_id, cfg in rooms.items()},
@@ -211,6 +248,8 @@ class World:
             "npcs": {npc_id: Npc(**cfg) for npc_id, cfg in npcs.items()},
             "intro": lang.get("intro", ""),
         }
+        if start_time_minutes is not None:
+            data["time"] = start_time_minutes
         return cls(data, debug=debug)
 
     def to_state(self) -> dict[str, Any]:
@@ -233,7 +272,13 @@ class World:
             for target, cfg in room.exits.items():
                 if target not in base_exits:
                     pre = cfg.get("preconditions")
-                    added[target] = {"preconditions": pre} if pre else {}
+                    dur = cfg.get("duration")
+                    entry: dict[str, Any] = {}
+                    if pre:
+                        entry["preconditions"] = pre
+                    if dur is not None:
+                        entry["duration"] = int(dur)
+                    added[target] = entry
             if added:
                 exits_added[room_id] = added
         if exits_added:
@@ -252,6 +297,9 @@ class World:
                 npc_states_diff[npc_id] = val
         if npc_states_diff:
             state["npc_states"] = npc_states_diff
+        # Persist time only if progressed
+        if self.time:
+            state["time"] = int(self.time)
         return state
 
     def save(self, path: str | Path) -> None:
@@ -276,7 +324,8 @@ class World:
         for room_id, mapping in exits_added.items():
             for target, cfg in (mapping or {}).items():
                 pre = cfg.get("preconditions") if isinstance(cfg, dict) else None
-                self.add_exit(room_id, target, pre)
+                dur = cfg.get("duration") if isinstance(cfg, dict) else None
+                self.add_exit(room_id, target, pre, int(dur) if dur is not None else None)
         item_states = data.get("item_states", {})
         for item_id, state in item_states.items():
             if item_id in self.item_states:
@@ -289,6 +338,9 @@ class World:
                 val = StateTag(state) if isinstance(state, str) and state in StateTag._value2member_map_ else state
                 self.npc_states[npc_id] = val
                 self.npcs[npc_id].state = val
+        # time restore
+        if isinstance(data.get("time"), int):
+            self.time = int(data.get("time"))
 
     def _check_item_condition(self, cond: dict[str, Any]) -> bool:
         item_id = cond.get("item")
@@ -413,7 +465,8 @@ class World:
                 if pre is not None and not isinstance(pre, dict):
                     raise TypeError("preconditions must be a mapping")
                 if room and target:
-                    self.add_exit(room, target, pre)
+                    duration = cfg.get("duration")
+                    self.add_exit(room, target, pre, int(duration) if duration is not None else None)
 
     def describe_current(self, messages: dict[str, str] | None = None) -> str:
         header = self.describe_room_header(messages)
@@ -441,6 +494,12 @@ class World:
                 desc += " Exits: " + ", ".join(exit_names)
         return desc
 
+    def format_time(self) -> str:
+        minutes = int(self.time) % 1440
+        hh = minutes // 60
+        mm = minutes % 60
+        return f"{hh:02d}:{mm:02d}"
+
     def describe_visibility(self, messages: dict[str, str] | None = None) -> str | None:
         """Return a single consolidated 'You see here: ...' line for items and NPCs.
 
@@ -450,8 +509,10 @@ class World:
         names: list[str] = []
         for item_id in room.items:
             item = self.items.get(item_id)
-            if item and item.names:
-                names.append(item.names[0])
+            if item:
+                eff = self.item_names(item_id)
+                if eff:
+                    names.append(eff[0])
         for npc_id in room.occupants:
             npc = self.npcs.get(npc_id)
             if not npc:
@@ -475,7 +536,7 @@ class World:
             item = self.items.get(item_id)
             if not item:
                 continue
-            names = item.names
+            names = self.item_names(item_id)
             if any(name.casefold() == item_name_cf for name in names):
                 state = self.item_states.get(item_id)
                 if state:
@@ -488,7 +549,7 @@ class World:
             item = self.items.get(item_id)
             if not item:
                 continue
-            names = item.names
+            names = self.item_names(item_id)
             if any(name.casefold() == item_name_cf for name in names):
                 state = self.item_states.get(item_id)
                 if state:
@@ -561,7 +622,7 @@ class World:
                 return self.check_preconditions(pre)
         return False
 
-    def add_exit(self, room_id: str, target: str, pre: dict[str, Any] | None = None) -> None:
+    def add_exit(self, room_id: str, target: str, pre: dict[str, Any] | None = None, duration: int | None = None) -> None:
         room = self.rooms.setdefault(room_id, Room(names=[], description=""))
         exits = room.exits
         target_room = self.rooms.get(target)
@@ -569,7 +630,25 @@ class World:
         exits[target] = {"names": names}
         if pre:
             exits[target]["preconditions"] = pre
+        if duration is not None:
+            exits[target]["duration"] = int(duration)
         self.debug(f"add_exit {room_id}->{target}")
+
+    # --- time management helpers ---
+    def get_exit_duration(self, exit_name: str) -> int:
+        room = self.rooms[self.current]
+        exit_name_cf = exit_name.casefold()
+        for cfg in room.exits.values():
+            names = cfg.get("names", [])
+            if any(name.casefold() == exit_name_cf for name in names):
+                dur = cfg.get("duration")
+                return int(dur) if isinstance(dur, int) else 1
+        return 1
+
+    def advance_time(self, units: int) -> None:
+        if units and units > 0:
+            self.time = (self.time + int(units)) % 1440
+            self.debug(f"time +{units} -> {self.time}")
 
     def take(self, item_name: str) -> str | None:
         """Move an item from the current room into the inventory.
@@ -580,7 +659,7 @@ class World:
         items = room.items
         item_name_cf = item_name.casefold()
         for item_id in list(items):
-            names = self.items.get(item_id, Item(names=[], description="")).names
+            names = self.item_names(item_id)
             if any(name.casefold() == item_name_cf for name in names):
                 items.remove(item_id)
                 self.inventory.append(item_id)
@@ -594,7 +673,7 @@ class World:
     def drop(self, item_name: str) -> bool:
         item_name_cf = item_name.casefold()
         for item_id in list(self.inventory):
-            names = self.items.get(item_id, Item(names=[], description="")).names
+            names = self.item_names(item_id)
             if any(name.casefold() == item_name_cf for name in names):
                 self.inventory.remove(item_id)
                 room = self.rooms[self.current]
@@ -680,7 +759,14 @@ class World:
     def describe_inventory(self, messages: dict[str, str]) -> str:
         if not self.inventory:
             return messages["inventory_empty"]
-        item_names = [self.items[i].names[0] for i in self.inventory]
+        item_names: list[str] = []
+        for i in self.inventory:
+            names = self.item_names(i)
+            if names:
+                item_names.append(names[0])
+            else:
+                item = self.items.get(i)
+                item_names.append((item.names[0] if item and item.names else i))
         return messages["inventory_items"].format(items=", ".join(item_names))
 
     def check_endings(self) -> str | None:

@@ -182,12 +182,11 @@ class OllamaLLM(LLMBackend):
         npc_states = {world.npcs[npc_id].names[0]: str(state) for npc_id, state in world.npc_states.items() if npc_id in world.npcs}
         recent_log = [entry.command for entry in log]
         context = (
-            f"Room: {room}\n"
-            f"Visible: {visible}\n"
-            f"Inventory: {', '.join(inventory_names) if inventory_names else 'empty'}\n"
+            f"Description of the current location:\n"
+            f"{room} {visible}\n"
+            f"Player inventory: {', '.join(inventory_names) if inventory_names else 'empty'}\n"
             f"Item states: {item_states}\n"
             f"NPC states: {npc_states}\n"
-            f"Log: {recent_log}\n"
         )
         system_prompt = (
             "You map player input to game commands. A command consists of a <verb>, and optional 1 or 2 objects. "
@@ -195,8 +194,8 @@ class OllamaLLM(LLMBackend):
             f"Language: {lang_code}.\n"
             f"Allowed verbs: {', '.join(allowed_verbs)}\n"
             f"Known nouns: {', '.join(nouns)}\n"
-            f"Guidance:\n{self._language_hints(lang_code)}\n"
-            f"Context:\n{context}\n"
+            f"Guidance:\n```\n{self._language_hints(lang_code)}\n```\n"
+            f"Context:\n```\n{context}\n```\n"
             "Respond with JSON "
             '{"confidence": <confidence>, "verb": "<verb>", "object": "<noun1>", "additional": "<noun2>"} and nothing else.\n'
         )

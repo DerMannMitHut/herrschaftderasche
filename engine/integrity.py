@@ -103,9 +103,16 @@ def validate_world_structure(w: world.World) -> list[str]:
 
     for room_id, room in w.rooms.items():
         exits = room.get("exits", {})
-        for target in exits:
+        for target, cfg in exits.items():
             if target not in w.rooms:
                 errors.append(f"Room '{room_id}' has exit to missing room '{target}'")
+            # validate optional exit duration
+            if isinstance(cfg, dict):
+                dur = cfg.get("duration")
+                if dur is not None and (not isinstance(dur, int) or dur < 1):
+                    errors.append(
+                        f"Room '{room_id}' exit to '{target}' has invalid duration '{dur}' (must be positive integer)"
+                    )
         for item in room.get("items", []):
             if item not in w.items:
                 errors.append(f"Room '{room_id}' contains missing item '{item}'")
@@ -114,14 +121,19 @@ def validate_world_structure(w: world.World) -> list[str]:
         errors.append(f"Start room '{w.current}' does not exist")
 
     for action in w.actions:
-        if action.trigger != "use":
-            continue
+        # action duration validation (if provided)
+        act_dur = action.get("duration")
+        if act_dur is not None and (not isinstance(act_dur, int) or act_dur < 1):
+            errors.append(f"Action '{action}' has invalid duration '{act_dur}' (must be positive integer)")
         item = action.get("item")
         if item not in w.items:
             errors.append(f"Action '{action}' references missing item '{item}'")
         target_item = action.get("target_item")
         if target_item and target_item not in w.items:
             errors.append(f"Action '{action}' references missing target item '{target_item}'")
+        target_npc = action.get("target_npc")
+        if target_npc and target_npc not in w.npcs:
+            errors.append(f"Action '{action}' references missing target NPC '{target_npc}'")
         pre = action.get("preconditions") or {}
         loc = pre.get("is_location")
         if loc and loc not in w.rooms:
@@ -189,6 +201,11 @@ def validate_world_structure(w: world.World) -> list[str]:
                 errors.append(f"Action '{action}' effect references missing room '{room}' for add_exits")
             if target and target not in w.rooms:
                 errors.append(f"Action '{action}' effect references missing target room '{target}' for add_exits")
+            dur = cfg.get("duration")
+            if dur is not None and (not isinstance(dur, int) or dur < 1):
+                errors.append(
+                    f"Action '{action}' effect add_exits has invalid duration '{dur}' for {room}->{target} (must be positive integer)"
+                )
             pre = cfg.get("preconditions")
             if pre is not None:
                 if isinstance(pre, list):

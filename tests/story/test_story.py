@@ -42,9 +42,9 @@ def test_examine_closed_chest_reveals_no_crown(data_dir, io_backend):
     with open(data_dir / "en" / "world.en.yaml", encoding="utf-8") as fh:
         en = yaml.safe_load(fh)
 
-    closed_desc = en["items"]["locked_chest"]["states"]["closed"]["description"]
+    closed_desc = en["items"]["chest"]["states"]["closed"]["description"]
     open_success = en["actions"]["open_chest"]["messages"]["success"]
-    open_desc = en["items"]["locked_chest"]["states"]["open"]["description"]
+    open_desc = en["items"]["chest"]["states"]["open"]["description"]
     crown_msg = en["actions"]["find_crown"]["messages"]["success"]
 
     g = game.Game(str(data_dir / "en" / "world.en.yaml"), "en", io_backend=io_backend)

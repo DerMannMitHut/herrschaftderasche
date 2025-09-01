@@ -135,6 +135,10 @@ class Game:
     def run(self) -> None:
         if self._show_intro and self.world.intro:
             self.io.output(self.world.intro)
+        # Show current time at game start
+        ts = self.world.format_time()
+        msg = self.language_manager.messages.get("time", "{time}").format(time=ts)
+        self.io.output(msg)
         header = self.world.describe_room_header(self.language_manager.messages)
         self.io.output(header)
         event_outs: list[str] = []

@@ -36,6 +36,9 @@ help:
 language:
   - 'language $a'
   - 'lang $a'
+time:
+  - 'time'
+  - 'clock'
 destroy:
   - 'destroy $a'
   - 'break $a'

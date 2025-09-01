@@ -114,6 +114,7 @@ class CommandProcessor:
         self._build_cmd_patterns()
         self._ignore_articles: set[str] = set()
         self._ignore_contractions: set[str] = set()
+        self._last_duration: int | None = None
         try:
             data_dir = getattr(self.language_manager, "data_dir", None)
             lang = getattr(self.language_manager, "language", None)
@@ -137,6 +138,7 @@ class CommandProcessor:
         """
 
         before = self.world.to_state()
+        prev_time = self.world.time
         outputs: list[str] = []
         original_output = self.io.output
 
@@ -179,6 +181,18 @@ class CommandProcessor:
         finally:
             self.io.output = original_output
         after = self.world.to_state()
+        if parse_ok:
+            duration = self._last_duration if isinstance(self._last_duration, int) else 1
+            self.world.advance_time(duration)
+            self._last_duration = None
+            # If hour changed, output current time once
+            prev_hour = (int(prev_time) % 1440) // 60
+            cur_hour = (int(self.world.time) % 1440) // 60
+            if prev_hour != cur_hour:
+                ts = self.world.format_time()
+                msg = self.language_manager.messages.get("time", "{time}").format(time=ts)
+                outputs.append(msg)
+                original_output(msg)
         if before != after:
             self.log.append(LogEntry(raw, outputs))
         return bool(parse_ok)
@@ -257,11 +271,11 @@ class CommandProcessor:
         if not in_inventory:
             room = self.world.rooms[self.world.current]
             for item_id in room.get("items", []):
-                names = self.world.items.get(item_id, {}).get("names", [])
+                names = self.world.item_names(item_id)
                 if any(n.casefold() == name_cf for n in names):
                     return item_id
         for item_id in self.world.inventory:
-            names = self.world.items.get(item_id, {}).get("names", [])
+            names = self.world.item_names(item_id)
             if any(n.casefold() == name_cf for n in names):
                 return item_id
         return None
@@ -334,6 +348,11 @@ class CommandProcessor:
                 continue
             effect = action.effect or {}
             self.world.apply_effect(effect)
+            if getattr(action, "duration", None) is not None:
+                try:
+                    self._last_duration = int(getattr(action, "duration"))
+                except Exception:
+                    self._last_duration = None
             message = action.messages.get("success")
             if message:
                 self.io.output(message)
@@ -429,7 +448,9 @@ class CommandProcessor:
         direction = self._strip_leading_tokens(direction)
         if not self.world.has_room(direction):
             return False
+        move_duration = self.world.get_exit_duration(direction)
         if self.world.can_move(direction) and self.world.move(direction):
+            self._last_duration = move_duration
             header = self.world.describe_room_header(self.language_manager.messages)
             self.io.output(header)
             event_outs: list[str] = []
@@ -515,6 +536,12 @@ class CommandProcessor:
         return True
 
     @require_args(0)
+    def cmd_time(self) -> bool:
+        ts = self.world.format_time()
+        self.io.output(self.language_manager.messages.get("time", "{time}").format(time=ts))
+        return True
+
+    @require_args(0)
     def cmd_show_log(self, count: str | None = None) -> bool:
         n = None
         if count:
@@ -587,8 +614,8 @@ class CommandProcessor:
             return None
         name = self._strip_leading_tokens(name)
         name_cf = name.casefold()
-        for item_id, item in self.world.items.items():
-            names = getattr(item, "names", [])
+        for item_id in self.world.items.keys():
+            names = self.world.item_names(item_id)
             if any(n.casefold() == name_cf for n in names):
                 return item_id
         return None

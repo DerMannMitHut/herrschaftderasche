@@ -93,6 +93,7 @@ class Action(BaseModel):
     target_npc: str | None = None
     preconditions: dict[str, Any] | None = None
     effect: dict[str, Any] | None = None
+    duration: int | None = None
     messages: dict[str, str] = Field(default_factory=dict)  # noqa
 
     model_config = ConfigDict(extra="forbid")

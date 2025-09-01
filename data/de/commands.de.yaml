@@ -37,6 +37,9 @@ help:
   - 'h $a'
 language:
   - 'sprache $a'
+time:
+  - 'zeit'
+  - 'uhrzeit'
 destroy:
   - 'zerstöre $a'
   - 'vernichte $a'

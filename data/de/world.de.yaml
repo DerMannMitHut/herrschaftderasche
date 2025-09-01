@@ -20,15 +20,25 @@ items:
       - Aschenkrone
       - Krone
     description: "Eine Krone, von Asche geschwärzt, in deren filigranen Ranken das Grau wie ein Schleier hängt. Sie ist schwerer, als Metall allein es sein dürfte, und in der Kälte ihres Glanzes liegt ein fernes Raunen, als trüge sie die Erinnerung an Stimmen."
-  locked_chest:
+  chest:
     names:
-      - Verschlossene Truhe
       - Truhe
     states:
       closed:
+        names:
+          - Verschlossene Truhe
+          - Truhe
         description: "Eine niedrige Truhe aus dunkel verfärbtem Holz, mit einem einfachen Eisenband gefasst. Feine Asche sammelt sich in der Spalte des Deckels, und irgendwo darin haftet der Geruch von Harz und Regen. Das Schloss wirkt schlicht, aber unbeugsam."
       open:
+        names:
+          - Geöffnete Truhe
+          - Truhe
         description: "Der Deckel gibt mit einem müden Seufzen nach. Alte Luft entweicht, staubig und süßlich. Innen ist der Samt zu Pulver zerfallen; in der Asche ruht etwas, das wie Schlaf wirkt: eine Krone, stumpf schimmernd."
+      empty:
+        names:
+          - Leere Truhe
+          - Truhe
+        description: "Die Truhe steht offen und ist leer. Nur ein staubiger Abdruck zeichnet nach, wo einst etwas Schweres lag; feine Aschespuren markieren die Rundung eines Reifs."
 
 rooms:
   hut:

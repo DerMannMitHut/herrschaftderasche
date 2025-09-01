@@ -6,32 +6,38 @@ items:
       unreadable: {}
       readable: {}
   ashen_crown: {}
-  locked_chest:
+  chest:
     state: closed
     states:
       closed: {}
       open: {}
+      empty: {}
 
 rooms:
   hut:
     items:
       - small_key
     exits:
-      - forest
+      forest:
+        duration: 5
   forest:
     exits:
-      - hut
-      - ash_village
+      hut:
+        duration: 5
+      ash_village:
+        duration: 10
   ruins:
     items:
-      - locked_chest
+      - chest
     exits:
-      - forest
+      hut:
+        duration: 20
   ash_village:
     items:
       - map_fragment
     exits:
-      - forest
+      forest:
+        duration: 10
 
 npcs:
   villager:
@@ -68,34 +74,48 @@ actions:
       item_conditions:
         - item: map_fragment
           state: readable
+
+
+  read_map:
+    trigger: examine
+    item: map_fragment
+    preconditions:
+      item_condition:
+        - item: map
+          state: readable
+    effect:
       add_exits:
         - room: hut
           target: ruins
+          duration: 12
 
   open_chest:
     trigger: use
     item: small_key
-    target_item: locked_chest
+    target_item: chest
     preconditions:
       is_location: ruins
     effect:
       item_conditions:
-        - item: locked_chest
+        - item: chest
           state: open
 
   find_crown:
     trigger: examine
-    item: locked_chest
+    item: chest
     preconditions:
       item_conditions:
-        - item: locked_chest
+        - item: chest
           state: open
     effect:
       item_conditions:
+        - item: chest
+          state: empty
         - item: ashen_crown
           location: INVENTORY
 
 start: hut
+start_time: "08:00"
 
 endings:
   crown_returned:
