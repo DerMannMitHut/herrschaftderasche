@@ -11,11 +11,8 @@
   - `poetry env use 3.12`
   - `poetry install`
   - Interaktive Shell: `poetry shell` (alternativ Befehle mit `poetry run ...`)
-- Lint: `poetry run ruff check .` und Format: `poetry run ruff format .`
-- Typen: `poetry run pyright`
-- Tests schnell: `poetry run pytest -q`
-- Tests mit Coverage: `poetry run pytest --cov --cov-branch -q`
-- Abhängigkeiten: `poetry add <pkg>`; Dev-Tools: `poetry add --group dev ruff pyright pytest pytest-cov`
+- Linting/Testing/reformatting/Abhängigkeiten: `make all`
+- if you need to do only parts of it: see `Makefile` for details
  - Ausführen:
    - Entry-Point: `poetry run herrschaft-der-asche --language de`
    - Modulstart: `poetry run python -m game.main --language de`
