@@ -39,7 +39,7 @@ def test_llm_fallback_on_unresolvable_argument_triggers_mapping(tmp_path):
         encoding="utf-8",
     )
     data_path = (tmp_path / "de" / "world.de.yaml").resolve()
-    io = DummyIO(inputs=["nimm den Schlüssel", "inventar", "beenden"]) 
+    io = DummyIO(inputs=["nimm den Schlüssel", "inventar", "beenden"])
     llm = MappingLLM("take Kleiner Schlüssel")
 
     g = game.Game(str(data_path), "de", io_backend=io, llm_backend=llm)

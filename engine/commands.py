@@ -15,7 +15,7 @@ from . import world
 from .interfaces import IOBackend
 from .language import LanguageManager
 from .persistence import LogEntry, SaveManager
-from .world_model import StateTag, CommandCategory
+from .world_model import CommandCategory, StateTag
 
 
 def require_args(n: int) -> Callable[[Callable[..., bool | None]], Callable[..., bool]]:
@@ -195,7 +195,7 @@ class CommandProcessor:
                 self.cmd_patterns.append((pattern, key, entry))
                 if base not in self.reverse_cmds:
                     self.reverse_cmds[base] = (key, entry)
-        
+
         for key in self.command_keys:
             info = self.language_manager.command_info.get(key, {})
             args = info.get("arguments", 0)
@@ -349,7 +349,6 @@ class CommandProcessor:
         self._execute_action("examine", item_id)
         self.check_end()
 
-    
     @require_args(0)
     def cmd_quit(self) -> bool:
         self.save_manager.save(self.world, self.language_manager.language, self.log)
@@ -595,5 +594,6 @@ class CommandProcessor:
             if any(n.casefold() == name_cf for n in names):
                 return npc_id
         return None
+
 
 __all__ = ["CommandProcessor"]

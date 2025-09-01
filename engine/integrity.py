@@ -8,7 +8,7 @@ from typing import Any
 import yaml
 
 from . import world
-from .world_model import LocationTag, StateTag, CommandCategory
+from .world_model import CommandCategory, LocationTag, StateTag
 
 
 def check_translations(language: str, data_dir: Path) -> list[str]:
@@ -51,7 +51,7 @@ def check_translations(language: str, data_dir: Path) -> list[str]:
             allowed = {c.value for c in CommandCategory}
         except Exception:
             allowed = {"system", "basics", "actions"}
-        for key, cfg in (base_cmd_keys.items() if isinstance(base_cmd_keys, dict) else []):
+        for key, cfg in base_cmd_keys.items() if isinstance(base_cmd_keys, dict) else []:
             if not isinstance(cfg, dict):
                 warnings.append(f"Command '{key}' definition must be a mapping")
                 continue
