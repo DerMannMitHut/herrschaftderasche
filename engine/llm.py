@@ -141,27 +141,29 @@ class OllamaLLM(LLMBackend):
             verb = parsed.get("verb")
             obj = parsed.get("object")
             add = parsed.get("additional")
-            # Normalize common alias: 'look <obj>' -> 'examine <obj>'
-            # This helps when the LLM chooses 'look' with an object in languages
-            # where 'look' is reserved for room overview.
-            if isinstance(verb, str) and isinstance(obj, str) and verb.strip().casefold() == "look" and obj.strip():
-                verb = "examine"
-            if verb and obj:
-                parts = [str(verb), str(obj)]
-                if isinstance(add, str) and add.strip():
-                    parts.append(add.strip())
-                result = " ".join(parts).strip()
+            # Normalize aliases and verb/object ordering for engine compatibility
+            norm_verb, norm_obj, norm_add = self._normalize_mapping(verb, obj, add)
+            if norm_verb and norm_obj:
+                # Prefer localized phrase to avoid ambiguous splitting (esp. multi-word nouns)
+                localized = self._format_suggestion(norm_verb, norm_obj, norm_add)
+                parts_fallback = [str(norm_verb), str(norm_obj)]
+                if isinstance(norm_add, str) and norm_add.strip():
+                    parts_fallback.append(norm_add.strip())
+                result = localized or " ".join(parts_fallback).strip()
                 with suppress(Exception):
-                    self.world.debug(f"mapped result='{result}' confidence={conf}")
+                    if conf is None:
+                        self.world.debug(f"mapped result='{result}'")
+                    else:
+                        self.world.debug(f"mapped result='{result}' confidence={conf}")
                 if conf == 2:
                     return result
                 if conf == 1:
-                    suggestion = self._format_suggestion(str(verb), str(obj), str(add) if add else None)
+                    suggestion = self._format_suggestion(norm_verb, norm_obj, norm_add)
                     return f"__SUGGEST__ {suggestion or result}"
                 if conf == 0:
                     return "__UNKNOWN__"
                 return command
-            result = verb or command
+            result = (str(verb) if isinstance(verb, str) else None) or command
             with suppress(Exception):
                 self.world.debug(f"mapped result='{result}'")
             return result
@@ -229,6 +231,38 @@ class OllamaLLM(LLMBackend):
         text = phrase.replace("$a", a).replace("$b", b)
         text = " ".join(text.split()).strip()
         return text
+
+    def _normalize_mapping(
+        self,
+        verb: object,
+        obj: object,
+        add: object,
+    ) -> tuple[str | None, str | None, str | None]:
+        """Normalize LLM JSON into engine verb + ordered objects.
+
+        - Map 'look <obj>' -> 'examine <obj>'.
+        - Map open-like verbs ('open', 'öffne', 'öffnen') to 'use' and swap
+          object/additional so the tool comes first (e.g. key, then chest).
+        Returns normalized (verb, obj, add) or (None, None, None) if invalid.
+        """
+        v = str(verb).strip() if isinstance(verb, str) else None
+        o = str(obj).strip() if isinstance(obj, str) else None
+        b = str(add).strip() if isinstance(add, str) else None
+        if not v:
+            return None, None, None
+        v_cf = v.casefold()
+        # look -> examine when an object is present
+        if v_cf == "look" and o:
+            return "examine", o, None if not b else b
+        # open-like verbs -> use, swap order (tool first)
+        if v_cf in {"open", "öffne", "öffnen"}:
+            if o and b:
+                return "use", b, o
+            # If only one object present, fall back to 'use' with same order
+            if o:
+                return "use", o, b
+        # Default: keep as-is
+        return v, o, b
 
     def _language_hints(self, lang_code: str) -> str:
         """Return language-specific instructions from data/<lang>/llm.<lang>.yaml.
