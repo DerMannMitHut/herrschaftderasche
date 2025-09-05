@@ -261,8 +261,76 @@ class OllamaLLM(LLMBackend):
             # If only one object present, fall back to 'use' with same order
             if o:
                 return "use", o, b
+        # For 'show', prefer item as first arg and NPC as second
+        if v_cf == "show" and o and b and self.world is not None:
+            item1, d_item1 = self._best_match(o, self._known_item_names())
+            npc1, d_npc1 = self._best_match(o, self._known_npc_names())
+            item2, d_item2 = self._best_match(b, self._known_item_names())
+            npc2, d_npc2 = self._best_match(b, self._known_npc_names())
+            # classify each arg by lower distance; use tight thresholds to avoid wrong swaps
+            cls1 = "npc" if d_npc1 < d_item1 else "item"
+            cls2 = "npc" if d_npc2 < d_item2 else "item"
+            # If one looks like item and the other like npc, enforce (item, npc)
+            if cls1 != cls2:
+                item_name = item1 if cls1 == "item" else item2
+                npc_name = npc2 if cls2 == "npc" else npc1
+                # Snap to canonical names if available
+                o_norm = item_name or o
+                b_norm = npc_name or b
+                return "show", o_norm, b_norm
         # Default: keep as-is
         return v, o, b
+
+    def _known_item_names(self) -> list[str]:
+        assert self.world is not None
+        names: list[str] = []
+        for item in self.world.items.values():
+            names.extend(item.names)
+        return names
+
+    def _known_npc_names(self) -> list[str]:
+        assert self.world is not None
+        names: list[str] = []
+        for npc in self.world.npcs.values():
+            names.extend(npc.names)
+        return names
+
+    def _best_match(self, text: str, candidates: list[str]) -> tuple[str | None, int]:
+        """Return (best_candidate, distance) using simple Levenshtein distance.
+
+        Uses casefolded comparison; returns (None, large) if list is empty.
+        """
+        if not candidates:
+            return None, 1 << 30
+        t = text.casefold().strip()
+        best: tuple[str | None, int] = (None, 1 << 30)
+        for cand in candidates:
+            d = self._levenshtein(t, cand.casefold())
+            if d < best[1]:
+                best = (cand, d)
+                if d == 0:
+                    break
+        return best
+
+    @staticmethod
+    def _levenshtein(a: str, b: str) -> int:
+        if a == b:
+            return 0
+        if not a:
+            return len(b)
+        if not b:
+            return len(a)
+        # Ensure a is the shorter string for less memory
+        if len(a) > len(b):
+            a, b = b, a
+        prev = list(range(len(a) + 1))
+        for i, ch_b in enumerate(b, 1):
+            cur = [i]
+            for j, ch_a in enumerate(a, 1):
+                cost = 0 if ch_a == ch_b else 1
+                cur.append(min(cur[-1] + 1, prev[j] + 1, prev[j - 1] + cost))
+            prev = cur
+        return prev[-1]
 
     def _language_hints(self, lang_code: str) -> str:
         """Return language-specific instructions from data/<lang>/llm.<lang>.yaml.
