@@ -43,6 +43,8 @@ def check_translations(language: str, data_dir: Path) -> list[str]:
             if key not in lang_cmds:
                 warnings.append(f"Missing translation for command '{key}'")
         for key in lang_cmds:
+            if key.startswith("llm_"):
+                continue
             if key not in base_cmd_keys:
                 warnings.append(f"Unused command translation '{key}' ignored")
 
