@@ -223,6 +223,25 @@ class World:
             for key, value in npc_data.items():
                 if key == "states":
                     continue
+                if key == "dialog" and isinstance(value, dict):
+                    base_dialog = npc_cfg.setdefault("dialog", {})
+                    for node_id, node_cfg in value.items():
+                        base_node = base_dialog.setdefault(node_id, {})
+                        text = node_cfg.get("text")
+                        if text is not None:
+                            base_node["text"] = text
+                        lang_opts = node_cfg.get("options")
+                        if isinstance(lang_opts, dict):
+                            base_opts = base_node.setdefault("options", [])
+                            if base_opts:
+                                for opt in base_opts:
+                                    opt_id = opt.get("id")
+                                    if opt_id and opt_id in lang_opts:
+                                        opt["prompt"] = lang_opts[opt_id]
+                            else:
+                                for opt_id, prompt in lang_opts.items():
+                                    base_opts.append({"id": opt_id, "prompt": prompt})
+                    continue
                 if isinstance(value, dict):
                     npc_cfg.setdefault(key, {}).update(value)
                 else:

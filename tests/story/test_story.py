@@ -27,9 +27,11 @@ def test_ruins_inaccessible_without_map(data_dir, io_backend):
     assert io_backend.outputs[-1] == g.language_manager.messages["cannot_move"]
 
     g.command_processor.cmd_go("Ash Village")
+    io_backend.inputs = ["2"]
     g.command_processor.cmd_talk("Villager")
     g.command_processor.cmd_take("Map Fragment")
     g.command_processor.cmd_go("Forest")
+    io_backend.inputs = ["1"]
     g.command_processor.cmd_talk("Ashram")
     g.command_processor.cmd_show("Map Fragment", "Ashram")
     # Optionally examine the map after interpretation (align with current story flow)
@@ -87,10 +89,10 @@ def test_game_reaches_ending(data_dir, io_backend):
         lambda: cp.cmd_take("Small Key"),
         lambda: cp.cmd_go("Forest"),
         lambda: cp.cmd_go("Ash Village"),
-        lambda: cp.cmd_talk("Villager"),
+        lambda: (io_backend.inputs.extend(["2"]), cp.cmd_talk("Villager"))[1],
         lambda: cp.cmd_take("Map Fragment"),
         lambda: cp.cmd_go("Forest"),
-        lambda: cp.cmd_talk("Ashram"),
+        lambda: (io_backend.inputs.extend(["1"]), cp.cmd_talk("Ashram"))[1],
         lambda: cp.cmd_show("Map Fragment", "Ashram"),
         # Optionally examine the map after interpretation
         lambda: cp.cmd_examine("Map Fragment"),

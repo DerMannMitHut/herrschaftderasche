@@ -68,11 +68,25 @@ class Item(BaseModel):
         setattr(self, key, value)
 
 
+class DialogOption(BaseModel):
+    id: str
+    prompt: str | None = None
+    next: str | None = None
+    effect: dict[str, Any] | None = None
+
+
+class DialogNode(BaseModel):
+    text: str | None = None
+    options: list[DialogOption] = Field(default_factory=list)
+    effect: dict[str, Any] | None = None
+
+
 class Npc(BaseModel):
     names: list[str]
     state: str | StateTag | None = None
     states: dict[str, dict[str, Any]] = Field(default_factory=dict)  # noqa
     meet: dict[str, Any] = Field(default_factory=dict)  # noqa
+    dialog: dict[str, DialogNode] = Field(default_factory=dict)  # noqa
 
     model_config = ConfigDict(extra="forbid")
 
@@ -114,6 +128,8 @@ __all__ = [
     "CommandCategory",
     "Room",
     "Item",
+    "DialogOption",
+    "DialogNode",
     "Npc",
     "Action",
 ]
