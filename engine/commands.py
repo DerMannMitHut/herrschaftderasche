@@ -115,6 +115,8 @@ class CommandProcessor:
         self._ignore_articles: set[str] = {str(a).casefold() for a in arts}
         self._ignore_contractions: set[str] = {str(c).casefold() for c in contr}
         self._last_duration: int | None = None
+        self._dialog_npc: str | None = None
+        self._dialog_node: str | None = None
 
     def execute(self, raw: str) -> bool:
         """Execute ``raw`` and return True if parsing succeeded, else False.
@@ -586,6 +588,64 @@ class CommandProcessor:
         self._action_command("show", item_name, npc_name)
         return True
 
+    def _advance_dialog(self, option_id: str | None) -> bool:
+        npc_id = self._dialog_npc
+        node_id = self._dialog_node
+        if not npc_id or not node_id:
+            return False
+        npc = self.world.npcs.get(npc_id)
+        if not npc:
+            self._dialog_npc = None
+            self._dialog_node = None
+            return False
+        dialog = getattr(npc, "dialog", {})
+        node = dialog.get(node_id)
+        if not node:
+            self._dialog_npc = None
+            self._dialog_node = None
+            return False
+        if option_id is not None:
+            opt = next((o for o in node.options if o.id.casefold() == option_id.casefold()), None)
+            if not opt:
+                return False
+            eff = opt.effect or {}
+            state = eff.get("set_npc_state")
+            if state is not None:
+                self.world.set_npc_state(npc_id, state)
+            other = {k: v for k, v in eff.items() if k != "set_npc_state"}
+            if other:
+                self.world.apply_effect(other)
+            self._dialog_node = opt.next
+            node_id = self._dialog_node
+            if not node_id:
+                self._dialog_npc = None
+                self.check_end()
+                return True
+            node = dialog.get(node_id)
+            if not node:
+                self._dialog_npc = None
+                return True
+        eff = node.effect or {}
+        state = eff.get("set_npc_state")
+        if state is not None:
+            self.world.set_npc_state(npc_id, state)
+        other = {k: v for k, v in eff.items() if k != "set_npc_state"}
+        if other:
+            self.world.apply_effect(other)
+        text = node.text
+        if text:
+            self.io.output(text)
+        options = list(getattr(node, "options", []))
+        if options:
+            for opt in options:
+                prompt = opt.prompt or opt.id
+                self.io.output(f"{opt.id}: {prompt}")
+        else:
+            self._dialog_npc = None
+            self._dialog_node = None
+        self.check_end()
+        return True
+
     @require_args(1)
     def cmd_talk(self, npc_name: str) -> bool:
         if self._match_any_npc_id(npc_name) is None:
@@ -597,44 +657,9 @@ class CommandProcessor:
         npc = self.world.npcs[npc_id]
         dialog = getattr(npc, "dialog", {})
         if dialog:
-            node_id = "start"
-            while node_id:
-                node = dialog.get(node_id)
-                if not node:
-                    break
-                eff = getattr(node, "effect", None)
-                if eff:
-                    state = eff.get("set_npc_state")
-                    if state is not None:
-                        self.world.set_npc_state(npc_id, state)
-                    other = {k: v for k, v in eff.items() if k != "set_npc_state"}
-                    if other:
-                        self.world.apply_effect(other)
-                text = getattr(node, "text", None)
-                if text:
-                    self.io.output(text)
-                options = list(getattr(node, "options", []))
-                if not options:
-                    break
-                for idx, opt in enumerate(options, start=1):
-                    prompt = opt.prompt or opt.id
-                    self.io.output(f"{idx}. {prompt}")
-                choice = self.io.get_input().strip()
-                try:
-                    sel = int(choice) - 1
-                except Exception:
-                    break
-                if sel < 0 or sel >= len(options):
-                    break
-                opt = options[sel]
-                eff = opt.effect or {}
-                state = eff.get("set_npc_state")
-                if state is not None:
-                    self.world.set_npc_state(npc_id, state)
-                other = {k: v for k, v in eff.items() if k != "set_npc_state"}
-                if other:
-                    self.world.apply_effect(other)
-                node_id = opt.next
+            self._dialog_npc = npc_id
+            self._dialog_node = "start"
+            self._advance_dialog(None)
             return True
         state = self.world.npc_state(npc_id)
         state_key = state.value if isinstance(state, StateTag) else state
@@ -646,7 +671,15 @@ class CommandProcessor:
             self.io.output(self.language_manager.messages["no_npc"])
         if state != StateTag.HELPED:
             self.world.set_npc_state(npc_id, StateTag.HELPED)
+        self.check_end()
         return True
+
+    @require_args(1)
+    def cmd_say(self, option_id: str) -> bool:
+        option_id = option_id.strip()
+        if not option_id or not self._dialog_npc:
+            return False
+        return self._advance_dialog(option_id)
 
     @require_args(2)
     def cmd_use(self, item_name: str, target_name: str) -> bool:
