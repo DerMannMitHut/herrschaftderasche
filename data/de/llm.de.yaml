@@ -1,3 +1,29 @@
+prompt: |-
+  Du ordnest Spielerbefehle Spielkommandos zu. Ein Kommando besteht aus einem <Verb> und optional 1 oder 2 Objekten. <confidence> ist ein Wert zwischen 0 und 2: 0=unsicher, 1=ziemlich sicher, 2=völlig sicher.
+  Sprache: {lang}.
+  Erlaubte Verben: {allowed_verbs}
+  Bekannte Nomen: {known_nouns}
+  Hinweise:
+  ```
+  {guidance}
+  ```
+  Kontext:
+  ```
+  {context}
+  ```
+  Antworte ausschließlich mit JSON {{"confidence": <confidence>, "verb": "<verb>", "object": "<noun1>", "additional": "<noun2>"}}.
+context: |-
+  Beschreibung der aktuellen Umgebung:
+  {room} {visible}
+  Inventar des Spielers: {inventory}
+  Objektzustände: {item_states}
+  NPC-Zustände: {npc_states}
+guidance: |-
+  Ignoriere Artikel/Determinatoren bei der Objekterkennung ({articles}).
+  Ignoriere Kontraktionen bei der Objekterkennung ({contractions}).
+  Ordne diese Präpositionen dem zweiten Objekt (additional) zu: {prepositions}.
+  Wähle Objektstrings aus 'Known nouns'.
+  Behandle zitatmarkierte Phrasen als ein Objekt.
 ignore_articles:
   - der
   - die
@@ -24,7 +50,3 @@ ignore_contractions:
   - durchs
 second_object_preps:
   - mit
-notes:
-  - "Wähle Objektstrings aus 'Known nouns'."
-  - "Behandle zitatmarkierte Phrasen als ein Objekt."
-  - "Groß-/Kleinschreibung ignorieren; Lemma verwenden (Schlüssel == schlüssel)."

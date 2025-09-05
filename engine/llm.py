@@ -9,7 +9,6 @@ from enum import IntEnum
 from typing import TYPE_CHECKING
 
 import requests
-import yaml
 
 from .interfaces import LLMBackend
 from .persistence import LogEntry
@@ -190,6 +189,7 @@ class OllamaLLM(LLMBackend):
         assert self.world and self.language
         world = self.world
         lm = self.language
+        cfg = lm.llm_config
         allowed_verbs = sorted(lm.commands.keys())
         lang_code = getattr(lm, "language", "en")
         nouns: list[str] = []
@@ -202,27 +202,26 @@ class OllamaLLM(LLMBackend):
         inventory_names = [world.items[item_id].names[0] for item_id in world.inventory if item_id in world.items]
         item_states = {world.items[item_id].names[0]: str(state) for item_id, state in world.item_states.items() if item_id in world.items}
         npc_states = {world.npcs[npc_id].names[0]: str(state) for npc_id, state in world.npc_states.items() if npc_id in world.npcs}
-        context = (
-            f"Description of the current location:\n"
-            f"{room} {visible}\n"
-            f"Player inventory: {', '.join(inventory_names) if inventory_names else 'empty'}\n"
-            f"Item states: {item_states}\n"
-            f"NPC states: {npc_states}\n"
+        context_str = cfg["context"].format(
+            room=room,
+            visible=visible,
+            inventory=", ".join(inventory_names) if inventory_names else "empty",
+            item_states=item_states,
+            npc_states=npc_states,
         )
-        system_prompt = (
-            "You map player input to game commands. A command consists of a <verb>, and optional 1 or 2 objects. "
-            f"<confidence> is a value between {Confidence.UNSURE.value} and {Confidence.CERTAIN.value}: "
-            f"{Confidence.UNSURE.value}=unsure, {Confidence.MAYBE.value}=quite sure, {Confidence.CERTAIN.value}=totally sure.\n"
-            f"Language: {lang_code}.\n"
-            f"Allowed verbs: {', '.join(allowed_verbs)}\n"
-            f"Known nouns: {', '.join(nouns)}\n"
-            f"Guidance:\n```\n{self._language_hints(lang_code)}\n```\n"
-            f"Context:\n```\n{context}\n```\n"
-            "Respond with JSON "
-            '{"confidence": <confidence>, "verb": "<verb>", "object": "<noun1>", "additional": "<noun2>"} and nothing else.\n'
+        prompt = cfg["prompt"].format(
+            lang=lang_code,
+            allowed_verbs=", ".join(allowed_verbs),
+            known_nouns=", ".join(nouns),
+            guidance=cfg["guidance"].format(
+                articles=", ".join(cfg["ignore_articles"]),
+                contractions=", ".join(cfg["ignore_contractions"]),
+                prepositions=", ".join(cfg["second_object_preps"]),
+            ),
+            context=context_str,
         )
         return [
-            {"role": "system", "content": system_prompt},
+            {"role": "system", "content": prompt},
             {"role": "user", "content": command},
         ]
 
@@ -347,46 +346,6 @@ class OllamaLLM(LLMBackend):
                 cur.append(min(cur[-1] + 1, prev[j] + 1, prev[j - 1] + cost))
             prev = cur
         return prev[-1]
-
-    def _language_hints(self, lang_code: str) -> str:
-        """Return language-specific instructions from data/<lang>/llm.<lang>.yaml.
-
-        Falls back to generic English-like guidance if the file is missing.
-        """
-        try:
-            lm = self.language
-            if lm is None or not hasattr(lm, "data_dir"):
-                raise FileNotFoundError
-            from pathlib import Path
-
-            data_dir = lm.data_dir
-            lang = lang_code or "en"
-            path = Path(data_dir) / lang / f"llm.{lang}.yaml"
-            with open(path, encoding="utf-8") as fh:
-                cfg = yaml.safe_load(fh) or {}
-            articles = cfg.get("ignore_articles") or []
-            contractions = cfg.get("ignore_contractions") or []
-            preps = cfg.get("second_object_preps") or []
-            notes = cfg.get("notes") or []
-            parts: list[str] = []
-            if articles:
-                parts.append("Ignore articles/determiners when matching nouns (" + ", ".join(articles) + ").")
-            if contractions:
-                parts.append("Ignore contractions when matching nouns (" + ", ".join(contractions) + ").")
-            if preps:
-                parts.append("Map these prepositions to the second object (additional): " + ", ".join(preps) + ".")
-            if notes:
-                parts.extend(str(n) for n in notes)
-            if parts:
-                return " ".join(parts)
-        except Exception:  # pragma: no cover - fallback path
-            with suppress(Exception):
-                if self.world is not None:
-                    self.world.debug("llm hints: fallback to generic guidance")
-        return (
-            "Ignore articles/determiners (the, a, an) and minor prepositions when matching nouns. "
-            "Choose object strings from 'Known nouns'. Treat quoted phrases as one object."
-        )
 
     def _check_model_exists(self) -> None:
         """Check if the configured model exists on the Ollama server.

@@ -111,22 +111,69 @@ Hinweise:
 - Pro Sprache in `data/<lang>/llm.<lang>.yaml` konfigurierbar. Beispiel (DE):
 
 ```
+prompt: |-
+  Du ordnest Spielerbefehle Spielkommandos zu. Ein Kommando besteht aus einem <Verb> und optional 1 oder 2 Objekten. <confidence> ist ein Wert zwischen 0 und 2: 0=unsicher, 1=ziemlich sicher, 2=völlig sicher.
+  Sprache: {lang}.
+  Erlaubte Verben: {allowed_verbs}
+  Bekannte Nomen: {known_nouns}
+  Hinweise:
+  ```
+  {guidance}
+  ```
+  Kontext:
+  ```
+  {context}
+  ```
+  Antworte ausschließlich mit JSON {"confidence": <confidence>, "verb": "<verb>", "object": "<noun1>", "additional": "<noun2>"}.
+context: |-
+  Beschreibung der aktuellen Umgebung:
+  {room} {visible}
+  Inventar des Spielers: {inventory}
+  Objektzustände: {item_states}
+  NPC-Zustände: {npc_states}
+guidance: |-
+  Ignoriere Artikel/Determinatoren bei der Objekterkennung ({articles}).
+  Ignoriere Kontraktionen bei der Objekterkennung ({contractions}).
+  Ordne diese Präpositionen dem zweiten Objekt (additional) zu: {prepositions}.
+  Wähle Objektstrings aus 'Known nouns'.
+  Behandle zitatmarkierte Phrasen als ein Objekt.
 ignore_articles: [der, die, das, den, dem, des, ein, eine, einen, einem, eines]
 ignore_contractions: [im, am, beim, vom, zum, zur, ins, aufs, ans, ums, durchs]
 second_object_preps: [mit]
-notes:
-  - "Wähle Objektstrings aus 'Known nouns'."
-  - "Behandle zitatmarkierte Phrasen als ein Objekt."
 ```
 
 - EN (Beispiel):
 
 ```
+prompt: |-
+  You map player input to game commands. A command consists of a <verb> and optional 1 or 2 objects. <confidence> is a value between 0 and 2: 0=unsure, 1=quite sure, 2=totally sure.
+  Language: {lang}.
+  Allowed verbs: {allowed_verbs}
+  Known nouns: {known_nouns}
+  Guidance:
+  ```
+  {guidance}
+  ```
+  Context:
+  ```
+  {context}
+  ```
+  Respond with JSON {"confidence": <confidence>, "verb": "<verb>", "object": "<noun1>", "additional": "<noun2>"} and nothing else.
+context: |-
+  Description of the current location:
+  {room} {visible}
+  Player inventory: {inventory}
+  Item states: {item_states}
+  NPC states: {npc_states}
+guidance: |-
+  Ignore articles/determiners when matching nouns ({articles}).
+  Ignore contractions when matching nouns ({contractions}).
+  Map these prepositions to the second object (additional): {prepositions}.
+  Choose object strings from 'Known nouns'.
+  Treat quoted phrases as one object.
 ignore_articles: [the, a, an]
+ignore_contractions: []
 second_object_preps: [with]
-notes:
-  - "Choose object strings from 'Known nouns'."
-  - "Treat quoted phrases as one object."
 ```
 
 ### Hilfe-Ausgabe
