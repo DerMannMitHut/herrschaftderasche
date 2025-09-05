@@ -156,6 +156,9 @@ class Game:
         if visible:
             self.io.output("")
             self.io.output(visible)
+        if self.command_processor._dialog_npc:
+            self.io.output("")
+            self.command_processor.list_dialog_options()
         self._check_end()
         try:
             while self.running:
