@@ -6,10 +6,7 @@ import re
 from collections.abc import Callable
 from dataclasses import dataclass
 from functools import wraps
-from pathlib import Path
 from typing import cast
-
-import yaml
 
 from . import world
 from .interfaces import IOBackend
@@ -112,45 +109,12 @@ class CommandProcessor:
         self.cmd_patterns: list[tuple[re.Pattern[str], str, str]] = []
         self.reverse_cmds: dict[str, tuple[str, str]] = {}
         self._build_cmd_patterns()
-        self._ignore_articles: set[str] = set()
-        self._ignore_contractions: set[str] = set()
+        cfg = getattr(language, "llm_config", {}) or {}
+        arts = cfg.get("ignore_articles") or []
+        contr = cfg.get("ignore_contractions") or []
+        self._ignore_articles: set[str] = {str(a).casefold() for a in arts}
+        self._ignore_contractions: set[str] = {str(c).casefold() for c in contr}
         self._last_duration: int | None = None
-        try:
-            data_dir = getattr(self.language_manager, "data_dir", None)
-            lang = getattr(self.language_manager, "language", None)
-            if data_dir and lang:
-                path = Path(data_dir) / lang / f"llm.{lang}.yaml"
-                with open(path, encoding="utf-8") as fh:
-                    cfg = yaml.safe_load(fh) or {}
-                arts = cfg.get("ignore_articles") or []
-                contr = cfg.get("ignore_contractions") or []
-                self._ignore_articles = {str(a).casefold() for a in arts}
-                self._ignore_contractions = {str(c).casefold() for c in contr}
-        except Exception:
-            # Best-effort; fall back to exact matching
-            self._ignore_articles = set()
-            self._ignore_contractions = set()
-        # Provide sensible defaults if language hints are absent
-        lang_code = getattr(self.language_manager, "language", "").casefold()
-        if not self._ignore_articles:
-            if lang_code == "de":
-                self._ignore_articles = {
-                    "der",
-                    "die",
-                    "das",
-                    "den",
-                    "dem",
-                    "des",
-                    "ein",
-                    "eine",
-                    "einen",
-                    "einem",
-                    "eines",
-                }
-            elif lang_code == "en":
-                self._ignore_articles = {"the", "a", "an"}
-        if not self._ignore_contractions and lang_code == "de":
-            self._ignore_contractions = {"im", "am", "beim", "vom", "zum", "zur", "ins", "aufs", "ans", "ums", "durchs"}
 
     def execute(self, raw: str) -> bool:
         """Execute ``raw`` and return True if parsing succeeded, else False.
