@@ -31,6 +31,12 @@ def load_commands(language: str, io: IOBackend) -> dict[str, str | list[str]]:
     return _load_yaml(path, io)
 
 
+def load_llm_config(language: str, io: IOBackend) -> dict:
+    """Load LLM configuration for the given language code."""
+    path = Path(__file__).resolve().parent.parent / "data" / language / f"llm.{language}.yaml"
+    return _load_yaml(path, io) or {}
+
+
 def load_command_info(io: IOBackend) -> dict[str, dict[str, int]]:
     """Return metadata about the available commands."""
     path = Path(__file__).resolve().parent.parent / "data" / "generic" / "commands.yaml"

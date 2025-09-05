@@ -20,6 +20,7 @@ class LanguageManager:
         self.messages = i18n.load_messages(language, io)
         self.commands = i18n.load_commands(language, io)
         self.command_info = i18n.load_command_info(io)
+        self.llm_config = i18n.load_llm_config(language, io)
 
     def switch(
         self,
@@ -37,6 +38,7 @@ class LanguageManager:
         try:
             messages = i18n.load_messages(language, self.io)
             commands = i18n.load_commands(language, self.io)
+            llm_config = i18n.load_llm_config(language, self.io)
             generic_path = self.data_dir / "generic" / "world.yaml"
             world_path = self.data_dir / language / f"world.{language}.yaml"
             new_world = world.World.from_files(generic_path, world_path, debug=self.debug)
@@ -50,6 +52,7 @@ class LanguageManager:
         self.language = language
         self.messages = messages
         self.commands = commands
+        self.llm_config = llm_config
         new_world.debug(f"language_switched to {language}")
         return new_world
 
