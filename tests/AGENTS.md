@@ -1,4 +1,4 @@
-# AGENTS.md
+# How to test
 
 ## Zweck
 Dieses Dokument beschreibt, wie AI-Agents Testcode erstellen sollen.
@@ -34,4 +34,4 @@ Dieses Dokument beschreibt, wie AI-Agents Testcode erstellen sollen.
 ## Testabdeckung (Coverage)
 - Coverage wird ausschließlich über die Unit-Tests gemessen.
 - Story-Tests werden nicht für die Abdeckungsmetriken herangezogen.
-- Empfohlener Befehl für Coverage: `pytest --cov --cov-branch -q tests/unit`.
+- Empfohlener Befehl für Coverage: `make unit`.
