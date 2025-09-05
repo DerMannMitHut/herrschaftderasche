@@ -5,6 +5,10 @@ items:
       - Kleiner Schlüssel
       - Schlüssel
     description: "Ein kleiner Messingschlüssel, dessen Schaft stumpf vom Anlaufen ist. Seine Zähnung wirkt unauffällig, doch in der Wärme des Metalls liegt der Abdruck vieler Hände. Wenn du ihn zwischen den Fingern drehst, bleibt ein Hauch von Harz und altem Holz in der Luft."
+    forms:
+      acc: "kleinen Schlüssel"
+    articles:
+      acc: "den"
   map_fragment:
     names:
       - Kartenfragment
@@ -15,11 +19,19 @@ items:
         description: "Ein zerknittertes, von Nässe welliges Fragment, überzogen mit Ruß und Asche. Wo einst Tinte Linien zog, stehen nur verwaschene Schatten, als hätte jemand Tränen über die Karte vergossen. Jede Berührung hebt grauen Staub."
       readable:
         description: "Unter dem Schmutz tritt eine dünne, in roter Kohle gezogene Linie hervor: ein Pfad von der Hütte zu den Ruinen. Kleine Randnotizen flüstern von Umwegen und Zeichen. Am Rand ist eingeritzt: 'Folge der Asche, wo der Wind ruht.'"
+    forms:
+      acc: "Kartenfragment"
+    articles:
+      acc: "das"
   ashen_crown:
     names:
       - Aschenkrone
       - Krone
     description: "Eine Krone, von Asche geschwärzt, in deren filigranen Ranken das Grau wie ein Schleier hängt. Sie ist schwerer, als Metall allein es sein dürfte, und in der Kälte ihres Glanzes liegt ein fernes Raunen, als trüge sie die Erinnerung an Stimmen."
+    forms:
+      acc: "Aschenkrone"
+    articles:
+      acc: "die"
   chest:
     names:
       - Truhe
@@ -39,6 +51,10 @@ items:
           - Leere Truhe
           - Truhe
         description: "Die Truhe steht offen und ist leer. Nur ein staubiger Abdruck zeichnet nach, wo einst etwas Schweres lag; feine Aschespuren markieren die Rundung eines Reifs."
+    forms:
+      acc: "Truhe"
+    articles:
+      acc: "die"
 
 rooms:
   hut:
@@ -47,24 +63,36 @@ rooms:
       - Häuschen
     description: "Eine schlichte Hütte, deren Dach in jedem Windstoß leise klagt. Das Licht fällt durch schmale Fugen, tanzt in feinen Staubfahnen. Der Boden ist rau, unter deinen Stiefeln knirscht Asche. Eine kalte Feuerstelle riecht nach längst verglühter Glut."
     to_article: "zur"
+    move_marker:
+      value: "zur"
+      position: "before"
   forest:
     names:
       - Wald
       - Forst
     description: "Ein lichter Wald, dessen Nadeln und Blätter einen grauen Flaum tragen. Jeder Schritt wirbelt einen flachen Atem von Staub auf. Fern ruft eine Krähe, und die Sonne hängt blass wie eine Münze zwischen den Zweigen."
     to_article: "zum"
+    move_marker:
+      value: "zum"
+      position: "before"
   ruins:
     names:
       - Ruinen
       - Ruinenstätte
     description: "Zerfallene Bögen und geborstene Stufen, über denen der Wind wie durch Flötenlöcher pfeift. In Ecken türmt sich Asche zu stillen Dünen; unter der grauen Haut blitzt hier und da ein Mosaik auf. Die Steine tragen Brandmale aus einer Zeit, die niemand mehr exakt benennen kann."
     to_article: "zu den"
+    move_marker:
+      value: "zu den"
+      position: "before"
   ash_village:
     names:
       - Aschendorf
       - Dorf
     description: "Ein Dorf, geduckt unter der weichen Last der Asche. Dächer biegen sich, Türen stehen einen Spalt offen, als lauschten sie. Im Brunnen liegt das Wasser dunkel und unbewegt. Alte Wimpel hängen in Fäden; der Geruch von Ruß und getrockneten Kräutern liegt darüber."
     to_article: "zum"
+    move_marker:
+      value: "zum"
+      position: "before"
 
 npcs:
   villager:

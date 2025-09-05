@@ -188,12 +188,28 @@ class World:
             item_cfg.setdefault("names", [item_id])
             if "description" not in item_cfg:
                 item_cfg["description"] = item_id
+            # Optional language-specific forms and articles for items
+            lang_item = lang.get("items", {}).get(item_id, {})
+            forms = lang_item.get("forms")
+            if isinstance(forms, dict):
+                item_cfg["forms"] = dict(forms)
+            articles = lang_item.get("articles")
+            if isinstance(articles, dict):
+                item_cfg["articles"] = dict(articles)
             states = item_cfg.get("states", {})
             for state_id, state_cfg in states.items():
                 state_cfg.setdefault("description", state_id)
         for room_id, room in rooms.items():
             room.setdefault("names", [room_id])
             room.setdefault("description", room_id)
+            # Optional forms and move marker for rooms
+            lang_room = lang_rooms.get(room_id, {})
+            forms = lang_room.get("forms")
+            if isinstance(forms, dict):
+                room["forms"] = dict(forms)
+            move_marker = lang_room.get("move_marker")
+            if isinstance(move_marker, dict):
+                room["move_marker"] = dict(move_marker)
         endings: dict[str, Any] = {}
         base_endings = base.get("endings", {})
         lang_endings = lang.get("endings", {})

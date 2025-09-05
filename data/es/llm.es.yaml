@@ -1,0 +1,21 @@
+prompt: |
+  Interpreta el comando del jugador y devuélvelo en una forma canónica.
+context: |
+  Eres un asistente para una aventura de texto. Mantén las respuestas breves.
+guidance: |
+  Si no estás seguro, sugiere un comando conocido.
+ignore_articles:
+  - el
+  - la
+  - los
+  - las
+  - un
+  - una
+  - unos
+  - unas
+ignore_contractions:
+  - al
+  - del
+second_object_preps:
+  - a
+  - con

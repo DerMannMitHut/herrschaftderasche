@@ -25,6 +25,8 @@ class Game:
         io_backend: IOBackend | None = None,
         llm_backend: LLMBackend | None = None,
         debug: bool = False,
+        *,
+        force_language: bool = False,
     ) -> None:
         data_path = Path(world_data_path)
         self.data_dir = data_path.parent.parent
@@ -40,7 +42,10 @@ class Game:
             raise SystemExit from exc
 
         self._show_intro = not save_data
-        self._language = str(save_data.get("language", language))
+        if save_data and not force_language:
+            self._language = str(save_data.get("language", language))
+        else:
+            self._language = language
         generic_path = self.data_dir / "generic" / "world.yaml"
         lang_world_path = self.data_dir / self._language / f"world.{self._language}.yaml"
 
@@ -196,6 +201,8 @@ def run(
     io_backend: IOBackend | None = None,
     llm_backend: LLMBackend | None = None,
     debug: bool = False,
+    *,
+    force_language: bool = False,
 ) -> None:
     Game(
         world_data_path,
@@ -203,4 +210,5 @@ def run(
         io_backend=io_backend,
         llm_backend=llm_backend,
         debug=debug,
+        force_language=force_language,
     ).run()

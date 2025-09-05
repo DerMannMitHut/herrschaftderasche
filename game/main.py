@@ -9,8 +9,28 @@ from engine.llm import OllamaLLM
 
 
 def run_cli() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--language", default="de")
+    # Discover available languages for nicer --help
+    data_root = Path(__file__).parent.parent / "data"
+    languages: list[str] = []
+    if data_root.exists():
+        for p in data_root.iterdir():
+            if not p.is_dir():
+                continue
+            code = p.name
+            if (p / f"messages.{code}.yaml").exists() and (p / f"world.{code}.yaml").exists():
+                languages.append(code)
+    languages.sort(key=lambda s: s.casefold())
+
+    epilog = None
+    if languages:
+        epilog = "Available languages: " + ", ".join(languages)
+
+    parser = argparse.ArgumentParser(
+        epilog=epilog or None,
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    # None allows us to detect whether the user explicitly provided --language
+    parser.add_argument("--language", default=None)
     parser.add_argument(
         "--debug",
         nargs="?",
@@ -43,7 +63,8 @@ def run_cli() -> None:
         help="Override request timeout in seconds (default 30)",
     )
     args = parser.parse_args()
-    data_path = Path(__file__).parent.parent / "data" / args.language / f"world.{args.language}.yaml"
+    cli_lang = args.language or "de"
+    data_path = Path(__file__).parent.parent / "data" / cli_lang / f"world.{cli_lang}.yaml"
     llm = (
         OllamaLLM(
             model=args.llm_model,
@@ -103,14 +124,14 @@ def run_cli() -> None:
             try:
                 sys.stdout = _TeeStdout(orig_stdout, fh)
                 sys.stderr = _OnlyFile(fh)
-                run(str(data_path), language=args.language, llm_backend=llm, debug=True)
+                run(str(data_path), language=cli_lang, llm_backend=llm, debug=True, force_language=(args.language is not None))
             finally:
                 sys.stdout = orig_stdout
                 sys.stderr = orig_stderr
     elif debug_opt is True:  # --debug without file
-        run(str(data_path), language=args.language, llm_backend=llm, debug=True)
+        run(str(data_path), language=cli_lang, llm_backend=llm, debug=True, force_language=(args.language is not None))
     else:
-        run(str(data_path), language=args.language, llm_backend=llm, debug=False)
+        run(str(data_path), language=cli_lang, llm_backend=llm, debug=False, force_language=(args.language is not None))
 
 
 if __name__ == "__main__":

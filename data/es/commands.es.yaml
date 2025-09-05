@@ -1,0 +1,28 @@
+go:
+  - ir $a
+look:
+  - mirar
+examine:
+  - examinar $a
+take:
+  - tomar $a
+  - coger $a
+drop:
+  - dejar $a
+use:
+  - usar $a $b
+talk:
+  - hablar $a
+help:
+  - ayuda
+  - ayuda $a
+quit:
+  - salir
+time:
+  - hora
+show:
+  - mostrar $a $b
+show_log:
+  - mostrar_registro $a
+language:
+  - idioma $a

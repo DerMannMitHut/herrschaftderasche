@@ -32,6 +32,10 @@ class Room(BaseModel):
     occupants: list[str] = Field(default_factory=list)  # noqa
     # Optional localized article for movement phrases (e.g., de: "zum"/"zur"/"zu den")
     to_article: str | None = None
+    # Optional language-specific forms (e.g., locative/accusative variants of the room name)
+    forms: dict[str, str] | None = None
+    # Optional generic move marker: value + position (before|after|suffix) and optional use_form key
+    move_marker: dict[str, Any] | None = None
 
     model_config = ConfigDict(extra="forbid")
 
@@ -57,6 +61,10 @@ class Item(BaseModel):
     description: str | None = None
     state: str | StateTag | None = None
     states: dict[str, dict[str, Any]] = Field(default_factory=dict)  # noqa
+    # Optional language-specific forms of the item name (e.g., accusative)
+    forms: dict[str, str] | None = None
+    # Optional per-case articles or particles (e.g., {"acc": "den", "dat": "dem"})
+    articles: dict[str, str] | None = None
 
     model_config = ConfigDict(extra="forbid")
 

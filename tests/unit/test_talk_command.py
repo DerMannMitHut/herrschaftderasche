@@ -42,4 +42,3 @@ def test_invalid_option_shows_message(data_dir, io_backend):
     io_backend.outputs.clear()
     g.command_processor.cmd_say("M2")
     assert "You can't say that." in io_backend.outputs
-

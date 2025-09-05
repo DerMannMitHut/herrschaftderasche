@@ -1,0 +1,81 @@
+intro: "Despiertas en una mañana gris pálida; la ceniza cae en silencio."
+items:
+  small_key:
+    names:
+      - Llave pequeña
+      - Llave
+    forms:
+      acc: "llave pequeña"
+    articles:
+      acc: "la"
+  map_fragment:
+    names:
+      - Fragmento de mapa
+      - Fragmento
+      - Mapa
+    forms:
+      acc: "fragmento de mapa"
+    articles:
+      acc: "el"
+  ashen_crown:
+    names:
+      - Corona de ceniza
+      - Corona
+    forms:
+      acc: "corona de ceniza"
+    articles:
+      acc: "la"
+  chest:
+    names:
+      - Cofre
+    states:
+      closed:
+        names:
+          - Cofre cerrado
+          - Cofre
+      open:
+        names:
+          - Cofre abierto
+          - Cofre
+      empty:
+        names:
+          - Cofre vacío
+          - Cofre
+    forms:
+      acc: "cofre"
+    articles:
+      acc: "el"
+
+rooms:
+  hut:
+    names:
+      - Cabaña
+    description: "Una cabaña modesta."
+    move_marker:
+      value: "a la"
+      position: "before"
+  forest:
+    names:
+      - Bosque
+    description: "Un bosque claro cubierto de ceniza."
+    move_marker:
+      value: "al"
+      position: "before"
+  ruins:
+    names:
+      - Ruinas
+    description: "Arcos rotos y escaleras partidas."
+    move_marker:
+      value: "a las"
+      position: "before"
+  ash_village:
+    names:
+      - Aldea de Ceniza
+      - Aldea
+    description: "Una aldea bajo el peso suave de la ceniza."
+    move_marker:
+      value: "a la"
+      position: "before"
+
+endings:
+  crown_returned: "Con la Corona de Ceniza devuelta, vuelves a la aldea."

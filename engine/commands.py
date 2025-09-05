@@ -301,7 +301,21 @@ class CommandProcessor:
             return
         self.world.inventory.remove(item_id)
         self.world.debug(f"inventory {self.world.inventory}")
-        self.io.output(self.language_manager.messages[cfg.message_key].format(item=item_name))
+        # Prefer article-aware message if configured
+        messages = self.language_manager.messages
+        art_key = f"{cfg.message_key}_article"
+        if art_key in messages:
+            item_obj = self.world.items.get(item_id)
+            names = self.world.item_names(item_id)
+            name_acc = (getattr(item_obj, "forms", {}) or {}).get("acc") if item_obj else None
+            name_to_use = name_acc or (names[0] if names else item_name)
+            article = (getattr(item_obj, "articles", {}) or {}).get("acc") if item_obj else None
+            if article:
+                self.io.output(messages[art_key].format(article=article, name=name_to_use))
+            else:
+                self.io.output(messages[cfg.message_key].format(item=name_to_use))
+        else:
+            self.io.output(messages[cfg.message_key].format(item=item_name))
         self.check_end()
 
     def _action_command(self, cmd: str, item_name: str, target_name: str) -> None:
@@ -396,7 +410,21 @@ class CommandProcessor:
                 preferred = names[0]
         taken = self.world.take(preferred)
         if taken:
-            self.io.output(self.language_manager.messages["taken"].format(item=taken))
+            messages = self.language_manager.messages
+            item_id_final = self._find_item_id(taken, in_inventory=True)
+            # Prefer article-aware message if available
+            if "taken_article" in messages and item_id_final:
+                item_obj = self.world.items.get(item_id_final)
+                names = self.world.item_names(item_id_final)
+                name_acc = (getattr(item_obj, "forms", {}) or {}).get("acc") if item_obj else None
+                name_to_use = name_acc or (names[0] if names else taken)
+                article = (getattr(item_obj, "articles", {}) or {}).get("acc") if item_obj else None
+                if article:
+                    self.io.output(messages["taken_article"].format(article=article, name=name_to_use))
+                else:
+                    self.io.output(messages["taken"].format(item=name_to_use))
+            else:
+                self.io.output(messages["taken"].format(item=taken))
         else:
             self.io.output(self.language_manager.messages["item_not_present"])
         self.check_end()
@@ -414,7 +442,20 @@ class CommandProcessor:
             if names:
                 preferred = names[0]
         if self.world.drop(preferred):
-            self.io.output(self.language_manager.messages["dropped"].format(item=item))
+            messages = self.language_manager.messages
+            item_id_final = self._find_item_id(preferred, in_inventory=False)
+            if "dropped_article" in messages and item_id_final:
+                item_obj = self.world.items.get(item_id_final)
+                names = self.world.item_names(item_id_final)
+                name_acc = (getattr(item_obj, "forms", {}) or {}).get("acc") if item_obj else None
+                name_to_use = name_acc or (names[0] if names else item)
+                article = (getattr(item_obj, "articles", {}) or {}).get("acc") if item_obj else None
+                if article:
+                    self.io.output(messages["dropped_article"].format(article=article, name=name_to_use))
+                else:
+                    self.io.output(messages["dropped"].format(item=name_to_use))
+            else:
+                self.io.output(messages["dropped"].format(item=item))
         else:
             self.io.output(self.language_manager.messages["not_carrying"])
         self.check_end()
@@ -479,14 +520,40 @@ class CommandProcessor:
         move_duration = self.world.get_exit_duration(direction)
         if self.world.can_move(direction) and self.world.move(direction):
             self._last_duration = move_duration
-            # Confirmation message for movement using language-specific article only
-            art_tpl = self.language_manager.messages.get("going_to_article")
-            if art_tpl and target_room_id:
+            # Movement confirmation: prefer generic marker template if configured
+            msgs = self.language_manager.messages
+            if target_room_id:
                 room_obj = self.world.rooms.get(target_room_id)
                 if room_obj:
-                    art = room_obj.get("to_article")
-                    if art:
-                        self.io.output(art_tpl.format(article=art, place=dest_display))
+                    # Generic template with marker position support
+                    gen_tpl = msgs.get("going_to_template")
+                    move_marker = room_obj.get("move_marker") if hasattr(room_obj, "get") else None
+                    if gen_tpl and isinstance(move_marker, dict):
+                        marker = str(move_marker.get("value", ""))
+                        position = str(move_marker.get("position", "before"))
+                        use_form = move_marker.get("use_form")
+                        place_name = dest_display
+                        forms = room_obj.get("forms") if hasattr(room_obj, "get") else None
+                        if isinstance(forms, dict) and isinstance(use_form, str):
+                            place_name = forms.get(use_form, place_name)
+                        pre = ""
+                        post = ""
+                        suf = ""
+                        if marker:
+                            if position == "before":
+                                pre = marker if marker.endswith(" ") else marker + " "
+                            elif position == "after":
+                                post = marker if marker.startswith(" ") else " " + marker
+                            elif position == "suffix":
+                                suf = marker
+                        self.io.output(gen_tpl.format(pre=pre, place=place_name, post=post, suf=suf))
+                    else:
+                        # Backward-compatible article template
+                        art_tpl = msgs.get("going_to_article")
+                        if art_tpl:
+                            art = room_obj.get("to_article") if hasattr(room_obj, "get") else None
+                            if art:
+                                self.io.output(art_tpl.format(article=art, place=dest_display))
             header = self.world.describe_room_header(self.language_manager.messages)
             self.io.output(header)
             event_outs: list[str] = []
@@ -555,11 +622,35 @@ class CommandProcessor:
                 b = bas_list[i] if i < len(bas_list) else ""
                 c = act_list[i] if i < len(act_list) else ""
                 lines.append(f"{a.ljust(w1)}  {b.ljust(w2)}  {c.ljust(w3)}")
+            # Output commands table
             self.io.output("\n".join(lines))
+            # Append available languages line
+            data_dir = getattr(self.language_manager, "data_dir", None)
+            if data_dir is not None:
+                from pathlib import Path
+
+                base = Path(data_dir)
+                langs: list[str] = []
+                for p in base.iterdir():
+                    if not p.is_dir():
+                        continue
+                    code = p.name
+                    if (p / f"messages.{code}.yaml").exists() and (p / f"world.{code}.yaml").exists():
+                        langs.append(code)
+                if langs:
+                    langs.sort(key=lambda s: s.casefold())
+                    msg = self.language_manager.messages.get("help_languages", "Available languages: {languages}")
+                    self.io.output("")
+                    self.io.output(msg.format(languages=", ".join(langs)))
             return True
         cmd_info = self.reverse_cmds.get(arg)
         if not cmd_info:
-            self.cmd_unknown(arg)
+            # Language-specific feedback for unknown command in help
+            msg = self.language_manager.messages.get("help_unknown")
+            if msg:
+                self.io.output(msg.format(command=arg))
+            else:
+                self.io.output(self.language_manager.messages["unknown_command"])
             return True
         key, _ = cmd_info
         entries = self.language_manager.commands.get(key, [])
@@ -594,6 +685,10 @@ class CommandProcessor:
             lines.extend(f"| {o}" for o in entry.output)
         if lines:
             self.io.output("\n".join(lines))
+        else:
+            msg = self.language_manager.messages.get("log_empty")
+            if msg:
+                self.io.output(msg)
         return True
 
     @require_args(1)
