@@ -28,11 +28,11 @@ def test_ruins_inaccessible_without_map(data_dir, io_backend):
 
     g.command_processor.cmd_go("Ash Village")
     g.command_processor.cmd_talk("Villager")
-    g.command_processor.cmd_say("ashen_crown")
+    g.command_processor.cmd_say("M2")
     g.command_processor.cmd_take("Map Fragment")
     g.command_processor.cmd_go("Forest")
     g.command_processor.cmd_talk("Ashram")
-    g.command_processor.cmd_say("goal")
+    g.command_processor.cmd_say("A1")
     g.command_processor.cmd_show("Map Fragment", "Ashram")
     # Optionally examine the map after interpretation (align with current story flow)
     g.command_processor.cmd_examine("Map Fragment")
@@ -89,10 +89,10 @@ def test_game_reaches_ending(data_dir, io_backend):
         lambda: cp.cmd_take("Small Key"),
         lambda: cp.cmd_go("Forest"),
         lambda: cp.cmd_go("Ash Village"),
-        lambda: (cp.cmd_talk("Villager"), cp.cmd_say("ashen_crown"))[1],
+        lambda: (cp.cmd_talk("Villager"), cp.cmd_say("M2"))[1],
         lambda: cp.cmd_take("Map Fragment"),
         lambda: cp.cmd_go("Forest"),
-        lambda: (cp.cmd_talk("Ashram"), cp.cmd_say("goal"))[1],
+        lambda: (cp.cmd_talk("Ashram"), cp.cmd_say("A1"))[1],
         lambda: cp.cmd_show("Map Fragment", "Ashram"),
         # Optionally examine the map after interpretation
         lambda: cp.cmd_examine("Map Fragment"),

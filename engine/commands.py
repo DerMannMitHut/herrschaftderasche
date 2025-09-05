@@ -117,6 +117,8 @@ class CommandProcessor:
         self._last_duration: int | None = None
         self._dialog_npc: str | None = None
         self._dialog_node: str | None = None
+        self._npc_prefixes = self._build_npc_prefixes()
+        self._dialog_option_map: dict[str, str] = {}
 
     def execute(self, raw: str) -> bool:
         """Execute ``raw`` and return True if parsing succeeded, else False.
@@ -440,6 +442,9 @@ class CommandProcessor:
         if visible:
             self.io.output("")
             self.io.output(visible)
+        if self._dialog_npc:
+            self.io.output("")
+            self._list_dialog_options()
         return True
 
     @require_args(1)
@@ -478,6 +483,9 @@ class CommandProcessor:
             if visible:
                 self.io.output("")
                 self.io.output(visible)
+            if self._dialog_npc:
+                self.io.output("")
+                self._list_dialog_options()
         else:
             self.io.output(self.language_manager.messages["cannot_move"])
         self.check_end()
@@ -635,12 +643,8 @@ class CommandProcessor:
         text = node.text
         if text:
             self.io.output(text)
-        options = list(getattr(node, "options", []))
-        if options:
-            for opt in options:
-                prompt = opt.prompt or opt.id
-                self.io.output(f"{opt.id}: {prompt}")
-        else:
+        self._list_dialog_options()
+        if not self._dialog_option_map:
             self._dialog_npc = None
             self._dialog_node = None
         self.check_end()
@@ -648,6 +652,7 @@ class CommandProcessor:
 
     @require_args(1)
     def cmd_talk(self, npc_name: str) -> bool:
+        self._dialog_option_map.clear()
         if self._match_any_npc_id(npc_name) is None:
             return False
         npc_id = self._find_npc_id(npc_name)
@@ -661,6 +666,8 @@ class CommandProcessor:
             self._dialog_node = "start"
             self._advance_dialog(None)
             return True
+        self._dialog_npc = None
+        self._dialog_node = None
         state = self.world.npc_state(npc_id)
         state_key = state.value if isinstance(state, StateTag) else state
         talk_cfg = npc.get("states", {}).get(state_key, {})
@@ -679,7 +686,13 @@ class CommandProcessor:
         option_id = option_id.strip()
         if not option_id or not self._dialog_npc:
             return False
-        return self._advance_dialog(option_id)
+        internal = self._dialog_option_map.get(option_id.casefold())
+        if not internal:
+            msg = self.language_manager.messages.get("invalid_dialog_option")
+            if msg:
+                self.io.output(msg)
+            return True
+        return self._advance_dialog(internal)
 
     @require_args(2)
     def cmd_use(self, item_name: str, target_name: str) -> bool:
@@ -712,6 +725,42 @@ class CommandProcessor:
             if any(n.casefold() == name_cf for n in names):
                 return npc_id
         return None
+
+    def _build_npc_prefixes(self) -> dict[str, str]:
+        prefixes: dict[str, str] = {}
+        names = {nid: npc.names[0] for nid, npc in self.world.npcs.items() if npc.names}
+        for nid, name in names.items():
+            prefix_len = 1
+            lowered = name.casefold()
+            while any(other_id != nid and other_name.casefold().startswith(lowered[:prefix_len]) for other_id, other_name in names.items()):
+                prefix_len += 1
+            prefixes[nid] = name[:prefix_len]
+        return prefixes
+
+    def _list_dialog_options(self) -> None:
+        npc_id = self._dialog_npc
+        node_id = self._dialog_node
+        if not npc_id or not node_id:
+            return
+        npc = self.world.npcs.get(npc_id)
+        if not npc:
+            return
+        node = getattr(npc, "dialog", {}).get(node_id)
+        if not node:
+            return
+        options = list(getattr(node, "options", []))
+        if not options:
+            return
+        prefix = self._npc_prefixes.get(npc_id, "")
+        self._dialog_option_map.clear()
+        for idx, opt in enumerate(options, start=1):
+            display_id = f"{prefix}{idx}"
+            self._dialog_option_map[display_id.casefold()] = opt.id
+            prompt = opt.prompt or opt.id
+            self.io.output(f"{display_id}: {prompt}")
+
+    def list_dialog_options(self) -> None:
+        self._list_dialog_options()
 
     def describe_npc(self, npc_name: str) -> None:
         """Describe an NPC if present and visible; otherwise output no_npc."""
