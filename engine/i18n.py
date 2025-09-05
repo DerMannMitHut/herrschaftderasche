@@ -34,7 +34,29 @@ def load_commands(language: str, io: IOBackend) -> dict[str, str | list[str]]:
 def load_llm_config(language: str, io: IOBackend) -> dict:
     """Load LLM configuration for the given language code."""
     path = Path(__file__).resolve().parent.parent / "data" / language / f"llm.{language}.yaml"
-    return _load_yaml(path, io) or {}
+    data = _load_yaml(path, io) or {}
+    required = [
+        "prompt",
+        "context",
+        "guidance",
+        "ignore_articles",
+        "ignore_contractions",
+        "second_object_preps",
+    ]
+    must_have_content = [
+        "prompt",
+        "context",
+        "guidance",
+        "ignore_articles",
+        "second_object_preps",
+    ]
+    missing = [key for key in required if key not in data]
+    empty = [key for key in must_have_content if not data.get(key)]
+    if missing or empty:
+        fields = missing + empty
+        io.output(f"ERROR: Missing or empty fields {fields} in '{path.name}'")
+        raise SystemExit
+    return data
 
 
 def load_command_info(io: IOBackend) -> dict[str, dict[str, int]]:

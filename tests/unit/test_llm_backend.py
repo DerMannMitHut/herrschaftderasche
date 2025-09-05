@@ -42,10 +42,11 @@ def test_ollama_llm_builds_context(monkeypatch, data_dir):
     llm.interpret("look around")
 
     system_prompt = captured["json"]["messages"][0]["content"]
+    first_line = lm.llm_config["prompt"].splitlines()[0]
+    assert first_line in system_prompt
     assert "Room 1." in system_prompt
     assert "Old Man" in system_prompt
     assert "red" in system_prompt
-    assert "look" in system_prompt
 
 
 def test_ollama_llm_fallback(monkeypatch, data_dir):
