@@ -12,5 +12,6 @@ destroy: {arguments: 1, category: actions}
 wear: {arguments: 1, category: actions}
 use: {arguments: 2, category: actions}
 talk: {arguments: 1, category: actions}
+say: {arguments: 1, category: actions}
 show: {arguments: 2, category: actions}
 show_log: {optional_arguments: 1, category: system}

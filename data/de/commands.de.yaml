@@ -54,6 +54,9 @@ use:
 talk:
   - 'rede mit $a'
   - 'sprich mit $a'
+say:
+  - 'sag $a'
+  - 'sage $a'
 show:
   - 'zeige $b $a'
   - 'zeige $a $b'

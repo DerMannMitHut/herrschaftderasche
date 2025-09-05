@@ -56,6 +56,8 @@ talk:
   - 'talk with $a'
   - 'speak to $a'
   - 'speak with $a'
+say:
+  - 'say $a'
 show:
   - 'show $a to $b'
   - 'present $a to $b'
