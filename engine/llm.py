@@ -253,7 +253,7 @@ class OllamaLLM(LLMBackend):
         v_cf = v.casefold()
         # look -> examine when an object is present
         if v_cf == "look" and o:
-            return "examine", o, None if not b else b
+            return "examine", o, b if b else None
         # open-like verbs -> use, swap order (tool first)
         if v_cf in {"open", "öffne", "öffnen"}:
             if o and b:

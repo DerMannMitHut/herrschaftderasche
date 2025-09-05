@@ -631,6 +631,47 @@ class CommandProcessor:
             self.io.output(self.language_manager.messages["no_npc"])
             return True
         npc = self.world.npcs[npc_id]
+        dialog = getattr(npc, "dialog", {})
+        if dialog:
+            node_id = "start"
+            while node_id:
+                node = dialog.get(node_id)
+                if not node:
+                    break
+                eff = getattr(node, "effect", None)
+                if eff:
+                    state = eff.get("set_npc_state")
+                    if state is not None:
+                        self.world.set_npc_state(npc_id, state)
+                    other = {k: v for k, v in eff.items() if k != "set_npc_state"}
+                    if other:
+                        self.world.apply_effect(other)
+                text = getattr(node, "text", None)
+                if text:
+                    self.io.output(text)
+                options = list(getattr(node, "options", []))
+                if not options:
+                    break
+                for idx, opt in enumerate(options, start=1):
+                    prompt = opt.prompt or opt.id
+                    self.io.output(f"{idx}. {prompt}")
+                choice = self.io.get_input().strip()
+                try:
+                    sel = int(choice) - 1
+                except Exception:
+                    break
+                if sel < 0 or sel >= len(options):
+                    break
+                opt = options[sel]
+                eff = opt.effect or {}
+                state = eff.get("set_npc_state")
+                if state is not None:
+                    self.world.set_npc_state(npc_id, state)
+                other = {k: v for k, v in eff.items() if k != "set_npc_state"}
+                if other:
+                    self.world.apply_effect(other)
+                node_id = opt.next
+            return True
         state = self.world.npc_state(npc_id)
         state_key = state.value if isinstance(state, StateTag) else state
         talk_cfg = npc.get("states", {}).get(state_key, {})

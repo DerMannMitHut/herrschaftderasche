@@ -58,6 +58,10 @@ def data_dir(tmp_path):
                 "state": "unknown",
                 "states": {"unknown": {}, "met": {}, "helped": {}},
                 "meet": {"location": "room2"},
+                "dialog": {
+                    "start": {"options": [{"id": "quest", "next": "quest"}]},
+                    "quest": {"effect": {"set_npc_state": "helped"}},
+                },
             }
         },
         "actions": {
@@ -97,13 +101,16 @@ def data_dir(tmp_path):
                 "names": ["Old Man"],
                 "meet": {"text": "The old man greets you."},
                 "states": {
-                    "met": {
-                        "text": "The old man nods at you.",
-                        "talk": "You tell the old man about your quest. He agrees to help.",
+                    "met": {"text": "The old man nods at you."},
+                    "helped": {"text": "The old man smiles at you."},
+                },
+                "dialog": {
+                    "start": {
+                        "text": "The old man peers at you.",
+                        "options": {"quest": "I need your help."},
                     },
-                    "helped": {
-                        "text": "The old man smiles at you.",
-                        "talk": "The old man has already offered his aid.",
+                    "quest": {
+                        "text": "You tell the old man about your quest. He agrees to help.",
                     },
                 },
             }
@@ -136,13 +143,16 @@ def data_dir(tmp_path):
                 "names": ["Alter Mann"],
                 "meet": {"text": "Der alte Mann grüßt dich."},
                 "states": {
-                    "met": {
-                        "text": "Der alte Mann nickt dir zu.",
-                        "talk": "Du erzählst dem alten Mann von deiner Suche. Er hilft dir.",
+                    "met": {"text": "Der alte Mann nickt dir zu."},
+                    "helped": {"text": "Der alte Mann lächelt dich an."},
+                },
+                "dialog": {
+                    "start": {
+                        "text": "Der alte Mann mustert dich.",
+                        "options": {"quest": "Ich brauche deine Hilfe."},
                     },
-                    "helped": {
-                        "text": "Der alte Mann lächelt dich an.",
-                        "talk": "Der alte Mann hat dir bereits geholfen.",
+                    "quest": {
+                        "text": "Du erzählst dem alten Mann von deiner Suche. Er hilft dir.",
                     },
                 },
             }

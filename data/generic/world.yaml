@@ -48,6 +48,20 @@ npcs:
       helped: {}
     meet:
       location: ash_village
+    dialog:
+      start:
+        options:
+          - id: past
+            next: past
+          - id: ashen_crown
+            next: quest
+      past:
+        options:
+          - id: ashen_crown
+            next: quest
+      quest:
+        effect:
+          set_npc_state: helped
   ashram:
     state: unknown
     states:
@@ -60,6 +74,14 @@ npcs:
         npc_conditions:
           - npc: villager
             state: helped
+    dialog:
+      start:
+        options:
+          - id: goal
+            next: goal
+      goal:
+        effect:
+          set_npc_state: helped
 
 actions:
   interpret_map:
