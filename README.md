@@ -98,7 +98,7 @@ poetry run python -c "from engine.game import run; from engine.llm import Ollama
 ```
 
 Hinweise:
-- Das Backend erhält zur Laufzeit Kontext (Welt, Sprache, Log) und kann daraus passende Prompts bauen.
+- Die Prompt-Vorlagen liegen in `data/<lang>/llm.<lang>.yaml`. Zur Laufzeit füllt das Backend diese mit Welt, Sprache und Log.
 - Netzwerkfehler oder ungültige Antworten führen zu einem sicheren Fallback: Der Originalbefehl wird genutzt.
 
 ### Eigenes LLM-Backend
@@ -108,43 +108,10 @@ Hinweise:
 - Binde es beim Start wie oben gezeigt über `llm_backend=<DeinBackend>()` ein.
 
 ### LLM-Sprachkonfiguration
-- Pro Sprache in `data/<lang>/llm.<lang>.yaml` konfigurierbar. Beispiel (DE):
+- Pro Sprache konfigurierbar unter `data/<lang>/llm.<lang>.yaml`. Die Datei enthält Abschnitte für `prompt`, `context` und `guidance` sowie Listen für Artikel und Präpositionen.
+- Beispiel (`data/en/llm.en.yaml`):
 
-```
-prompt: |-
-  Du ordnest Spielerbefehle Spielkommandos zu. Ein Kommando besteht aus einem <Verb> und optional 1 oder 2 Objekten. <confidence> ist ein Wert zwischen 0 und 2: 0=unsicher, 1=ziemlich sicher, 2=völlig sicher.
-  Sprache: {lang}.
-  Erlaubte Verben: {allowed_verbs}
-  Bekannte Nomen: {known_nouns}
-  Hinweise:
-  ```
-  {guidance}
-  ```
-  Kontext:
-  ```
-  {context}
-  ```
-  Antworte ausschließlich mit JSON {"confidence": <confidence>, "verb": "<verb>", "object": "<noun1>", "additional": "<noun2>"}.
-context: |-
-  Beschreibung der aktuellen Umgebung:
-  {room} {visible}
-  Inventar des Spielers: {inventory}
-  Objektzustände: {item_states}
-  NPC-Zustände: {npc_states}
-guidance: |-
-  Ignoriere Artikel/Determinatoren bei der Objekterkennung ({articles}).
-  Ignoriere Kontraktionen bei der Objekterkennung ({contractions}).
-  Ordne diese Präpositionen dem zweiten Objekt (additional) zu: {prepositions}.
-  Wähle Objektstrings aus 'Known nouns'.
-  Behandle zitatmarkierte Phrasen als ein Objekt.
-ignore_articles: [der, die, das, den, dem, des, ein, eine, einen, einem, eines]
-ignore_contractions: [im, am, beim, vom, zum, zur, ins, aufs, ans, ums, durchs]
-second_object_preps: [mit]
-```
-
-- EN (Beispiel):
-
-```
+```yaml
 prompt: |-
   You map player input to game commands. A command consists of a <verb> and optional 1 or 2 objects. <confidence> is a value between 0 and 2: 0=unsure, 1=quite sure, 2=totally sure.
   Language: {lang}.
@@ -158,7 +125,7 @@ prompt: |-
   ```
   {context}
   ```
-  Respond with JSON {"confidence": <confidence>, "verb": "<verb>", "object": "<noun1>", "additional": "<noun2>"} and nothing else.
+  Respond with JSON {{"confidence": <confidence>, "verb": "<verb>", "object": "<noun1>", "additional": "<noun2>"}} and nothing else.
 context: |-
   Description of the current location:
   {room} {visible}
@@ -171,9 +138,13 @@ guidance: |-
   Map these prepositions to the second object (additional): {prepositions}.
   Choose object strings from 'Known nouns'.
   Treat quoted phrases as one object.
-ignore_articles: [the, a, an]
+ignore_articles:
+  - the
+  - a
+  - an
 ignore_contractions: []
-second_object_preps: [with]
+second_object_preps:
+  - with
 ```
 
 ### Hilfe-Ausgabe
