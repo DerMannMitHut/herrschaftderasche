@@ -46,21 +46,25 @@ rooms:
       - Hut
       - Cabin
     description: "A modest hut whose roof complains at every gust. Light slips through thin seams and dances in slow dust. The floor is rough; ash grits beneath your boots. A cold hearth smells of long-spent embers."
+    to_article: "to the"
   forest:
     names:
       - Forest
       - Woods
     description: "Open woods laid with a soft grey bloom. Each step breathes up a shallow drift. A crow calls far off, and the sun hangs pale as a coin between the branches."
+    to_article: "to the"
   ruins:
     names:
       - Ruins
       - Ruined Site
     description: "Broken arches and split stairs where the wind plays like a flute. Ash piles into quiet dunes; beneath the grey skin a mosaic shows in fragments. The stones wear scorch marks from a time no one can name."
+    to_article: "to the"
   ash_village:
     names:
       - Ash Village
       - Village
     description: "A village bowed beneath a soft weight of ash. Roofs sag; doors stand ajar as if listening. Water lies dark and still in the well. Old pennants hang in threads; soot and dried herbs scent the air."
+    to_article: "to"
 
 npcs:
   villager:

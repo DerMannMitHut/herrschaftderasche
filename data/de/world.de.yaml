@@ -46,21 +46,25 @@ rooms:
       - Hütte
       - Häuschen
     description: "Eine schlichte Hütte, deren Dach in jedem Windstoß leise klagt. Das Licht fällt durch schmale Fugen, tanzt in feinen Staubfahnen. Der Boden ist rau, unter deinen Stiefeln knirscht Asche. Eine kalte Feuerstelle riecht nach längst verglühter Glut."
+    to_article: "zur"
   forest:
     names:
       - Wald
       - Forst
     description: "Ein lichter Wald, dessen Nadeln und Blätter einen grauen Flaum tragen. Jeder Schritt wirbelt einen flachen Atem von Staub auf. Fern ruft eine Krähe, und die Sonne hängt blass wie eine Münze zwischen den Zweigen."
+    to_article: "zum"
   ruins:
     names:
       - Ruinen
       - Ruinenstätte
     description: "Zerfallene Bögen und geborstene Stufen, über denen der Wind wie durch Flötenlöcher pfeift. In Ecken türmt sich Asche zu stillen Dünen; unter der grauen Haut blitzt hier und da ein Mosaik auf. Die Steine tragen Brandmale aus einer Zeit, die niemand mehr exakt benennen kann."
+    to_article: "zu den"
   ash_village:
     names:
       - Aschendorf
       - Dorf
     description: "Ein Dorf, geduckt unter der weichen Last der Asche. Dächer biegen sich, Türen stehen einen Spalt offen, als lauschten sie. Im Brunnen liegt das Wasser dunkel und unbewegt. Alte Wimpel hängen in Fäden; der Geruch von Ruß und getrockneten Kräutern liegt darüber."
+    to_article: "zum"
 
 npcs:
   villager:

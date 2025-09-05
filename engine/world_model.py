@@ -30,6 +30,8 @@ class Room(BaseModel):
     items: list[str] = Field(default_factory=list)  # noqa
     exits: dict[str, dict[str, Any]] = Field(default_factory=dict)  # noqa
     occupants: list[str] = Field(default_factory=list)  # noqa
+    # Optional localized article for movement phrases (e.g., de: "zum"/"zur"/"zu den")
+    to_article: str | None = None
 
     model_config = ConfigDict(extra="forbid")
 

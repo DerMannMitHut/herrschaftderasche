@@ -179,6 +179,10 @@ class World:
             desc = lang_room.get("description")
             if desc is not None:
                 room["description"] = desc
+            # Optional language-specific article for movement phrases
+            to_article = lang_room.get("to_article")
+            if to_article is not None:
+                room["to_article"] = to_article
             rooms[room_id] = room
         for item_id, item_cfg in items.items():
             item_cfg.setdefault("names", [item_id])

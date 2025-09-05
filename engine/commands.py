@@ -463,9 +463,30 @@ class CommandProcessor:
         direction = self._strip_leading_tokens(direction)
         if not self.world.has_room(direction):
             return False
+        # Determine a friendly display name for the destination (first exit name)
+        dest_display = direction
+        target_room_id = None
+        room = self.world.rooms[self.world.current]
+        dir_cf = direction.casefold()
+        for _target, cfg in room.exits.items():
+            names = cfg.get("names", [])
+            if any(n.casefold() == dir_cf for n in names):
+                if names:
+                    dest_display = names[0]
+                target_room_id = _target
+                break
+
         move_duration = self.world.get_exit_duration(direction)
         if self.world.can_move(direction) and self.world.move(direction):
             self._last_duration = move_duration
+            # Confirmation message for movement using language-specific article only
+            art_tpl = self.language_manager.messages.get("going_to_article")
+            if art_tpl and target_room_id:
+                room_obj = self.world.rooms.get(target_room_id)
+                if room_obj:
+                    art = room_obj.get("to_article")
+                    if art:
+                        self.io.output(art_tpl.format(article=art, place=dest_display))
             header = self.world.describe_room_header(self.language_manager.messages)
             self.io.output(header)
             event_outs: list[str] = []
