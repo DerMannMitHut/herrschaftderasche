@@ -18,11 +18,14 @@ class MappingLLM(LLMBackend):
 
     def __init__(self, mapped: str) -> None:
         self.mapped = mapped
+        self.prompt: str | None = None
 
     def set_context(self, world, language, log) -> None:  # noqa: D401, ARG002
+        self.prompt = language.llm_config["prompt"]
         return None
 
     def interpret(self, command: str) -> str:  # noqa: D401, ARG002
+        assert self.prompt is not None
         return self.mapped
 
 
@@ -47,3 +50,4 @@ def test_llm_fallback_on_unresolvable_argument_triggers_mapping(tmp_path):
 
     assert "small_key" in g.world.inventory
     assert any("Du trägst:" in line and "Kleiner Schlüssel" in line for line in io.outputs)
+    assert llm.prompt == g.language_manager.llm_config["prompt"]
