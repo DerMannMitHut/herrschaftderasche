@@ -48,4 +48,3 @@ def test_load_llm_config_empty_field(data_dir, monkeypatch, io_backend):
     with pytest.raises(SystemExit):
         i18n.load_llm_config("en", io_backend)
     assert any("Missing or empty fields" in o for o in io_backend.outputs)
-
