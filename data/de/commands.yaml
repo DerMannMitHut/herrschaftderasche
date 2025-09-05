@@ -56,4 +56,8 @@ show:
 show_log:
   - 'show_log'
   - 'show_log $a'
+llm_open_verbs:
+  - 'open'
+  - 'öffne'
+  - 'öffnen'
 

@@ -12,7 +12,7 @@ from .commands import CommandProcessor
 from .interfaces import IOBackend, LLMBackend
 from .io import ConsoleIO
 from .language import LanguageManager
-from .llm import NoOpLLM
+from .llm import SUGGEST_PREFIX, UNKNOWN_TOKEN, NoOpLLM
 from .persistence import SaveManager
 from .world_model import StateTag
 
@@ -166,11 +166,11 @@ class Game:
                 if self.command_processor.execute(normalized):
                     continue
                 mapped = self.llm.interpret(user_input)
-                if mapped == "__UNKNOWN__":
+                if mapped == UNKNOWN_TOKEN:
                     self.io.output(self.language_manager.messages["unknown_command"])
                     continue
-                if mapped.startswith("__SUGGEST__ "):
-                    suggestion = mapped[len("__SUGGEST__ ") :].strip()
+                if mapped.startswith(f"{SUGGEST_PREFIX} "):
+                    suggestion = mapped[len(SUGGEST_PREFIX) + 1 :].strip()
                     msg_tpl = self.language_manager.messages.get("llm_suggest", "Try: {command}")
                     self.io.output(msg_tpl.format(command=suggestion))
                     continue

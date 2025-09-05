@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 from contextlib import suppress
+from enum import IntEnum
 from typing import TYPE_CHECKING
 
 import requests
@@ -12,6 +13,19 @@ import yaml
 
 from .interfaces import LLMBackend
 from .persistence import LogEntry
+
+SUGGEST_PREFIX = "__SUGGEST__"
+UNKNOWN_TOKEN = "__UNKNOWN__"
+OPEN_VERBS_KEY = "llm_open_verbs"
+
+
+class Confidence(IntEnum):
+    """Confidence levels returned by the LLM."""
+
+    UNSURE = 0
+    MAYBE = 1
+    CERTAIN = 2
+
 
 if TYPE_CHECKING:  # pragma: no cover - used for type checking only
     from .language import LanguageManager
@@ -155,13 +169,13 @@ class OllamaLLM(LLMBackend):
                         self.world.debug(f"mapped result='{result}'")
                     else:
                         self.world.debug(f"mapped result='{result}' confidence={conf}")
-                if conf == 2:
+                if conf == Confidence.CERTAIN:
                     return result
-                if conf == 1:
+                if conf == Confidence.MAYBE:
                     suggestion = self._format_suggestion(norm_verb, norm_obj, norm_add)
-                    return f"__SUGGEST__ {suggestion or result}"
-                if conf == 0:
-                    return "__UNKNOWN__"
+                    return f"{SUGGEST_PREFIX} {suggestion or result}"
+                if conf == Confidence.UNSURE:
+                    return UNKNOWN_TOKEN
                 return command
             result = (str(verb) if isinstance(verb, str) else None) or command
             with suppress(Exception):
@@ -197,7 +211,8 @@ class OllamaLLM(LLMBackend):
         )
         system_prompt = (
             "You map player input to game commands. A command consists of a <verb>, and optional 1 or 2 objects. "
-            "<confidence> is a value between 0 and 2: 0=unsure, 1=quite sure, 2=totally sure.\n"
+            f"<confidence> is a value between {Confidence.UNSURE.value} and {Confidence.CERTAIN.value}: "
+            f"{Confidence.UNSURE.value}=unsure, {Confidence.MAYBE.value}=quite sure, {Confidence.CERTAIN.value}=totally sure.\n"
             f"Language: {lang_code}.\n"
             f"Allowed verbs: {', '.join(allowed_verbs)}\n"
             f"Known nouns: {', '.join(nouns)}\n"
@@ -241,7 +256,7 @@ class OllamaLLM(LLMBackend):
         """Normalize LLM JSON into engine verb + ordered objects.
 
         - Map 'look <obj>' -> 'examine <obj>'.
-        - Map open-like verbs ('open', 'öffne', 'öffnen') to 'use' and swap
+        - Map language-defined open-like verbs to 'use' and swap
           object/additional so the tool comes first (e.g. key, then chest).
         Returns normalized (verb, obj, add) or (None, None, None) if invalid.
         """
@@ -255,7 +270,8 @@ class OllamaLLM(LLMBackend):
         if v_cf == "look" and o:
             return "examine", o, b if b else None
         # open-like verbs -> use, swap order (tool first)
-        if v_cf in {"open", "öffne", "öffnen"}:
+        open_verbs = {verb.casefold() for verb in (self.language.commands.get(OPEN_VERBS_KEY, []) if self.language else [])}
+        if v_cf in open_verbs:
             if o and b:
                 return "use", b, o
             # If only one object present, fall back to 'use' with same order
@@ -400,4 +416,11 @@ class OllamaLLM(LLMBackend):
             raise SystemExit(f"ERROR: Could not verify LLM model '{self.model}' at {self.base_url}: {exc}") from exc
 
 
-__all__ = ["NoOpLLM", "OllamaLLM"]
+__all__ = [
+    "NoOpLLM",
+    "OllamaLLM",
+    "SUGGEST_PREFIX",
+    "UNKNOWN_TOKEN",
+    "OPEN_VERBS_KEY",
+    "Confidence",
+]
